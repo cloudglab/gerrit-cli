@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.0.2 - 2026-06-12
+
+Follow-up release after the initial public publish.
+
+### Fixed
+
+- Pin GitHub Actions publish workflow to Bun `1.3.14` to avoid `latest` runtime drift during npm publishing.
+
 ## 0.0.1 - 2026-06-12
 
 Initial public baseline for `@cloudglab/gerrit-cli`.
