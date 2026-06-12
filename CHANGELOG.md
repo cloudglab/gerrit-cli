@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.0.5 - 2026-06-12
+
+Follow-up release after the `v0.0.4` publish workflow failed in CI.
+
+### Fixed
+
+- Replace partial `child_process` module mocks with scoped adapter spies so CI tests do not leak incomplete mocks across files.
+
 ## 0.0.4 - 2026-06-12
 
 Follow-up release after the `v0.0.3` publish workflow failed in CI.

@@ -9,17 +9,34 @@ import { createMockConfigService } from './helpers/config-mock'
 // --- fs / child_process mocks ---
 
 const mockExecSyncImpl = mock((..._args: unknown[]): string => '')
+const mockExecImpl = mock()
+const mockSpawnImpl = mock()
 const mockSpawnSyncImpl = mock((..._args: unknown[]): { status: number; stderr: string } => ({
   status: 0,
   stderr: '',
 }))
+const mockGitLogWithoutChangeId = () => ({
+  stdout: {
+    on: (event: string, callback: (data: Buffer) => void) => {
+      if (event === 'data') callback(Buffer.from('feat: no change id'))
+    },
+  },
+  stderr: {
+    on: () => {},
+  },
+  on: (event: string, callback: (code: number) => void) => {
+    if (event === 'close') callback(0)
+  },
+})
 const mockExistsSync = mock((..._args: unknown[]): boolean => false)
 const mockMkdirSync = mock((..._args: unknown[]) => undefined)
 const mockReaddirSync = mock((..._args: unknown[]): string[] => [])
 const mockStatSync = mock((..._args: unknown[]) => ({ isDirectory: () => true }))
 
 mock.module('@/utils/child-process', () => ({
+  exec: mockExecImpl,
   execSync: mockExecSyncImpl,
+  spawn: mockSpawnImpl,
   spawnSync: mockSpawnSyncImpl,
 }))
 mock.module('node:fs', () => ({
@@ -77,6 +94,8 @@ afterAll(() => server.close())
 describe('tree-setup', () => {
   beforeEach(() => {
     mockExecSyncImpl.mockReset()
+    mockSpawnImpl.mockReset()
+    mockSpawnImpl.mockImplementation(mockGitLogWithoutChangeId)
     mockSpawnSyncImpl.mockReset()
     mockExistsSync.mockReturnValue(false)
     mockMkdirSync.mockReset()
@@ -151,6 +170,8 @@ describe('tree-setup', () => {
 describe('trees', () => {
   beforeEach(() => {
     mockExecSyncImpl.mockReset()
+    mockSpawnImpl.mockReset()
+    mockSpawnImpl.mockImplementation(mockGitLogWithoutChangeId)
     mockSpawnSyncImpl.mockReset()
   })
 
@@ -233,6 +254,8 @@ describe('trees', () => {
 describe('tree-cleanup', () => {
   beforeEach(() => {
     mockExecSyncImpl.mockReset()
+    mockSpawnImpl.mockReset()
+    mockSpawnImpl.mockImplementation(mockGitLogWithoutChangeId)
     mockSpawnSyncImpl.mockReset()
     mockExistsSync.mockReturnValue(false)
     mockReaddirSync.mockReturnValue([])

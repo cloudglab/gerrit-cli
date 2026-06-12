@@ -7,7 +7,23 @@ const mockFs = {
 }
 
 const mockExecSync = mock()
+const mockExec = mock()
+const mockSpawn = mock()
 const mockSpawnSync = mock()
+
+const mockGitLogWithoutChangeId = () => ({
+  stdout: {
+    on: (event: string, callback: (data: Buffer) => void) => {
+      if (event === 'data') callback(Buffer.from('feat: no change id'))
+    },
+  },
+  stderr: {
+    on: () => {},
+  },
+  on: (event: string, callback: (code: number) => void) => {
+    if (event === 'close') callback(0)
+  },
+})
 
 const mockConsole = {
   log: mock(),
@@ -17,7 +33,9 @@ const mockConsole = {
 // Mock modules
 mock.module('node:fs', () => mockFs)
 mock.module('@/utils/child-process', () => ({
+  exec: mockExec,
   execSync: mockExecSync,
+  spawn: mockSpawn,
   spawnSync: mockSpawnSync,
 }))
 
@@ -28,8 +46,11 @@ describe('Workspace Command', () => {
   beforeEach(() => {
     // Reset all mocks
     Object.values(mockFs).forEach((mock) => mock.mockReset())
+    mockExec.mockReset()
     mockExecSync.mockReset()
+    mockSpawn.mockReset()
     mockSpawnSync.mockReset()
+    mockSpawn.mockImplementation(mockGitLogWithoutChangeId)
     mockConsole.log.mockReset()
     mockConsole.error.mockReset()
 

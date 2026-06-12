@@ -8,10 +8,39 @@ import { ConfigService } from '@/services/config'
 
 import { createMockConfigService } from './helpers/config-mock'
 
-// Mock child_process.exec
 const mockExec = mock()
+const mockExecSync = mock()
+const mockSpawn = mock()
+const mockSpawnSync = mock()
+
+const mockGitLogWithoutChangeId = () => ({
+  stdout: {
+    on: (event: string, callback: (data: Buffer) => void) => {
+      if (event === 'data') callback(Buffer.from('feat: no change id'))
+    },
+  },
+  stderr: {
+    on: () => {},
+  },
+  on: (event: string, callback: (code: number) => void) => {
+    if (event === 'close') callback(0)
+  },
+})
+
+const mockExecImplementation = (
+  implementation: (cmd: string, callback: (error: Error | null) => void) => void,
+) => {
+  mockExec.mockImplementation((command, options, callback) => {
+    const execCallback = typeof options === 'function' ? options : callback
+    implementation(command, (error) => execCallback?.(error, '', ''))
+  })
+}
+
 mock.module('@/utils/child-process', () => ({
   exec: mockExec,
+  execSync: mockExecSync,
+  spawn: mockSpawn,
+  spawnSync: mockSpawnSync,
 }))
 
 const server = setupServer()
@@ -21,7 +50,11 @@ beforeAll(() => {
 })
 
 beforeEach(() => {
-  mockExec.mockClear()
+  mockExec.mockReset()
+  mockExecSync.mockReset()
+  mockSpawn.mockReset()
+  mockSpawnSync.mockReset()
+  mockSpawn.mockImplementation(mockGitLogWithoutChangeId)
 })
 
 afterAll(() => {
@@ -31,7 +64,7 @@ afterAll(() => {
 describe('open command', () => {
   test('should open change URL in browser', async () => {
     // Mock the exec function to simulate successful browser opening
-    mockExec.mockImplementation((cmd: string, callback: (error: null) => void) => {
+    mockExecImplementation((cmd: string, callback: (error: Error | null) => void) => {
       expect(cmd).toMatch(
         /^(open|start|xdg-open) "https:\/\/gerrit\.example\.com\/c\/test-project\/\+\/12345"$/,
       )
@@ -88,7 +121,7 @@ describe('open command', () => {
   })
 
   test('should handle URLs and extract change number', async () => {
-    mockExec.mockImplementation((cmd: string, callback: (error: null) => void) => {
+    mockExecImplementation((cmd: string, callback: (error: Error | null) => void) => {
       expect(cmd).toMatch(
         /^(open|start|xdg-open) "https:\/\/gerrit\.example\.com\/c\/test-project\/\+\/12345"$/,
       )
@@ -188,7 +221,7 @@ describe('open command', () => {
   })
 
   test('should handle browser opening errors', async () => {
-    mockExec.mockImplementation((cmd: string, callback: (error: Error) => void) => {
+    mockExecImplementation((cmd: string, callback: (error: Error | null) => void) => {
       callback(new Error('Browser not found'))
     })
 
