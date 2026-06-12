@@ -104,7 +104,7 @@ npx -y @cloudglab/gerrit-cli@latest update
 ### 提示格式
 
 ```
-gerrit-cli v4.0.2 is available (currently on v4.0.1). Run `gerrit-cli update` to upgrade.
+gerrit-cli v0.0.2 is available (currently on v0.0.1). Run `gerrit-cli update` to upgrade.
 ```
 
 ## 启动链路

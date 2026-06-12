@@ -84,7 +84,7 @@ Options:
 ```
 $ gerrit-cli doctor
 
-Gerrit CLI Doctor — v4.0.1
+Gerrit CLI Doctor — v0.0.1
 ──────────────────────────────────────────
 
 Runtime

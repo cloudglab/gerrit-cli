@@ -1,6 +1,6 @@
 # @cloudglab/gerrit-cli
 
-![gerrit-cli hero](./assets/readme/gerrit-cli-hero.png)
+![gerrit-cli hero](./assets/readme/gerrit-cli-hero.svg)
 
 让 Gerrit 代码审查流程进入命令行。支持查看变更、提交评论、管理审查、检查 CI 构建状态，以及直接面向 LLM 和自动化脚本输出结构化数据。
 

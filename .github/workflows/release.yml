@@ -35,7 +35,7 @@ jobs:
           path: |
             ~/.bun/install/cache
             node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
           restore-keys: |
             ${{ runner.os }}-bun-
 
@@ -75,7 +75,7 @@ jobs:
           path: |
             ~/.bun/install/cache
             node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
           restore-keys: |
             ${{ runner.os }}-bun-
 
@@ -85,30 +85,14 @@ jobs:
       - name: Build for ${{ matrix.target }}
         run: bun run build
 
-      - name: Create release archive (Unix)
-        if: matrix.os != 'windows-latest'
-        run: |
-          tar -czf gi-${{ matrix.target }}.tar.gz -C dist .
+      - name: Create npm package artifact
+        run: npm pack --ignore-scripts
 
-      - name: Create release archive (Windows)
-        if: matrix.os == 'windows-latest'
-        run: |
-          Compress-Archive -Path dist\* -DestinationPath gi-${{ matrix.target }}.zip
-
-      - name: Upload release artifacts (Unix)
-        if: matrix.os != 'windows-latest'
+      - name: Upload release artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: gi-${{ matrix.target }}
-          path: gi-${{ matrix.target }}.tar.gz
-          retention-days: 30
-
-      - name: Upload release artifacts (Windows)
-        if: matrix.os == 'windows-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: gi-${{ matrix.target }}
-          path: gi-${{ matrix.target }}.zip
+          name: gerrit-cli-${{ matrix.target }}
+          path: cloudglab-gerrit-cli-*.tgz
           retention-days: 30
 
   # Create GitHub release
@@ -157,9 +141,9 @@ jobs:
           name: Release ${{ steps.release-notes.outputs.version }}
           body_path: release_notes.md
           files: |
-            artifacts/gi-linux/gi-linux.tar.gz
-            artifacts/gi-darwin/gi-darwin.tar.gz
-            artifacts/gi-windows/gi-windows.zip
+            artifacts/gerrit-cli-linux/cloudglab-gerrit-cli-*.tgz
+            artifacts/gerrit-cli-darwin/cloudglab-gerrit-cli-*.tgz
+            artifacts/gerrit-cli-windows/cloudglab-gerrit-cli-*.tgz
           draft: false
           prerelease: false
         env:
