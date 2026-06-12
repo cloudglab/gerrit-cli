@@ -31,7 +31,7 @@
 - 缺少 `install/update` 一体化链路和每日更新探针。
 - 缺少“角色入口 / 场景入口 / agent 命中链路”文档化设计。
 - `skills/gerrit-workflow` 组织还不够像产品化 Skill 包。
-- 发布链路已有 `release.yml`，但更像构建产物发布，不像 `zentao-cli` 那样强调 npm 发布和发版前 smoke 回归。
+- 发布链路需对齐 `zentao-cli` 的 `publish.yml`，强调 npm Trusted Publisher 发布和发版前 smoke 回归。
 - 缺少“环境变量位置、启动链路、配置优先级”的统一说明。
 
 ## 参考仓库提炼

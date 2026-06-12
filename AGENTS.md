@@ -130,13 +130,13 @@ export GERRIT_PASSWORD="your-http-password"
 
 已内置 GitHub Actions：
 - `ci.yml`：push/main 触发，跑 `check:all`
-- `release.yml`：tag `v*` 触发，构建平台二进制 + 创建 GitHub Release
+- `publish.yml`：tag `v*` 触发，校验版本并通过 npm Trusted Publisher 发布
 
 发版步骤：
 1. 确保本地 `bun run check:all` 通过
 2. 更新 `package.json` 中 `version`
-3. `git tag v4.x.x && git push origin v4.x.x`
-4. 等待 release workflow 完成
+3. `git tag v0.x.x && git push origin v0.x.x`
+4. 等待 publish workflow 完成，并验证 npm 包版本
 
 ## 与 zentao-cli 架构对齐状态
 

@@ -132,57 +132,41 @@ GERRIT_PASSWORD=$GERRIT_SMOKE_PASSWORD \
 
 **注意**：smoke 查询是只读操作，不对线上数据做任何修改。
 
-## release workflow 重构（R45）
+## publish workflow 重构（R45）
 
-### 当前 release.yml
+### 当前 publish.yml
 
-- `pre-release-checks`：运行 `check:all`
-- `build-release`：多平台构建（linux/darwin/windows）
-- `create-release`：创建 GitHub Release 并上传二进制
+- tag `v*` 触发
+- 校验 tag version 与 `package.json` version 一致
+- 运行 `bun run check:all`
+- 使用 npm Trusted Publisher 执行 `npm publish --provenance --access public`
 
 ### 问题
 
-- 缺少 npm 发布步骤
 - 缺少 smoke 查询
-- 缺少 tag vs package.json version 校验
+- GitHub Release 作为可选补充，不再作为主发布入口
 
 ### 建议 workflow
 
 ```yaml
 jobs:
-  # 1. 质量门
-  pre-release-checks:
-    - bun install --frozen-lockfile
-    - bun run check:all
-
-  # 2. Smoke 查询（需要 secrets）
+  # 1. Smoke 查询（需要 secrets，可选）
   release-smoke:
-    needs: pre-release-checks
     - 使用 GERRIT_SMOKE_* 环境变量
     - 运行 smoke 测试
 
-  # 3. NPM 发布
+  # 2. NPM 发布
   npm-publish:
     needs: release-smoke
     - 校验 tag version 与 package.json version
+    - bun run check:all
     - npm publish --provenance --access public
-
-  # 4. 平台构建（可选，Bun 源码直跑不需要）
-  build-release:
-    needs: pre-release-checks
-    - 多平台构建（保留现有逻辑）
-
-  # 5. GitHub Release
-  create-release:
-    needs: [npm-publish, build-release]
-    - 创建 Release
-    - 上传构建产物
 ```
 
 ### 决策点
 
 - npm 发布是首选交付方式（Bun 源码直跑，但需要 npm 注册）
-- 平台二进制作为可选附件
+- 平台二进制不作为当前主交付物
 - smoke 查询应在 npm 发布之前运行
 
 ## GitHub Pages 交付（R46）

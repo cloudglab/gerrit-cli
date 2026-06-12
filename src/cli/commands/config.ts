@@ -1,7 +1,7 @@
-import chalk from 'chalk'
 import { existsSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
+import chalk from 'chalk'
 import { Console, Effect, pipe } from 'effect'
 import { GerritApiService } from '@/api/gerrit'
 import type { AppConfig } from '@/schemas/config'

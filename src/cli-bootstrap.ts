@@ -101,5 +101,5 @@ export async function runCli(argv: string[]): Promise<void> {
   }
 
   const program = createProgram()
-  await program.parseAsync(argv)
+  await program.parseAsync(argv, { from: 'user' })
 }
