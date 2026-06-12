@@ -16,7 +16,7 @@ const mockConsole = {
 
 // Mock modules
 mock.module('node:fs', () => mockFs)
-mock.module('node:child_process', () => ({
+mock.module('@/utils/child-process', () => ({
   execSync: mockExecSync,
   spawnSync: mockSpawnSync,
 }))

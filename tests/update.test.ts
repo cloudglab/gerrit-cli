@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, mock, spyOn, test } from 'bun:test'
-import * as childProcess from 'node:child_process'
 import { Effect } from 'effect'
 import { updateCommand } from '@/cli/commands/update'
+import * as childProcess from '@/utils/child-process'
 
 describe('update command', () => {
   let execSpy: ReturnType<typeof spyOn>

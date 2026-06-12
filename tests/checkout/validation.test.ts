@@ -1,5 +1,4 @@
 import { afterAll, afterEach, beforeAll, describe, expect, mock, spyOn, test } from 'bun:test'
-import * as childProcess from 'node:child_process'
 import { Effect, Layer } from 'effect'
 import { HttpResponse, http } from 'msw'
 import { setupServer } from 'msw/node'
@@ -7,6 +6,7 @@ import { GerritApiServiceLive } from '@/api/gerrit'
 import { checkoutCommand, InvalidInputError } from '@/cli/commands/checkout'
 import type { ChangeInfo, RevisionInfo } from '@/schemas/gerrit'
 import { ConfigService } from '@/services/config'
+import * as childProcess from '@/utils/child-process'
 import { createMockConfigService } from '../helpers/config-mock'
 
 /**

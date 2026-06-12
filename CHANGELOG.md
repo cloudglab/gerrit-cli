@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.0.4 - 2026-06-12
+
+Follow-up release after the `v0.0.3` publish workflow failed in CI.
+
+### Fixed
+
+- Route `child_process` usage through an internal adapter so Bun/Linux CI and tests avoid direct Node builtin ESM mock interop failures.
+
 ## 0.0.3 - 2026-06-12
 
 Follow-up release after the `v0.0.2` publish workflow failed in CI.

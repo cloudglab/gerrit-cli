@@ -1,7 +1,7 @@
-import * as childProcess from 'node:child_process'
 import { Effect } from 'effect'
 import { type ApiError, GerritApiService } from '@/api/gerrit'
 import { type ConfigError, ConfigService } from '@/services/config'
+import * as childProcess from '@/utils/child-process'
 import { getOpenCommand, sanitizeUrl } from '@/utils/shell-safety'
 import { extractChangeNumber, isValidChangeId } from '@/utils/url-parser'
 

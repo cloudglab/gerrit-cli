@@ -1,10 +1,10 @@
-import * as childProcess from 'node:child_process'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import chalk from 'chalk'
 import { Effect } from 'effect'
 import { type ApiError, GerritApiService, type GerritApiServiceImpl } from '@/api/gerrit'
 import { type ConfigError, ConfigService, type ConfigServiceImpl } from '@/services/config'
+import * as childProcess from '@/utils/child-process'
 
 export const TREE_SETUP_HELP_TEXT = `
 Examples:

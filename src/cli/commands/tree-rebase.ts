@@ -1,8 +1,8 @@
-import * as childProcess from 'node:child_process'
 import * as path from 'node:path'
 import chalk from 'chalk'
 import { Effect } from 'effect'
 import { type ConfigError, ConfigService, type ConfigServiceImpl } from '@/services/config'
+import * as childProcess from '@/utils/child-process'
 
 export interface TreeRebaseOptions {
   onto?: string

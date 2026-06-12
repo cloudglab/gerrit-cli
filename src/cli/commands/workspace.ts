@@ -1,9 +1,9 @@
-import * as childProcess from 'node:child_process'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { Effect } from 'effect'
 import { type ApiError, GerritApiService } from '@/api/gerrit'
 import { type ConfigError, ConfigService } from '@/services/config'
+import * as childProcess from '@/utils/child-process'
 
 interface WorkspaceOptions {
   xml?: boolean

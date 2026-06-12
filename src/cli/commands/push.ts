@@ -1,4 +1,3 @@
-import * as childProcess from 'node:child_process'
 import chalk from 'chalk'
 import { Console, Effect } from 'effect'
 import {
@@ -9,6 +8,7 @@ import {
   NotGitRepoError,
 } from '@/services/commit-hook'
 import { type ConfigError, ConfigService, type ConfigServiceImpl } from '@/services/config'
+import * as childProcess from '@/utils/child-process'
 
 /** Help text for push command - exported to keep index.ts under line limit */
 export const PUSH_HELP_TEXT = `

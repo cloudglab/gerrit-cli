@@ -1,5 +1,5 @@
-import * as childProcess from 'node:child_process'
 import { Effect } from 'effect'
+import * as childProcess from '@/utils/child-process'
 
 /**
  * Error thrown when git operations fail

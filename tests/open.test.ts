@@ -10,7 +10,7 @@ import { createMockConfigService } from './helpers/config-mock'
 
 // Mock child_process.exec
 const mockExec = mock()
-mock.module('node:child_process', () => ({
+mock.module('@/utils/child-process', () => ({
   exec: mockExec,
 }))
 

@@ -18,7 +18,7 @@ const mockMkdirSync = mock((..._args: unknown[]) => undefined)
 const mockReaddirSync = mock((..._args: unknown[]): string[] => [])
 const mockStatSync = mock((..._args: unknown[]) => ({ isDirectory: () => true }))
 
-mock.module('node:child_process', () => ({
+mock.module('@/utils/child-process', () => ({
   execSync: mockExecSyncImpl,
   spawnSync: mockSpawnSyncImpl,
 }))

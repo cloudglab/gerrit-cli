@@ -1,8 +1,8 @@
-import * as childProcess from 'node:child_process'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { Console, Context, Effect, Layer, pipe, Schema } from 'effect'
 import { ConfigService, type ConfigServiceImpl } from '@/services/config'
+import * as childProcess from '@/utils/child-process'
 
 // Error types
 //

@@ -1,6 +1,6 @@
-import * as childProcess from 'node:child_process'
 import chalk from 'chalk'
 import { Effect } from 'effect'
+import * as childProcess from '@/utils/child-process'
 
 export interface CleanOptions {
   readonly dryRun?: boolean

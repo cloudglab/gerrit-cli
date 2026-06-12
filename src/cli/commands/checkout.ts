@@ -1,8 +1,8 @@
-import * as childProcess from 'node:child_process'
 import chalk from 'chalk'
 import { Console, Effect, Schema } from 'effect'
 import { type ApiError, GerritApiService, type GerritApiServiceImpl } from '@/api/gerrit'
 import { type ConfigError, ConfigService, type ConfigServiceImpl } from '@/services/config'
+import * as childProcess from '@/utils/child-process'
 import { extractChangeNumber } from '@/utils/url-parser'
 
 /** Help text for checkout command */
