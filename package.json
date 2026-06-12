@@ -1,0 +1,108 @@
+{
+  "name": "@cloudglab/gerrit-cli",
+  "version": "4.0.1",
+  "description": "Gerrit CLI and SDK - A modern CLI tool and TypeScript SDK for Gerrit Code Review, built with Effect-TS",
+  "keywords": [
+    "gerrit",
+    "code-review",
+    "cli",
+    "sdk",
+    "effect",
+    "effect-ts",
+    "typescript",
+    "api-client"
+  ],
+  "module": "index.ts",
+  "type": "module",
+  "bin": {
+    "gerrit-cli": "./bin/gerrit-cli",
+    "gerrit": "./bin/gerrit-cli"
+  },
+  "exports": {
+    ".": {
+      "import": "./index.ts",
+      "types": "./index.ts"
+    },
+    "./api": {
+      "import": "./src/api/gerrit.ts",
+      "types": "./src/api/gerrit.ts"
+    },
+    "./services/config": {
+      "import": "./src/services/config.ts",
+      "types": "./src/services/config.ts"
+    },
+    "./services/git-worktree": {
+      "import": "./src/services/git-worktree.ts",
+      "types": "./src/services/git-worktree.ts"
+    },
+    "./schemas/gerrit": {
+      "import": "./src/schemas/gerrit.ts",
+      "types": "./src/schemas/gerrit.ts"
+    },
+    "./schemas/config": {
+      "import": "./src/schemas/config.ts",
+      "types": "./src/schemas/config.ts"
+    },
+    "./utils": {
+      "import": "./src/utils/index.ts",
+      "types": "./src/utils/index.ts"
+    },
+    "./cli": {
+      "import": "./src/cli-bootstrap.ts",
+      "types": "./src/cli-bootstrap.ts"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cloudglab/gerrit-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/cloudglab/gerrit-cli/issues"
+  },
+  "homepage": "https://github.com/cloudglab/gerrit-cli#readme",
+  "files": [
+    "index.ts",
+    "bin",
+    "src",
+    "scripts",
+    "tsconfig.json"
+  ],
+  "devDependencies": {
+    "@biomejs/biome": "^2.2.2",
+    "@types/node": "^24.3.1",
+    "ast-grep": "^0.1.0",
+    "bun-types": "^1.2.21",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.6",
+    "msw": "^2.11.1",
+    "oxlint": "^1.14.0",
+    "typescript": "^5.9.2"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@effect/platform": "^0.90.10",
+    "@effect/platform-node": "^0.94.2",
+    "@effect/schema": "^0.75.5",
+    "@inquirer/prompts": "^7.8.4",
+    "chalk": "^5.6.0",
+    "cli-table3": "^0.6.5",
+    "commander": "^14.0.0",
+    "effect": "^3.18.4",
+    "signal-exit": "3.0.7"
+  },
+  "scripts": {
+    "prepare": "husky",
+    "dev": "bun run src/cli/index.ts",
+    "build": "tsc --noEmit && echo 'Build successful - CLI runs directly with bun'",
+    "test": "bun test",
+    "test:coverage": "bun test --coverage",
+    "test:coverage:check": "bun scripts/check-coverage.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint src/ tests/",
+    "format": "biome format --write src/ tests/",
+    "format:check": "biome check src/ tests/",
+    "check:all": "bun run typecheck && bun run lint && bun run format:check && bun run test:coverage"
+  }
+}

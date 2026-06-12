@@ -1,0 +1,203 @@
+# gerrit-cli
+
+> CLI for Gerrit code review. Query changes, post comments, vote, manage reviewers, checkout/push code, check build status. Supports XML output for LLM pipelines.
+
+## Installation
+
+```bash
+bun install -g @cloudglab/gerrit-cli
+gerrit-cli setup  # Configure credentials interactively
+```
+
+## Change Identifiers
+
+Commands accept change number (12345) or Change-ID (If5a3ae8...). Many commands auto-detect from HEAD commit when omitted.
+
+## Commands
+
+### View Changes
+
+```bash
+gerrit-cli show [change-id]              # Full change info: metadata, diff, comments
+gerrit-cli show --xml                    # XML output for LLM consumption
+gerrit-cli diff <change-id>              # Get diff
+gerrit-cli diff <change-id> --files-only # List changed files only
+gerrit-cli comments <change-id>          # View all comments with context
+gerrit-cli search "owner:self status:open"  # Gerrit query syntax
+gerrit-cli search "project:foo" -n 10    # Limit results
+```
+
+### List Changes
+
+```bash
+gerrit-cli mine                  # Your open changes
+gerrit-cli incoming              # Changes awaiting your review
+```
+
+### Post Comments
+
+```bash
+gerrit-cli comment <change-id> -m "LGTM"                           # Overall comment
+echo "Review text" | gerrit-cli comment <change-id>                # Piped input
+gerrit-cli comment <change-id> --file src/foo.ts --line 42 -m "Fix this"  # Line comment
+gerrit-cli comment <change-id> --file src/foo.ts --line 42 -m "Bug" --unresolved
+```
+
+Batch comments via JSON stdin:
+
+```bash
+echo '[
+  {"file": "src/main.ts", "line": 10, "message": "Add type annotation"},
+  {"file": "src/api.ts", "line": 25, "message": "Handle error", "unresolved": true}
+]' | gerrit-cli comment <change-id> --batch
+```
+
+JSON schema: `{"file": string, "line": number, "message": string, "unresolved"?: boolean, "side"?: "PARENT"|"REVISION", "range"?: {start_line, end_line, start_character?, end_character?}}`
+
+### Vote
+
+```bash
+gerrit-cli vote <change-id> --code-review +2
+gerrit-cli vote <change-id> --code-review +2 --verified +1 -m "LGTM"
+gerrit-cli vote <change-id> --label "Custom-Label" +1
+```
+
+### Manage Reviewers
+
+```bash
+gerrit-cli add-reviewer user@example.com -c <change-id>
+gerrit-cli add-reviewer user1 user2 -c <change-id>
+gerrit-cli add-reviewer --group team-name -c <change-id>
+gerrit-cli add-reviewer --cc user@example.com -c <change-id>
+gerrit-cli remove-reviewer user@example.com -c <change-id>
+```
+
+### Topic Management
+
+```bash
+gerrit-cli topic <change-id>              # View current topic
+gerrit-cli topic <change-id> my-feature   # Set topic
+gerrit-cli topic <change-id> --delete     # Remove topic
+```
+
+### Git Operations
+
+```bash
+gerrit-cli checkout <change-id>           # Fetch and checkout change
+gerrit-cli checkout <change-id> --detach  # Detached HEAD
+gerrit-cli push                           # Push for review
+gerrit-cli push -r alice@example.com -t my-topic --wip
+gerrit-cli push --dry-run                 # Preview push
+```
+
+### Change Lifecycle
+
+```bash
+gerrit-cli rebase [change-id]             # Rebase onto target branch
+gerrit-cli submit <change-id>             # Submit for merge
+gerrit-cli abandon <change-id> -m "reason"
+gerrit-cli restore <change-id>
+```
+
+### Build Status
+
+```bash
+gerrit-cli build-status [change-id]                    # Check status: pending|running|success|failure
+gerrit-cli build-status --watch                        # Poll until completion
+gerrit-cli build-status --watch --exit-status && deploy.sh  # Exit 1 on failure
+```
+
+### Extract URLs
+
+```bash
+gerrit-cli extract-url "build-summary-report" | tail -1   # Latest Jenkins URL
+gerrit-cli extract-url "jenkins" --json | jq -r '.urls[-1]'
+```
+
+### Groups
+
+```bash
+gerrit-cli groups                         # List groups
+gerrit-cli groups --pattern "^team-.*"    # Filter by regex
+gerrit-cli groups-show <group-id>         # Group details
+gerrit-cli groups-members <group-id>      # List members
+```
+
+### Utilities
+
+```bash
+gerrit-cli status                         # Check connection
+gerrit-cli open <change-id>               # Open in browser
+gerrit-cli install-hook                   # Install commit-msg hook
+gerrit-cli projects                       # List projects
+```
+
+## Output Formats
+
+Most commands support `--xml` for structured LLM output:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<comment_result>
+  <status>success</status>
+  <change_id>12345</change_id>
+</comment_result>
+```
+
+Some commands also support `--json`.
+
+## Gerrit Query Syntax
+
+Common operators for `gerrit-cli search`:
+
+- `owner:USER` - Changes owned by user (use 'self' for yourself)
+- `status:STATE` - open, merged, abandoned
+- `project:NAME` - Filter by project
+- `branch:NAME` - Filter by branch
+- `reviewer:USER` - Changes where user is reviewer
+- `is:wip` - Work-in-progress
+- `is:submittable` - Ready to submit
+- `age:TIME` - Time since update (1d, 2w, 1mon)
+- `label:Code-Review+2` - Filter by vote
+
+## Common Workflows
+
+### Review a change
+
+```bash
+gerrit-cli show 12345                     # View change
+gerrit-cli diff 12345                     # See code changes
+gerrit-cli comment 12345 -m "LGTM"        # Add comment
+gerrit-cli vote 12345 --code-review +2    # Approve
+```
+
+### Check build and get failures
+
+```bash
+gerrit-cli build-status --watch --exit-status
+gerrit-cli extract-url "build-summary-report" | tail -1  # Get Jenkins URL
+```
+
+### Push with reviewers
+
+```bash
+gerrit-cli push -r alice@example.com -r bob@example.com -t feature-topic
+```
+
+## Exit Codes
+
+- `0` - Success
+- `1` - Error (or build failure with --exit-status)
+- `2` - Timeout
+- `3` - API/network error
+
+## Configuration
+
+Credentials stored in `~/.gerrit-cli/config.json`. Run `gerrit-cli setup` to configure:
+- Gerrit host URL
+- Username
+- HTTP password (from Gerrit settings)
+
+## Links
+
+- [Gerrit Query Syntax](https://gerrit-review.googlesource.com/Documentation/user-search.html)

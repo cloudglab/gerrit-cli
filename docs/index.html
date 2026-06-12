@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>gerrit-cli — 命令速查</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Mono", "Fira Code", "Cascadia Code", monospace;
+    background: #0d1117; color: #c9d1d9; line-height: 1.7; padding: 2rem 1.5rem;
+    max-width: 860px; margin: 0 auto;
+  }
+  h1 { font-size: 1.6rem; color: #f0f6fc; margin-bottom: 0.25rem; }
+  .subtitle { color: #8b949e; font-size: 0.85rem; margin-bottom: 2rem; }
+  h2 { font-size: 1.1rem; color: #58a6ff; margin: 2rem 0 0.75rem; padding-top: 1rem; border-top: 1px solid #21262d; }
+  section { margin-bottom: 1.5rem; }
+  code { background: #161b22; padding: 0.15em 0.4em; border-radius: 3px; font-size: 0.85em; color: #ffa657; }
+  pre { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 1rem; overflow-x: auto; font-size: 0.85rem; margin: 0.5rem 0 1rem; }
+  pre code { background: none; padding: 0; color: #c9d1d9; }
+  table { width: 100%; border-collapse: collapse; margin: 0.5rem 0 1rem; font-size: 0.85rem; }
+  th, td { text-align: left; padding: 0.4rem 0.6rem; border-bottom: 1px solid #21262d; }
+  th { color: #8b949e; font-weight: 600; }
+  td code { font-size: 0.82em; }
+  .tag { display: inline-block; background: #1f6feb22; color: #58a6ff; border: 1px solid #1f6feb44; border-radius: 3px; padding: 0 0.35em; font-size: 0.75em; margin-left: 0.3em; }
+  a { color: #58a6ff; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem; margin: 0.5rem 0 1rem; }
+  .card { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 0.75rem; }
+  .card h3 { font-size: 0.9rem; color: #f0f6fc; margin-bottom: 0.35rem; }
+  .card p { font-size: 0.8rem; color: #8b949e; }
+  @media (max-width: 600px) {
+    body { padding: 1rem; }
+    .grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<h1>gerrit-cli</h1>
+<p class="subtitle">Gerrit 命令行工具 · <code>bun install -g @cloudglab/gerrit-cli</code></p>
+
+<section>
+  <h2>安装 &amp; 升级</h2>
+  <pre><code># 安装 Bun 运行时
+curl -fsSL https://bun.sh/install | bash
+
+# 全局安装
+bun install -g @cloudglab/gerrit-cli
+
+# 升级
+bun update -g @cloudglab/gerrit-cli</code></pre>
+</section>
+
+<section>
+  <h2>环境变量</h2>
+  <pre><code>export GERRIT_HOST="https://gerrit.example.com"
+export GERRIT_USERNAME="your-username"
+export GERRIT_PASSWORD="your-http-password"</code></pre>
+  <p style="font-size:0.8em;color:#8b949e;">或运行 <code>gerrit-cli setup</code> 写入配置文件。</p>
+</section>
+
+<section>
+  <h2>角色入口</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>开发者</h3>
+      <p><code>push</code> <code>mine</code> <code>show</code> <code>rebase</code> <code>checkout</code></p>
+    </div>
+    <div class="card">
+      <h3>审查者</h3>
+      <p><code>incoming</code> <code>diff</code> <code>comments</code> <code>comment</code> <code>vote</code></p>
+    </div>
+    <div class="card">
+      <h3>CI/自动化</h3>
+      <p><code>build-status</code> <code>extract-url</code> <code>--json</code> <code>--xml</code></p>
+    </div>
+    <div class="card">
+      <h3>团队 Lead</h3>
+      <p><code>add-reviewer</code> <code>groups</code> <code>groups-members</code> <code>team</code></p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>输出格式</h2>
+  <table>
+    <tr><th>格式</th><th>标志</th><th>适用</th></tr>
+    <tr><td>纯文本</td><td><em>默认</em></td><td>人类阅读</td></tr>
+    <tr><td>JSON</td><td><code>--json</code></td><td>脚本解析</td></tr>
+    <tr><td>XML</td><td><code>--xml</code></td><td>LLM 消费（CDATA）</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>场景速查</h2>
+
+  <h3>提交变更</h3>
+  <pre><code>git commit -m "feat: add login"
+gerrit-cli push -t my-feature -r alice@example.com</code></pre>
+
+  <h3>审查</h3>
+  <pre><code>gerrit-cli incoming                                   # 待审查列表
+gerrit-cli show 12345                                 # 变更详情
+gerrit-cli diff 12345                                 # 查看 diff
+gerrit-cli comments 12345                             # 已有评论
+gerrit-cli comment 12345 -m "LGTM, one nit"           # 发布评论
+gerrit-cli vote 12345 --code-review 2 -m "Approved"   # 投票</code></pre>
+
+  <h3>CI 状态</h3>
+  <pre><code>gerrit-cli build-status 12345                        # 单次快照
+gerrit-cli build-status --watch --exit-status         # 轮询等待
+gerrit-cli extract-url "jenkins" | tail -1            # 提取构建链接</code></pre>
+
+  <h3>工作区</h3>
+  <pre><code>gerrit-cli checkout 12345                            # 检出变更
+gerrit-cli workspace create 12345                     # 创建工作树
+gerrit-cli push -b main -t refactor --wip             # 推送 WIP</code></pre>
+
+  <h3>变更管理</h3>
+  <pre><code>gerrit-cli rebase 12345                              # 重基
+gerrit-cli submit 12345                               # 合入
+gerrit-cli abandon 12345                              # 丢弃
+gerrit-cli restore 12345                              # 恢复</code></pre>
+
+  <h3>组管理</h3>
+  <pre><code>gerrit-cli groups                                    # 组列表
+gerrit-cli groups-show administrators                 # 组详情
+gerrit-cli groups-members project-reviewers           # 组成员</code></pre>
+
+  <h3>批量管道</h3>
+  <pre><code># 批量行评论
+echo '[{"file":"src/app.ts","line":42,"message":"Use const"}]' \
+  | gerrit-cli comment 12345 --batch
+
+# 批量添加审查人
+gerrit-cli add-reviewer alice bob -c 12345</code></pre>
+
+  <h3>搜索</h3>
+  <pre><code>gerrit-cli search "owner:self status:open"
+gerrit-cli search "project:my-project" -n 10
+gerrit-cli search "status:merged age:7d"</code></pre>
+
+  <h3>配置 &amp; 辅助</h3>
+  <pre><code>gerrit-cli setup                                     # 初始化
+gerrit-cli status                                    # 连接状态
+gerrit-cli config show                               # 显示配置
+gerrit-cli version                                   # 版本号
+gerrit-cli completion bash                           # 生成补全脚本
+gerrit-cli clean --dry-run                           # 清理已合并分支</code></pre>
+</section>
+
+<section>
+  <h2>命令索引</h2>
+  <table>
+    <tr><th>分类</th><th>命令</th></tr>
+    <tr><td>查看</td><td><code>show</code> <code>diff</code> <code>comments</code> <code>search</code> <code>list</code> <code>files</code></td></tr>
+    <tr><td>审查</td><td><code>comment</code> <code>vote</code> <code>review</code> <code>add-reviewer</code> <code>remove-reviewer</code> <code>reviewers</code></td></tr>
+    <tr><td>管理</td><td><code>mine</code> <code>incoming</code> <code>team</code> <code>abandon</code> <code>restore</code> <code>submit</code></td></tr>
+    <tr><td>工作区</td><td><code>checkout</code> <code>push</code> <code>rebase</code> <code>workspace</code> <code>tree</code></td></tr>
+    <tr><td>CI/分析</td><td><code>build-status</code> <code>failures</code> <code>analyze</code> <code>extract-url</code> <code>retrigger</code></td></tr>
+    <tr><td>组</td><td><code>groups</code> <code>groups-show</code> <code>groups-members</code></td></tr>
+    <tr><td>配置</td><td><code>setup</code> <code>config</code> <code>status</code> <code>init</code> <code>install-hook</code></td></tr>
+    <tr><td>辅助</td><td><code>version</code> <code>completion</code> <code>clean</code> <code>open</code> <code>cherry</code> <code>topic</code></td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>Skill 安装</h2>
+  <pre><code># Claude Code 插件
+/plugin marketplace add cloudglab/gerrit-cli
+/plugin install gerrit-workflow@gerrit-cli</code></pre>
+  <p style="font-size:0.8em;color:#8b949e;">安装后可直接用自然语言操作 Gerrit。</p>
+</section>
+
+<section>
+  <h2>扩展</h2>
+  <p>
+    <a href="https://github.com/cloudglab/gerrit-cli">GitHub</a> ·
+    <a href="https://github.com/cloudglab/gerrit-cli/blob/main/EXAMPLES.md">SDK 示例</a> ·
+    <a href="https://github.com/cloudglab/gerrit-cli/blob/main/DEVELOPMENT.md">开发指南</a>
+  </p>
+</section>
+
+</body>
+</html>
