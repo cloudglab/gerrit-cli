@@ -1,4 +1,4 @@
-import { execSync, spawnSync } from 'node:child_process'
+import * as childProcess from 'node:child_process'
 import * as path from 'node:path'
 import chalk from 'chalk'
 import { Effect } from 'effect'
@@ -13,7 +13,7 @@ export interface TreeRebaseOptions {
 
 const isInGitRepo = (): boolean => {
   try {
-    execSync('git rev-parse --git-dir', { encoding: 'utf8' })
+    childProcess.execSync('git rev-parse --git-dir', { encoding: 'utf8' })
     return true
   } catch {
     return false
@@ -21,14 +21,14 @@ const isInGitRepo = (): boolean => {
 }
 
 const getRepoRoot = (): string =>
-  execSync('git rev-parse --show-toplevel', { encoding: 'utf8' }).trim()
+  childProcess.execSync('git rev-parse --show-toplevel', { encoding: 'utf8' }).trim()
 
 const getCwd = (): string => process.cwd()
 
 /** Returns the remote name for the given Gerrit host, or null if not found. */
 const findMatchingRemote = (repoRoot: string, gerritHost: string): string | null => {
   try {
-    const output = execSync('git remote -v', { encoding: 'utf8', cwd: repoRoot })
+    const output = childProcess.execSync('git remote -v', { encoding: 'utf8', cwd: repoRoot })
     const gerritHostname = new URL(gerritHost).hostname
     for (const line of output.split('\n')) {
       const match = line.match(/^(\S+)\s+(\S+)\s+\(fetch\)$/)
@@ -55,10 +55,12 @@ const findMatchingRemote = (repoRoot: string, gerritHost: string): string | null
 const detectBaseBranch = (remote: string): string => {
   // Prefer upstream tracking branch
   try {
-    const upstream = execSync('git rev-parse --abbrev-ref HEAD@{u}', {
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'ignore'],
-    }).trim()
+    const upstream = childProcess
+      .execSync('git rev-parse --abbrev-ref HEAD@{u}', {
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'ignore'],
+      })
+      .trim()
     if (upstream && !upstream.includes('@{u}')) return upstream
   } catch {
     // no upstream set
@@ -67,7 +69,7 @@ const detectBaseBranch = (remote: string): string => {
   // Fall back to <remote>/main, then <remote>/master
   for (const branch of [`${remote}/main`, `${remote}/master`]) {
     try {
-      execSync(`git rev-parse --verify ${branch}`, {
+      childProcess.execSync(`git rev-parse --verify ${branch}`, {
         encoding: 'utf8',
         stdio: ['ignore', 'pipe', 'ignore'],
       })
@@ -128,7 +130,10 @@ export const treeRebaseCommand = (
           console.log(chalk.dim(`  Fetching ${remote}...`))
         }
 
-        const fetchResult = spawnSync('git', ['fetch', remote], { encoding: 'utf8', cwd: repoRoot })
+        const fetchResult = childProcess.spawnSync('git', ['fetch', remote], {
+          encoding: 'utf8',
+          cwd: repoRoot,
+        })
         if (fetchResult.status !== 0) {
           throw new Error(`Failed to fetch ${remote}: ${fetchResult.stderr}`)
         }
@@ -140,7 +145,7 @@ export const treeRebaseCommand = (
         const rebaseArgs = options.interactive
           ? ['rebase', '-i', baseBranch]
           : ['rebase', baseBranch]
-        const rebaseResult = spawnSync('git', rebaseArgs, {
+        const rebaseResult = childProcess.spawnSync('git', rebaseArgs, {
           encoding: 'utf8',
           stdio: 'inherit',
         })

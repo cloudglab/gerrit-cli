@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.0.3 - 2026-06-12
+
+Follow-up release after the `v0.0.2` publish workflow failed in CI.
+
+### Fixed
+
+- Use namespace imports for `node:child_process` to avoid Bun/Linux ESM named export compatibility failures in CI.
+
 ## 0.0.2 - 2026-06-12
 
 Follow-up release after the initial public publish.

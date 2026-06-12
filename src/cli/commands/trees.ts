@@ -1,4 +1,4 @@
-import { execSync } from 'node:child_process'
+import * as childProcess from 'node:child_process'
 import chalk from 'chalk'
 import { Effect } from 'effect'
 
@@ -48,7 +48,7 @@ const parseWorktreeList = (output: string): WorktreeEntry[] => {
 
 const isInGitRepo = (): boolean => {
   try {
-    execSync('git rev-parse --git-dir', { encoding: 'utf8' })
+    childProcess.execSync('git rev-parse --git-dir', { encoding: 'utf8' })
     return true
   } catch {
     return false
@@ -63,7 +63,7 @@ export const treesCommand = (options: TreesOptions): Effect.Effect<void, Error, 
 
     let output: string
     try {
-      output = execSync('git worktree list --porcelain', { encoding: 'utf8' })
+      output = childProcess.execSync('git worktree list --porcelain', { encoding: 'utf8' })
     } catch {
       throw new Error('Failed to list worktrees')
     }

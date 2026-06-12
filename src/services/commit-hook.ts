@@ -1,4 +1,4 @@
-import { execSync, spawnSync } from 'node:child_process'
+import * as childProcess from 'node:child_process'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { Console, Context, Effect, Layer, pipe, Schema } from 'effect'
@@ -77,7 +77,7 @@ export const CHANGE_ID_PATTERN: RegExp = /^Change-Id: I[0-9a-f]{40}$/m
 // Get .git directory path (handles both regular repos and worktrees)
 export const getGitDir = (): string => {
   try {
-    return execSync('git rev-parse --git-dir', { encoding: 'utf8' }).trim()
+    return childProcess.execSync('git rev-parse --git-dir', { encoding: 'utf8' }).trim()
   } catch {
     throw new Error('Not in a git repository')
   }
@@ -86,7 +86,7 @@ export const getGitDir = (): string => {
 // Get absolute .git directory path
 export const getGitDirAbsolute = (): string => {
   try {
-    return execSync('git rev-parse --absolute-git-dir', { encoding: 'utf8' }).trim()
+    return childProcess.execSync('git rev-parse --absolute-git-dir', { encoding: 'utf8' }).trim()
   } catch {
     throw new Error('Not in a git repository')
   }
@@ -114,7 +114,9 @@ export const hasCommitMsgHook = (): boolean => {
 // Check if a commit has a Change-Id in its message
 export const commitHasChangeId = (commit: string = 'HEAD'): boolean => {
   try {
-    const result = spawnSync('git', ['log', '-1', '--format=%B', commit], { encoding: 'utf8' })
+    const result = childProcess.spawnSync('git', ['log', '-1', '--format=%B', commit], {
+      encoding: 'utf8',
+    })
     if (result.status !== 0) {
       return false
     }
@@ -268,7 +270,7 @@ const CommitHookServiceImplLive: CommitHookServiceImpl = {
       yield* Effect.try({
         try: () => {
           // Use --no-edit to keep the same message, hook will add Change-Id
-          const result = spawnSync('git', ['commit', '--amend', '--no-edit'], {
+          const result = childProcess.spawnSync('git', ['commit', '--amend', '--no-edit'], {
             encoding: 'utf8',
             stdio: ['inherit', 'pipe', 'pipe'],
           })

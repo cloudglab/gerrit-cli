@@ -1,4 +1,4 @@
-import { exec } from 'node:child_process'
+import * as childProcess from 'node:child_process'
 import { promisify } from 'node:util'
 import { select } from '@inquirer/prompts'
 import { Effect } from 'effect'
@@ -9,7 +9,7 @@ import { colors, formatTimeAgo } from '@/utils/formatters'
 import { getOpenCommand, sanitizeUrlSync } from '@/utils/shell-safety'
 import { getStatusIndicators } from '@/utils/status-indicators'
 
-const execAsync = promisify(exec)
+const execAsync = promisify(childProcess.exec)
 
 interface IncomingOptions {
   xml?: boolean

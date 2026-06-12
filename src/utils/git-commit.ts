@@ -1,4 +1,4 @@
-import { spawn } from 'node:child_process'
+import * as childProcess from 'node:child_process'
 import { Effect } from 'effect'
 
 /**
@@ -51,7 +51,7 @@ export function extractChangeIdFromCommitMessage(message: string): string | null
  */
 const runGitCommand = (args: readonly string[]): Effect.Effect<string, GitError> =>
   Effect.async<string, GitError>((resume) => {
-    const child = spawn('git', [...args], {
+    const child = childProcess.spawn('git', [...args], {
       stdio: ['ignore', 'pipe', 'pipe'],
     })
 

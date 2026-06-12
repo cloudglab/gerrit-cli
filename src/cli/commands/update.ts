@@ -1,4 +1,4 @@
-import { execSync } from 'node:child_process'
+import * as childProcess from 'node:child_process'
 import chalk from 'chalk'
 import { Console, Effect } from 'effect'
 export interface UpdateOptions {
@@ -80,7 +80,10 @@ export const updateCommand = (options: UpdateOptions): Effect.Effect<void, Updat
 
     yield* Effect.try({
       try: () => {
-        execSync(`bun install -g ${PACKAGE_NAME}@latest`, { stdio: 'inherit', timeout: 60000 })
+        childProcess.execSync(`bun install -g ${PACKAGE_NAME}@latest`, {
+          stdio: 'inherit',
+          timeout: 60000,
+        })
       },
       catch: (e) =>
         new UpdateError(`Install failed: ${e instanceof Error ? e.message : String(e)}`),

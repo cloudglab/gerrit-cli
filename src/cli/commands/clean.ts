@@ -1,4 +1,4 @@
-import { execSync } from 'node:child_process'
+import * as childProcess from 'node:child_process'
 import chalk from 'chalk'
 import { Effect } from 'effect'
 
@@ -13,7 +13,7 @@ const PROTECTED_BRANCHES = ['main', 'master', 'develop', 'HEAD', 'head']
 
 const isInGitRepo = (): boolean => {
   try {
-    execSync('git rev-parse --git-dir', { encoding: 'utf8' })
+    childProcess.execSync('git rev-parse --git-dir', { encoding: 'utf8' })
     return true
   } catch {
     return false
@@ -21,11 +21,13 @@ const isInGitRepo = (): boolean => {
 }
 
 const getCurrentBranch = (): string =>
-  execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf8' }).trim()
+  childProcess.execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf8' }).trim()
 
 const getUpstreamBranch = (): string => {
   try {
-    return execSync('git rev-parse --abbrev-ref @{upstream}', { encoding: 'utf8' }).trim()
+    return childProcess
+      .execSync('git rev-parse --abbrev-ref @{upstream}', { encoding: 'utf8' })
+      .trim()
   } catch {
     throw new Error(
       'No upstream tracking branch found. Set one with:\n  git branch --set-upstream-to=origin/main',
@@ -34,9 +36,12 @@ const getUpstreamBranch = (): string => {
 }
 
 const getMergedBranches = (upstream: string): ReadonlyArray<string> => {
-  const output = execSync(`git branch --merged ${upstream} --format='%(refname:short)'`, {
-    encoding: 'utf8',
-  })
+  const output = childProcess.execSync(
+    `git branch --merged ${upstream} --format='%(refname:short)'`,
+    {
+      encoding: 'utf8',
+    },
+  )
   return output
     .split('\n')
     .map((line) => line.trim())
@@ -47,7 +52,9 @@ const getMergedBranches = (upstream: string): ReadonlyArray<string> => {
 
 const _isMergedIntoUpstream = (branch: string, upstream: string): boolean => {
   try {
-    execSync(`git merge-base --is-ancestor ${branch} ${upstream}`, { encoding: 'utf8' })
+    childProcess.execSync(`git merge-base --is-ancestor ${branch} ${upstream}`, {
+      encoding: 'utf8',
+    })
     return true
   } catch {
     return false
@@ -137,7 +144,10 @@ export const cleanCommand = (options: CleanOptions): Effect.Effect<void, Error, 
 
     for (const branch of candidates) {
       try {
-        execSync(`git branch ${deleteFlag} ${branch}`, { encoding: 'utf8', stdio: 'pipe' })
+        childProcess.execSync(`git branch ${deleteFlag} ${branch}`, {
+          encoding: 'utf8',
+          stdio: 'pipe',
+        })
         deleted.push(branch)
       } catch {
         failed.push(branch)

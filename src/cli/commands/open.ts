@@ -1,4 +1,4 @@
-import { exec } from 'node:child_process'
+import * as childProcess from 'node:child_process'
 import { Effect } from 'effect'
 import { type ApiError, GerritApiService } from '@/api/gerrit'
 import { type ConfigError, ConfigService } from '@/services/config'
@@ -43,7 +43,7 @@ export const openCommand = (
     yield* Effect.promise(
       () =>
         new Promise<void>((resolve, reject) => {
-          exec(`${openCmd} "${safeUrl}"`, (error) => {
+          childProcess.exec(`${openCmd} "${safeUrl}"`, (error) => {
             if (error) {
               reject(new Error(`Failed to open URL: ${error.message}`))
             } else {

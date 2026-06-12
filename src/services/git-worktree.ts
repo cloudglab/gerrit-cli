@@ -1,4 +1,4 @@
-import { spawn } from 'node:child_process'
+import * as childProcess from 'node:child_process'
 import * as fs from 'node:fs/promises'
 import * as os from 'node:os'
 import * as path from 'node:path'
@@ -104,7 +104,7 @@ const runGitCommand = (
   options: { cwd?: string } = {},
 ): Effect.Effect<string, GitWorktreeError, never> =>
   Effect.async<string, GitWorktreeError, never>((resume) => {
-    const child = spawn('git', args, {
+    const child = childProcess.spawn('git', args, {
       cwd: options.cwd || process.cwd(),
       stdio: ['ignore', 'pipe', 'pipe'],
     })

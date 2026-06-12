@@ -1,4 +1,4 @@
-import { execSync } from 'node:child_process'
+import * as childProcess from 'node:child_process'
 import chalk from 'chalk'
 import { Console, Effect, Schema } from 'effect'
 import { type ApiError, GerritApiService, type GerritApiServiceImpl } from '@/api/gerrit'
@@ -159,7 +159,7 @@ export const parseChangeInput = (input: string): ParsedChange => {
 // Get git remotes
 const getGitRemotes = (): Record<string, string> => {
   try {
-    const output = execSync('git remote -v', { encoding: 'utf8', timeout: 5000 })
+    const output = childProcess.execSync('git remote -v', { encoding: 'utf8', timeout: 5000 })
     const remotes: Record<string, string> = {}
 
     for (const line of output.split('\n')) {
@@ -214,7 +214,7 @@ const findMatchingRemote = (gerritHost: string): string | null => {
 // Check if we're in a git repo
 const isInGitRepo = (): boolean => {
   try {
-    execSync('git rev-parse --git-dir', { encoding: 'utf8', timeout: 5000 })
+    childProcess.execSync('git rev-parse --git-dir', { encoding: 'utf8', timeout: 5000 })
     return true
   } catch {
     return false
@@ -224,10 +224,12 @@ const isInGitRepo = (): boolean => {
 // Get current branch name
 const getCurrentBranch = (): string | null => {
   try {
-    const branch = execSync('git symbolic-ref --short HEAD', {
-      encoding: 'utf8',
-      timeout: 5000,
-    }).trim()
+    const branch = childProcess
+      .execSync('git symbolic-ref --short HEAD', {
+        encoding: 'utf8',
+        timeout: 5000,
+      })
+      .trim()
     return branch || null
   } catch {
     return null
@@ -240,7 +242,7 @@ const localBranchExists = (branchName: string): Effect.Effect<boolean, InvalidIn
     Effect.flatMap((validated) =>
       Effect.sync(() => {
         try {
-          execSync(`git rev-parse --verify ${validated}`, {
+          childProcess.execSync(`git rev-parse --verify ${validated}`, {
             encoding: 'utf8',
             stdio: ['pipe', 'pipe', 'pipe'],
             timeout: 5000,
@@ -331,7 +333,10 @@ export const checkoutCommand = (
     yield* Console.log(chalk.cyan(`Fetching ${validatedRef}...`))
     yield* Effect.try({
       try: () => {
-        execSync(`git fetch ${remote} ${validatedRef}`, { stdio: 'inherit', timeout: 60000 })
+        childProcess.execSync(`git fetch ${remote} ${validatedRef}`, {
+          stdio: 'inherit',
+          timeout: 60000,
+        })
       },
       catch: (e) => {
         const errorMsg = e instanceof Error ? e.message : String(e)
@@ -344,7 +349,7 @@ export const checkoutCommand = (
       // Detached HEAD mode
       yield* Effect.try({
         try: () => {
-          execSync('git checkout FETCH_HEAD', { stdio: 'inherit', timeout: 30000 })
+          childProcess.execSync('git checkout FETCH_HEAD', { stdio: 'inherit', timeout: 30000 })
         },
         catch: (e) => {
           const errorMsg = e instanceof Error ? e.message : String(e)
@@ -359,7 +364,10 @@ export const checkoutCommand = (
         if (currentBranch !== branchName) {
           yield* Effect.try({
             try: () => {
-              execSync(`git checkout ${branchName}`, { stdio: 'inherit', timeout: 30000 })
+              childProcess.execSync(`git checkout ${branchName}`, {
+                stdio: 'inherit',
+                timeout: 30000,
+              })
             },
             catch: (e) => {
               const errorMsg = e instanceof Error ? e.message : String(e)
@@ -369,7 +377,10 @@ export const checkoutCommand = (
         }
         yield* Effect.try({
           try: () => {
-            execSync('git reset --hard FETCH_HEAD', { stdio: 'inherit', timeout: 30000 })
+            childProcess.execSync('git reset --hard FETCH_HEAD', {
+              stdio: 'inherit',
+              timeout: 30000,
+            })
           },
           catch: (e) => {
             const errorMsg = e instanceof Error ? e.message : String(e)
@@ -381,7 +392,7 @@ export const checkoutCommand = (
         // Create new branch
         yield* Effect.try({
           try: () => {
-            execSync(`git checkout -b ${branchName} FETCH_HEAD`, {
+            childProcess.execSync(`git checkout -b ${branchName} FETCH_HEAD`, {
               stdio: 'inherit',
               timeout: 30000,
             })
@@ -398,7 +409,7 @@ export const checkoutCommand = (
       const upstreamRef = `${remote}/${targetBranch}`
       yield* Effect.try({
         try: () => {
-          execSync(`git branch --set-upstream-to=${upstreamRef} ${branchName}`, {
+          childProcess.execSync(`git branch --set-upstream-to=${upstreamRef} ${branchName}`, {
             stdio: ['pipe', 'pipe', 'pipe'],
             timeout: 10000,
           })

@@ -1,4 +1,4 @@
-import { execSync, spawnSync } from 'node:child_process'
+import * as childProcess from 'node:child_process'
 import chalk from 'chalk'
 import { Console, Effect } from 'effect'
 import {
@@ -96,7 +96,7 @@ export const validateEmails = (emails: string[] | undefined, fieldName: string):
 // Get git remotes
 const getGitRemotes = (): Record<string, string> => {
   try {
-    const output = execSync('git remote -v', { encoding: 'utf8' })
+    const output = childProcess.execSync('git remote -v', { encoding: 'utf8' })
     const remotes: Record<string, string> = {}
 
     for (const line of output.split('\n')) {
@@ -150,7 +150,7 @@ const findMatchingRemote = (gerritHost: string): string | null => {
 // Check if we're in a git repo
 const isInGitRepo = (): boolean => {
   try {
-    execSync('git rev-parse --git-dir', { encoding: 'utf8' })
+    childProcess.execSync('git rev-parse --git-dir', { encoding: 'utf8' })
     return true
   } catch {
     return false
@@ -160,7 +160,9 @@ const isInGitRepo = (): boolean => {
 // Get current branch name
 const getCurrentBranch = (): string | null => {
   try {
-    const branch = execSync('git symbolic-ref --short HEAD', { encoding: 'utf8' }).trim()
+    const branch = childProcess
+      .execSync('git symbolic-ref --short HEAD', { encoding: 'utf8' })
+      .trim()
     return branch || null
   } catch {
     return null
@@ -171,10 +173,12 @@ const getCurrentBranch = (): string | null => {
 const getTrackingBranch = (): string | null => {
   try {
     // Get the upstream branch reference
-    const upstream = execSync('git rev-parse --abbrev-ref @{upstream}', {
-      encoding: 'utf8',
-      stdio: ['pipe', 'pipe', 'pipe'],
-    }).trim()
+    const upstream = childProcess
+      .execSync('git rev-parse --abbrev-ref @{upstream}', {
+        encoding: 'utf8',
+        stdio: ['pipe', 'pipe', 'pipe'],
+      })
+      .trim()
 
     // Extract branch name (remove remote prefix like "origin/")
     const parts = upstream.split('/')
@@ -190,7 +194,7 @@ const getTrackingBranch = (): string | null => {
 // Check if a remote branch exists
 const remoteBranchExists = (remote: string, branch: string): boolean => {
   try {
-    execSync(`git rev-parse --verify ${remote}/${branch}`, {
+    childProcess.execSync(`git rev-parse --verify ${remote}/${branch}`, {
       encoding: 'utf8',
       stdio: ['pipe', 'pipe', 'pipe'],
     })
@@ -365,7 +369,7 @@ export const pushCommand = (
     args.push(`HEAD:${refspec}`)
 
     // Execute push
-    const result = spawnSync('git', args, {
+    const result = childProcess.spawnSync('git', args, {
       encoding: 'utf8',
       stdio: ['inherit', 'pipe', 'pipe'],
     })

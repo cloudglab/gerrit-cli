@@ -1,4 +1,4 @@
-import { execSync, spawnSync } from 'node:child_process'
+import * as childProcess from 'node:child_process'
 import chalk from 'chalk'
 import { Console, Effect, Schema } from 'effect'
 import { type ApiError, GerritApiService, type GerritApiServiceImpl } from '@/api/gerrit'
@@ -140,7 +140,7 @@ const parseChangeInput = (input: string): ParsedChange => {
 
 const getGitRemotes = (): Record<string, string> => {
   try {
-    const output = execSync('git remote -v', { encoding: 'utf8', timeout: 5000 })
+    const output = childProcess.execSync('git remote -v', { encoding: 'utf8', timeout: 5000 })
     const remotes: Record<string, string> = {}
     for (const line of output.split('\n')) {
       const match = line.match(/^(\S+)\s+(\S+)\s+\(fetch\)$/)
@@ -175,7 +175,7 @@ const findMatchingRemote = (gerritHost: string): string | null => {
 
 const isInGitRepo = (): boolean => {
   try {
-    execSync('git rev-parse --git-dir', { encoding: 'utf8', timeout: 5000 })
+    childProcess.execSync('git rev-parse --git-dir', { encoding: 'utf8', timeout: 5000 })
     return true
   } catch {
     return false
@@ -229,7 +229,7 @@ export const cherryCommand = (
     yield* Console.log(chalk.dim(`Fetching ${validatedRef}...`))
     yield* Effect.try({
       try: () => {
-        const result = spawnSync('git', ['fetch', remote, validatedRef], {
+        const result = childProcess.spawnSync('git', ['fetch', remote, validatedRef], {
           stdio: 'inherit',
           timeout: 60000,
         })
@@ -250,7 +250,10 @@ export const cherryCommand = (
     )
     yield* Effect.try({
       try: () => {
-        const result = spawnSync('git', cherryPickCmd, { stdio: 'inherit', timeout: 60000 })
+        const result = childProcess.spawnSync('git', cherryPickCmd, {
+          stdio: 'inherit',
+          timeout: 60000,
+        })
         if (result.status !== 0) throw new Error(result.stderr?.toString() ?? 'cherry-pick failed')
       },
       catch: (e) =>

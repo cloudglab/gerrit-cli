@@ -1,4 +1,4 @@
-import { execSync, spawnSync } from 'node:child_process'
+import * as childProcess from 'node:child_process'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import chalk from 'chalk'
@@ -34,7 +34,7 @@ const parseChangeSpec = (changeSpec: string): { changeId: string; patchset?: str
 
 const getGitRemotes = (): Record<string, string> => {
   try {
-    const output = execSync('git remote -v', { encoding: 'utf8' })
+    const output = childProcess.execSync('git remote -v', { encoding: 'utf8' })
     const remotes: Record<string, string> = {}
     for (const line of output.split('\n')) {
       const match = line.match(/^(\S+)\s+(\S+)\s+\(fetch\)$/)
@@ -70,7 +70,7 @@ const findMatchingRemote = (gerritHost: string): string | null => {
 
 const isInGitRepo = (): boolean => {
   try {
-    execSync('git rev-parse --git-dir', { encoding: 'utf8' })
+    childProcess.execSync('git rev-parse --git-dir', { encoding: 'utf8' })
     return true
   } catch {
     return false
@@ -79,7 +79,7 @@ const isInGitRepo = (): boolean => {
 
 const getRepoRoot = (): string => {
   try {
-    return execSync('git rev-parse --show-toplevel', { encoding: 'utf8' }).trim()
+    return childProcess.execSync('git rev-parse --show-toplevel', { encoding: 'utf8' }).trim()
   } catch {
     throw new Error('Not in a git repository')
   }
@@ -153,7 +153,7 @@ export const treeSetupCommand = (
       console.log(chalk.dim(`  Fetching ${changeRef}...`))
     }
 
-    const fetchResult = spawnSync('git', ['fetch', matchingRemote, changeRef], {
+    const fetchResult = childProcess.spawnSync('git', ['fetch', matchingRemote, changeRef], {
       encoding: 'utf8',
       cwd: repoRoot,
     })
@@ -165,10 +165,14 @@ export const treeSetupCommand = (
       console.log(chalk.dim(`  Creating worktree...`))
     }
 
-    const worktreeResult = spawnSync('git', ['worktree', 'add', worktreeDir, 'FETCH_HEAD'], {
-      encoding: 'utf8',
-      cwd: repoRoot,
-    })
+    const worktreeResult = childProcess.spawnSync(
+      'git',
+      ['worktree', 'add', worktreeDir, 'FETCH_HEAD'],
+      {
+        encoding: 'utf8',
+        cwd: repoRoot,
+      },
+    )
     if (worktreeResult.status !== 0) {
       throw new Error(worktreeResult.stderr ?? 'Git worktree add failed')
     }

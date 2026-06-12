@@ -1,4 +1,4 @@
-import { execSync, spawnSync } from 'node:child_process'
+import * as childProcess from 'node:child_process'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import chalk from 'chalk'
@@ -12,7 +12,7 @@ export interface TreeCleanupOptions {
 
 const isInGitRepo = (): boolean => {
   try {
-    execSync('git rev-parse --git-dir', { encoding: 'utf8' })
+    childProcess.execSync('git rev-parse --git-dir', { encoding: 'utf8' })
     return true
   } catch {
     return false
@@ -20,7 +20,7 @@ const isInGitRepo = (): boolean => {
 }
 
 const getRepoRoot = (): string =>
-  execSync('git rev-parse --show-toplevel', { encoding: 'utf8' }).trim()
+  childProcess.execSync('git rev-parse --show-toplevel', { encoding: 'utf8' }).trim()
 
 const getGerWorktrees = (repoRoot: string): string[] => {
   const gerDir = path.join(repoRoot, '.gerrit-cli')
@@ -41,7 +41,7 @@ const removeWorktree = (worktreePath: string, repoRoot: string, force: boolean):
     ? ['worktree', 'remove', '--force', worktreePath]
     : ['worktree', 'remove', worktreePath]
 
-  const result = spawnSync('git', args, { encoding: 'utf8', cwd: repoRoot })
+  const result = childProcess.spawnSync('git', args, { encoding: 'utf8', cwd: repoRoot })
   return result.status === 0
 }
 
@@ -108,7 +108,7 @@ export const treeCleanupCommand = (
     }
 
     // Clean up stale worktree metadata
-    spawnSync('git', ['worktree', 'prune'], { encoding: 'utf8', cwd: repoRoot })
+    childProcess.spawnSync('git', ['worktree', 'prune'], { encoding: 'utf8', cwd: repoRoot })
 
     if (options.json) {
       console.log(JSON.stringify({ status: 'success', removed, failed }, null, 2))
