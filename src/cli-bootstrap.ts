@@ -6,6 +6,8 @@ import { registerCommands } from './cli/register-commands'
 import { runDailyUpdateProbe } from './update-probe'
 
 function getVersion(): string {
+  // Prefer build-time injected version (for compiled standalone binaries)
+  if (process.env.GERRIT_CLI_VERSION) return process.env.GERRIT_CLI_VERSION
   try {
     const __filename = fileURLToPath(import.meta.url)
     const __dirname = dirname(__filename)

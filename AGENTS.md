@@ -8,9 +8,27 @@
 
 核心目标：把 Gerrit 工作流接到命令行、脚本、CI 和 AI Skill。
 
+## Agent 使用原则
+
+- 优先使用本机 `gerrit-cli` / `gerrit` / 角色入口，不要默认退回临时脚本。
+- 查询当前仓库对应的变更时，优先尝试 HEAD commit message 里的 `Change-Id`，再要求用户补 change number。
+- 默认读操作可直接执行；写操作（评论、投票、add-reviewer、submit、abandon、restore、push）必须显式命中命令，不做自然语言静默写入。
+- 需要脚本消费时优先使用 `--json`；需要给 LLM 保留富文本上下文时再用 `--xml`。
+- 遇到 Gerrit / Jenkins 瞬时错误可重试一次；连续失败两次先报告网络或权限阻塞。
+
+## 角色入口
+
+- `full`：`gerrit-cli` / `gerrit`，完整命令集。
+- `dev`：`gerrit-dev`，偏提交、查看、checkout、rebase。
+- `reviewer`：`gerrit-reviewer`，偏 incoming、diff、comments、comment、vote。
+- `lead`：`gerrit-lead`，偏 reviewer 管理、组和团队操作。
+- `ci`：`gerrit-ci`，偏构建状态、链接提取、结构化输出。
+
+这些入口当前只提供更清晰的调用别名，不改变 Gerrit 服务端权限。
+
 ## 技术栈
 
-- **Runtime**：Bun（源码直跑，不产 dist）
+- **Runtime**：Bun（源码直跑开发，`bun build --compile` 产出独立二进制）
 - **语言**：TypeScript，`isolatedDeclarations: true`
 - **CLI 框架**：Commander.js + Ink 终端 UI
 - **状态管理**：Effect + Effect Schema
@@ -69,7 +87,7 @@ tests/             # 测试（unit / integration / mocks / helpers）
 | **工作区** | `checkout`, `push`, `rebase`, `submit`, `workspace`, `tree` |
 | **CI/分析** | `build-status`, `failures`, `analyze`, `extract-url` |
 | **组** | `groups`, `groups-show`, `groups-members` |
-| **配置** | `setup`, `config`, `status`, `init`, `install-hook` |
+| **配置** | `setup`, `config`, `status`, `init`, `install`, `update`, `uninstall`, `install-hook` |
 | **辅助** | `version`, `completion`, `clean`, `open`, `cherry` |
 
 ## 场景链路模型
@@ -112,7 +130,7 @@ Skill / Agent 处理 Gerrit 请求时按下面链路路由：
 - 不支持 3.0 之前的 Gerrit 版本
 - 变更创建仍通过 `git push`，CLI 只做 push 封装
 - 复杂管理员操作（如项目创建、权限编辑）仍需 Web UI
-- `doctor` 诊断命令和 `install` 一键安装命令尚未实现
+- `doctor` 诊断命令尚未实现
 
 ## 环境变量
 
@@ -131,21 +149,28 @@ export GERRIT_PASSWORD="your-http-password"
 已内置 GitHub Actions：
 - `ci.yml`：push/main 触发，跑 `check:all`
 - `publish.yml`：tag `v*` 触发，校验版本并通过 npm Trusted Publisher 发布
+- `pages.yml`：main 更新后部署 `docs/` 到 GitHub Pages
+
+Pages 速查页源码在 `docs/index.html`；它由 workflow 单独部署，不随 npm tarball 发布。
+
+发布前本地 smoke：
+- `bun run release:smoke-query`：默认 dry-run，检查命令 help 面是否可达
+- `bun run release:smoke-query:live`：需要 `GERRIT_*` 配置，做真实 Gerrit 只读查询回归
+- live smoke 可用 `GERRIT_SMOKE_CHANGE_ID`、`GERRIT_SMOKE_QUERY`、`GERRIT_SMOKE_BUILD_KEYWORD` 覆盖默认查询样本
 
 发版步骤：
 1. 确保本地 `bun run check:all` 通过
-2. 更新 `package.json` 中 `version`
-3. `git tag v0.x.x && git push origin v0.x.x`
-4. 等待 publish workflow 完成，并验证 npm 包版本
+2. 执行 `bun run release:smoke-query`
+3. 更新 `package.json` 中 `version` 和 `CHANGELOG.md`
+4. `git tag v0.x.x && git push origin main && git push origin v0.x.x`
+5. 等待 publish workflow 完成，并验证 npm 包版本
 
 ## 与 zentao-cli 架构对齐状态
 
-已对齐：CLI bootstrap 模块化、SDK 导出、config/version/completion/clean 辅助命令、`--json/--xml` 一致性、no `as` type assertion。
+已对齐：CLI bootstrap 模块化、SDK 导出、config/version/completion/clean 辅助命令、`--json/--xml` 一致性、no `as` type assertion、每日更新探针、GitHub Pages 速查页、角色多入口、release smoke query、Trusted Publisher 发布链路。
 
 待对齐：
-- `install` / `update` 命令
+- `uninstall` 更完整的配置清理链路
 - `whoami` / `doctor` 诊断命令
-- 每日更新探针
-- `docs/index.html` GitHub Pages 速查页
-- 角色多入口（`gerrit-dev`, `gerrit-reviewer` 等别名）
-- release smoke query
+- `--role` 级别的 help/命令过滤
+- 更完整的 workflow 级真实 Gerrit smoke 矩阵

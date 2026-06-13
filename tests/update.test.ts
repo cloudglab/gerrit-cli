@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, mock, spyOn, test } from 'bun:test'
 import { Effect } from 'effect'
+import { installCommand } from '@/cli/commands/install'
+import { uninstallCommand } from '@/cli/commands/uninstall'
 import { updateCommand } from '@/cli/commands/update'
 import * as childProcess from '@/utils/child-process'
 
@@ -49,7 +51,7 @@ describe('update command', () => {
     expect(
       calls.some((c) => c.includes('bun install -g') && c.includes('@cloudglab/gerrit-cli')),
     ).toBe(true)
-    expect(logs.join('\n')).toContain('updated successfully')
+    expect(logs.join('\n')).toContain('更新完成')
   })
 
   test('--skip-pull installs without version check', async () => {
@@ -82,5 +84,65 @@ describe('update command', () => {
 
     const result = await Effect.runPromise(updateCommand({}).pipe(Effect.either))
     expect(result._tag).toBe('Left')
+  })
+
+  test('install command runs global bun install', async () => {
+    execSpy = spyOn(childProcess, 'execSync').mockImplementation((() =>
+      Buffer.from('')) as unknown as typeof childProcess.execSync)
+
+    const logs: string[] = []
+    const origLog = console.log
+    console.log = (...args: unknown[]) => logs.push(String(args[0]))
+
+    try {
+      await Effect.runPromise(installCommand({ skipConfigCheck: true }))
+    } finally {
+      console.log = origLog
+    }
+
+    const calls = (execSpy.mock.calls as unknown as [string][]).map(([c]) => c)
+    expect(
+      calls.some((c) => c.includes('bun install -g') && c.includes('@cloudglab/gerrit-cli')),
+    ).toBe(true)
+    expect(logs.join('\n')).toContain('安装完成')
+  })
+
+  test('uninstall command previews without confirm', async () => {
+    execSpy = spyOn(childProcess, 'execSync').mockImplementation((() =>
+      Buffer.from('')) as unknown as typeof childProcess.execSync)
+
+    const logs: string[] = []
+    const origLog = console.log
+    console.log = (...args: unknown[]) => logs.push(String(args[0]))
+
+    try {
+      await Effect.runPromise(uninstallCommand({}))
+    } finally {
+      console.log = origLog
+    }
+
+    expect(logs.join('\n')).toContain('卸载预览')
+    expect(execSpy.mock.calls.length).toBe(0)
+  })
+
+  test('uninstall command runs global bun remove with confirm', async () => {
+    execSpy = spyOn(childProcess, 'execSync').mockImplementation((() =>
+      Buffer.from('')) as unknown as typeof childProcess.execSync)
+
+    const logs: string[] = []
+    const origLog = console.log
+    console.log = (...args: unknown[]) => logs.push(String(args[0]))
+
+    try {
+      await Effect.runPromise(uninstallCommand({ confirm: true, keepConfig: true }))
+    } finally {
+      console.log = origLog
+    }
+
+    const calls = (execSpy.mock.calls as unknown as [string][]).map(([c]) => c)
+    expect(
+      calls.some((c) => c.includes('bun remove -g') && c.includes('@cloudglab/gerrit-cli')),
+    ).toBe(true)
+    expect(logs.join('\n')).toContain('卸载完成')
   })
 })

@@ -1,24 +1,45 @@
 # @cloudglab/gerrit-cli
 
-![gerrit-cli hero](./assets/readme/gerrit-cli-hero.svg)
+![gerrit-cli hero](./assets/readme/gerrit-cli-hero.png)
 
 让 Gerrit 代码审查流程进入命令行。支持查看变更、提交评论、管理审查、检查 CI 构建状态，以及直接面向 LLM 和自动化脚本输出结构化数据。
 
 ## 安装
 
 ```bash
-# 安装 Bun 运行时
-curl -fsSL https://bun.sh/install | bash
-
-# 全局安装 gerrit-cli
-bun install -g @cloudglab/gerrit-cli
+npm install -g @cloudglab/gerrit-cli
 ```
+
+安装完成后会打印 ASCII banner 和快速开始指引。
 
 ## 升级
 
 ```bash
-bun update -g @cloudglab/gerrit-cli
+npm update -g @cloudglab/gerrit-cli
+
+# 或走 CLI 更新入口
+gerrit update
 ```
+
+## 卸载
+
+```bash
+# 先看预览
+gerrit uninstall
+
+# 确认执行
+gerrit uninstall --confirm
+```
+
+## 命令速查页
+
+项目提供 GitHub Pages 速查页，适合复制安装、角色入口、审查链路、CI 命令和发布前 smoke：
+
+```text
+https://cloudglab.github.io/gerrit-cli/
+```
+
+页面源码位于 `docs/index.html`，由 GitHub Pages workflow 自动部署；npm 包不包含 `docs/`，只保留 CLI 入口、源码、发布脚本、README 和 CHANGELOG。
 
 ## 快速开始
 
@@ -34,12 +55,12 @@ gerrit-cli status
 
 | 入口 | 适用场景 | 核心命令 |
 |------|----------|----------|
-| **开发者** | 提交变更、查看状态 | `push`, `mine`, `show`, `rebase`, `checkout` |
-| **审查者** | 代码审查、投票 | `incoming`, `diff`, `comments`, `comment`, `vote` |
-| **CI/自动化** | 构建检查、脚本集成 | `build-status --watch`, `extract-url`, `--json`, `--xml` |
-| **团队 Lead** | 分配审查、组管理 | `add-reviewer`, `groups`, `groups-members`, `team` |
+| `gerrit-dev` | 提交变更、查看状态 | `push`, `mine`, `show`, `rebase`, `checkout` |
+| `gerrit-reviewer` | 代码审查、投票 | `incoming`, `diff`, `comments`, `comment`, `vote` |
+| `gerrit-ci` | 构建检查、脚本集成 | `build-status --watch`, `extract-url`, `--json`, `--xml` |
+| `gerrit-lead` | 分配审查、组管理 | `add-reviewer`, `groups`, `groups-members`, `team` |
 
-> 角色不改变服务端权限，只描述常用的 CLI 命令组合。
+> 这些入口与 `gerrit-cli` 使用同一套权限和命令，只是给不同角色提供更清晰的安装后入口。
 
 ## 日常场景
 
@@ -166,13 +187,29 @@ llm "Review change 12345" | gerrit-cli comment 12345
 gerrit-cli show 12345 | llm "Summarize this change and review status"
 ```
 
-## 进阶
+## 发布前 smoke
 
-- [命令速查页](https://cloudglab.github.io/gerrit-cli/) — GitHub Pages 极简速查
-- [DEVELOPMENT.md](./DEVELOPMENT.md) — 开发者贡献指南
-- [EXAMPLES.md](./EXAMPLES.md) — SDK 程序化调用示例
-- [docs/prd/](./docs/prd/) — 产品需求文档
-- [docs/adr/](./docs/adr/) — 架构决策记录
+```bash
+# 默认只检查命令 help 面，适合 release 前无凭证环境
+bun run release:smoke-query
+
+# 如需真实 Gerrit 查询，先配置 GERRIT_*，再打开 live 模式
+bun run release:smoke-query:live
+```
+
+live 模式默认只做只读查询，可用下面变量覆盖样本：
+
+```bash
+export GERRIT_SMOKE_CHANGE_ID="12345"
+export GERRIT_SMOKE_QUERY="status:open"
+export GERRIT_SMOKE_BUILD_KEYWORD="jenkins"
+```
+
+如果当前机器没有全局 CLI，也可以在仓库内直接运行脚本做发布前 smoke：
+
+```bash
+bun run release:smoke-query
+```
 
 ## License
 

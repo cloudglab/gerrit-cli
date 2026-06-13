@@ -4,6 +4,8 @@ import { GerritApiServiceLive } from '@/api/gerrit'
 import { ConfigServiceLive } from '@/services/config'
 import { analyzeCommand } from './commands/analyze'
 import { failuresCommand } from './commands/failures'
+import { installCommand } from './commands/install'
+import { uninstallCommand } from './commands/uninstall'
 import { updateCommand } from './commands/update'
 
 function executeEffect<E>(
@@ -33,6 +35,18 @@ function executeEffect<E>(
 }
 
 export function registerAnalyticsCommands(program: Command): void {
+  program
+    .command('install')
+    .description('Install gerrit-cli globally with Bun')
+    .option('--skip-config-check', 'Skip the post-install setup reminder')
+    .action(async (options) => {
+      await executeEffect(
+        installCommand({ skipConfigCheck: options.skipConfigCheck }),
+        {},
+        'install_result',
+      )
+    })
+
   // update command
   program
     .command('update')
@@ -45,6 +59,19 @@ export function registerAnalyticsCommands(program: Command): void {
         updateCommand({ skipPull: options.skipPull, xml: options.xml, json: options.json }),
         options,
         'update_result',
+      )
+    })
+
+  program
+    .command('uninstall')
+    .description('Uninstall gerrit-cli global package')
+    .option('--confirm', 'Actually run uninstall instead of previewing steps')
+    .option('--keep-config', 'Keep ~/.gerrit-cli config directory')
+    .action(async (options) => {
+      await executeEffect(
+        uninstallCommand({ confirm: options.confirm, keepConfig: options.keepConfig }),
+        {},
+        'uninstall_result',
       )
     })
 

@@ -2,6 +2,7 @@ import { Schema } from '@effect/schema'
 import { input, password } from '@inquirer/prompts'
 import chalk from 'chalk'
 import { Console, Effect, pipe } from 'effect'
+import { renderBanner, renderQuickStartGuide } from '@/cli/banner'
 import { AppConfig } from '@/schemas/config'
 import type { GerritCredentials } from '@/schemas/gerrit'
 import {
@@ -94,6 +95,7 @@ const setupEffect = (configService: ConfigServiceImpl) =>
     Effect.flatMap((existingConfig) =>
       pipe(
         Console.log(chalk.bold('🔧 Gerrit CLI Setup')),
+        Effect.flatMap(() => Console.log(chalk.cyan(renderBanner()))),
         Effect.flatMap(() => Console.log('')),
         Effect.flatMap(() => {
           if (existingConfig) {
@@ -212,9 +214,8 @@ const setupEffect = (configService: ConfigServiceImpl) =>
     Effect.tap(() => Console.log(chalk.green('Successfully authenticated'))),
     Effect.flatMap((config) => configService.saveFullConfig(config)),
     Effect.tap(() => Console.log(chalk.green('\nConfiguration saved successfully!'))),
-    Effect.tap(() => Console.log('You can now use:')),
-    Effect.tap(() => Console.log('  • "gerrit-cli mine" to view your changes')),
-    Effect.tap(() => Console.log('  • "gerrit-cli show <change-id>" to view change details')),
+    Effect.tap(() => Console.log('')),
+    Effect.tap(() => Console.log(chalk.cyan(renderQuickStartGuide()))),
     Effect.catchAll((error) =>
       pipe(
         Console.error(

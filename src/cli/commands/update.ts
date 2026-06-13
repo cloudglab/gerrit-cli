@@ -1,5 +1,6 @@
 import chalk from 'chalk'
 import { Console, Effect } from 'effect'
+import { renderInstallSuccessGuide } from '@/cli/banner'
 import * as childProcess from '@/utils/child-process'
 export interface UpdateOptions {
   skipPull?: boolean
@@ -99,6 +100,6 @@ export const updateCommand = (options: UpdateOptions): Effect.Effect<void, Updat
 </update_result>`)
     } else {
       yield* Console.log('')
-      yield* Console.log(chalk.green('✓ gerrit-cli updated successfully'))
+      yield* Console.log(chalk.green(renderInstallSuccessGuide('更新', 'Gerrit CLI 已更新。')))
     }
   })

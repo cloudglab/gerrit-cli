@@ -1,6 +1,6 @@
 {
   "name": "@cloudglab/gerrit-cli",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Gerrit CLI and SDK - A modern CLI tool and TypeScript SDK for Gerrit Code Review, built with Effect-TS",
   "keywords": [
     "gerrit",
@@ -15,8 +15,12 @@
   "module": "index.ts",
   "type": "module",
   "bin": {
-    "gerrit-cli": "./bin/gerrit-cli",
-    "gerrit": "./bin/gerrit-cli"
+    "gerrit-cli": "./dist/gerrit-cli",
+    "gerrit": "./dist/gerrit-cli",
+    "gerrit-dev": "./dist/gerrit-dev",
+    "gerrit-reviewer": "./dist/gerrit-reviewer",
+    "gerrit-lead": "./dist/gerrit-lead",
+    "gerrit-ci": "./dist/gerrit-ci"
   },
   "exports": {
     ".": {
@@ -64,7 +68,7 @@
     "CHANGELOG.md",
     "index.ts",
     "assets/readme",
-    "bin",
+    "dist",
     "src",
     "scripts",
     "tsconfig.json"
@@ -72,6 +76,7 @@
   "publishConfig": {
     "access": "public"
   },
+  "packageManager": "bun@1.3.14",
   "devDependencies": {
     "@biomejs/biome": "^2.2.2",
     "@types/node": "^24.3.1",
@@ -100,10 +105,12 @@
   "scripts": {
     "prepare": "husky",
     "dev": "bun run src/cli/index.ts",
-    "build": "tsc --noEmit && echo 'Build successful - CLI runs directly with bun'",
+    "build": "bun scripts/build-binary.ts",
     "test": "bun test",
     "test:coverage": "bun test --coverage",
     "test:coverage:check": "bun scripts/check-coverage.ts",
+    "release:smoke-query": "bun scripts/release-query-smoke.ts --dry-run",
+    "release:smoke-query:live": "GERRIT_SMOKE_LIVE=true bun scripts/release-query-smoke.ts --continue-on-error",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint src/ tests/",
     "format": "biome format --write src/ tests/",

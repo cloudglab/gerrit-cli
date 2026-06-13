@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.0.6 - 2026-06-13
+
+### Added
+
+- Standalone binary build via `bun build --compile` — users no longer need Bun installed.
+- Banner component with ASCII art and quick start guide on init/setup/update.
+
+### Changed
+
+- `npm install -g @cloudglab/gerrit-cli` now installs standalone binaries; no Bun prerequisite.
+- `bin` entries in package.json point to compiled `dist/` binaries.
+- `getVersion()` prefers build-time injected `GERRIT_CLI_VERSION` for compiled binaries.
+
+### Removed
+
+- AI tool artifacts: `.claude-plugin/`, `.cursor/`, `skills/`, `CLAUDE.md`, `llms.txt`.
+- Duplicate workflows: `ci-simple.yml`, `claude.yml`, `claude-code-review.yml`, `dependency-update.yml`, `security.yml`.
+- Redundant docs: `docs/prd/`, `docs/adr/`, `DEVELOPMENT.md`, `EXAMPLES.md`.
+- `.eslintrc.js` (project uses oxlint).
+
 ## 0.0.5 - 2026-06-12
 
 Follow-up release after the `v0.0.4` publish workflow failed in CI.

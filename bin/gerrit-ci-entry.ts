@@ -1,6 +1,3 @@
-#!/usr/bin/env bun
-// Gerrit CLI entry point — architecture aligned with zentao-cli
-
 import { runCli } from '../src/cli-bootstrap'
 
 await runCli(process.argv.slice(2)).catch((error: unknown) => {

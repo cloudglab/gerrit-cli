@@ -3,6 +3,7 @@ import * as os from 'node:os'
 import * as path from 'node:path'
 import * as readline from 'node:readline/promises'
 import { Effect } from 'effect'
+import { renderBanner, renderQuickStartGuide } from '@/cli/banner'
 import type { GerritCredentials } from '@/schemas/gerrit'
 import { ConfigService } from '@/services/config'
 
@@ -97,6 +98,8 @@ export const initCommand = (): Effect.Effect<void, Error, ConfigService> =>
     console.log('Gerrit CLI Setup')
     console.log('================')
     console.log('')
+    console.log(renderBanner())
+    console.log('')
 
     // Load existing config if it exists
     const existing = readExistingConfig()
@@ -157,8 +160,5 @@ export const initCommand = (): Effect.Effect<void, Error, ConfigService> =>
     console.log('')
     console.log('✓ Credentials saved to ~/.gerrit-cli/auth.json')
     console.log('')
-    console.log('You can now use commands like:')
-    console.log('  gerrit-cli status')
-    console.log('  gerrit-cli mine --pretty')
-    console.log('  gerrit-cli workspace <change-id>')
+    console.log(renderQuickStartGuide())
   })

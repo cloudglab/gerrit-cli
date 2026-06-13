@@ -1,186 +1,645 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>gerrit-cli — 命令速查</title>
-<style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "SF Mono", "Fira Code", "Cascadia Code", monospace;
-    background: #0d1117; color: #c9d1d9; line-height: 1.7; padding: 2rem 1.5rem;
-    max-width: 860px; margin: 0 auto;
-  }
-  h1 { font-size: 1.6rem; color: #f0f6fc; margin-bottom: 0.25rem; }
-  .subtitle { color: #8b949e; font-size: 0.85rem; margin-bottom: 2rem; }
-  h2 { font-size: 1.1rem; color: #58a6ff; margin: 2rem 0 0.75rem; padding-top: 1rem; border-top: 1px solid #21262d; }
-  section { margin-bottom: 1.5rem; }
-  code { background: #161b22; padding: 0.15em 0.4em; border-radius: 3px; font-size: 0.85em; color: #ffa657; }
-  pre { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 1rem; overflow-x: auto; font-size: 0.85rem; margin: 0.5rem 0 1rem; }
-  pre code { background: none; padding: 0; color: #c9d1d9; }
-  table { width: 100%; border-collapse: collapse; margin: 0.5rem 0 1rem; font-size: 0.85rem; }
-  th, td { text-align: left; padding: 0.4rem 0.6rem; border-bottom: 1px solid #21262d; }
-  th { color: #8b949e; font-weight: 600; }
-  td code { font-size: 0.82em; }
-  .tag { display: inline-block; background: #1f6feb22; color: #58a6ff; border: 1px solid #1f6feb44; border-radius: 3px; padding: 0 0.35em; font-size: 0.75em; margin-left: 0.3em; }
-  a { color: #58a6ff; text-decoration: none; }
-  a:hover { text-decoration: underline; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem; margin: 0.5rem 0 1rem; }
-  .card { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 0.75rem; }
-  .card h3 { font-size: 0.9rem; color: #f0f6fc; margin-bottom: 0.35rem; }
-  .card p { font-size: 0.8rem; color: #8b949e; }
-  @media (max-width: 600px) {
-    body { padding: 1rem; }
-    .grid { grid-template-columns: 1fr; }
-  }
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>gerrit-cli · Gerrit 命令速查</title>
+  <meta name="description" content="gerrit-cli 极简命令速查、安装、审查和发布前 smoke 入口。">
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #fbfaf7;
+      --ink: #161616;
+      --muted: #606060;
+      --hairline: #161616;
+      --soft-line: #d7d4cc;
+      --inverse: #f6f3eb;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        linear-gradient(var(--soft-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--soft-line) 1px, transparent 1px),
+        var(--paper);
+      background-size: 28px 28px;
+      line-height: 1.6;
+    }
+
+    main {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 36px 0 48px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+      gap: 18px;
+      align-items: stretch;
+      margin-bottom: 18px;
+    }
+
+    .panel, .command, .section {
+      min-width: 0;
+      border: 1px solid var(--hairline);
+      background: var(--paper);
+    }
+
+    .panel {
+      display: grid;
+      align-content: space-between;
+      min-height: 356px;
+      padding: 34px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 34px;
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      content: "";
+      display: inline-block;
+      width: 44px;
+      height: 1px;
+      background: var(--ink);
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 7em;
+      font-size: clamp(44px, 9vw, 104px);
+      line-height: 0.88;
+      letter-spacing: -0.08em;
+    }
+
+    .lead {
+      max-width: 650px;
+      margin: 30px 0 0;
+      color: var(--muted);
+      font-size: clamp(16px, 1.8vw, 20px);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0;
+      margin-top: 34px;
+    }
+
+    a, button { font: inherit; }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 46px;
+      margin-right: -1px;
+      padding: 0 18px;
+      border: 1px solid var(--hairline);
+      color: var(--ink);
+      background: var(--paper);
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .button.primary {
+      color: var(--inverse);
+      background: var(--ink);
+      font-weight: 700;
+    }
+
+    .stack {
+      display: grid;
+      gap: 0;
+    }
+
+    .command {
+      display: grid;
+      align-content: center;
+      min-height: 108px;
+      padding: 18px 20px;
+      border-bottom: 0;
+    }
+
+    .command:last-child { border-bottom: 1px solid var(--hairline); }
+
+    .command strong {
+      display: block;
+      margin-bottom: 12px;
+      font-size: 14px;
+      color: var(--muted);
+      letter-spacing: 0.02em;
+    }
+
+    .copy-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 76px;
+      gap: 0;
+      align-items: center;
+    }
+
+    code {
+      display: block;
+      width: 100%;
+      min-width: 0;
+      padding: 12px 13px;
+      overflow-x: auto;
+      border: 1px solid var(--hairline);
+      color: var(--ink);
+      background: var(--inverse);
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 13px;
+      line-height: 1.45;
+      white-space: nowrap;
+      scrollbar-width: thin;
+    }
+
+    .copy {
+      min-height: 48px;
+      margin-left: -1px;
+      padding: 0 12px;
+      border: 1px solid var(--hairline);
+      color: var(--ink);
+      background: var(--paper);
+      cursor: pointer;
+    }
+
+    .button:hover, .copy:hover {
+      color: var(--inverse);
+      background: var(--ink);
+    }
+
+    .wiki {
+      margin-top: 18px;
+      padding: 24px;
+    }
+
+    .wiki-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
+      gap: 18px;
+      align-items: end;
+    }
+
+    .wiki p {
+      max-width: 720px;
+      margin: -6px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .wiki-search {
+      display: grid;
+      gap: 8px;
+    }
+
+    .wiki-search label {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .wiki-search input {
+      width: 100%;
+      min-height: 46px;
+      padding: 0 14px;
+      border: 1px solid var(--hairline);
+      border-radius: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font: inherit;
+      outline: none;
+    }
+
+    .wiki-search input:focus { box-shadow: inset 0 0 0 2px var(--ink); }
+
+    .wiki-status {
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .section { padding: 22px; }
+
+    h2 {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 0 0 18px;
+      font-size: 20px;
+      letter-spacing: -0.04em;
+    }
+
+    h2::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--hairline);
+    }
+
+    ul {
+      display: grid;
+      gap: 14px;
+      padding: 0;
+      margin: 0;
+      list-style: none;
+    }
+
+    li {
+      min-width: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    li code { font-size: 12px; }
+
+    li .copy-row {
+      position: relative;
+      display: block;
+      margin-top: 6px;
+    }
+
+    li code {
+      min-height: 46px;
+      padding-right: 88px;
+      overflow-x: visible;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+
+    li .copy {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 76px;
+      height: 100%;
+      min-height: 46px;
+      margin-top: 0;
+      margin-left: 0;
+      font-size: 13px;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(6px);
+      transition: opacity 120ms ease, transform 120ms ease;
+    }
+
+    li .copy-row:hover code,
+    li .copy-row:focus-within code { background: var(--paper); }
+
+    li .copy-row:hover .copy,
+    li .copy-row:focus-within .copy {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(0);
+    }
+
+    footer {
+      margin-top: 28px;
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+    }
+
+    footer code {
+      display: inline;
+      width: auto;
+      padding: 2px 6px;
+      border: 1px solid var(--hairline);
+      background: transparent;
+      white-space: normal;
+    }
+
+    @media (max-width: 860px) {
+      main { padding-top: 20px; }
+      .hero, .wiki-head, .grid { grid-template-columns: 1fr; }
+      .panel {
+        min-height: auto;
+        padding: 26px;
+      }
+      .stack { border-bottom: 1px solid var(--hairline); }
+      .command:last-child { border-bottom: 0; }
+    }
+
+    @media (max-width: 520px) {
+      main { width: min(100% - 18px, 1180px); }
+      h1 { font-size: clamp(42px, 18vw, 76px); }
+      .actions { display: grid; }
+      .button {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: -1px;
+      }
+      .command .copy-row { grid-template-columns: 1fr; }
+      .command .copy {
+        width: 100%;
+        margin-top: -1px;
+        margin-left: 0;
+      }
+    }
+
+    @media (hover: none), (pointer: coarse) {
+      li .copy {
+        opacity: 1;
+        pointer-events: auto;
+        transform: none;
+      }
+    }
+  </style>
 </head>
 <body>
+  <main>
+    <section class="hero">
+      <div class="panel">
+        <div class="eyebrow">Gerrit CLI</div>
+        <h1>命令速查</h1>
+        <p class="lead">把 Gerrit 变更查看、审查、投票、工作区、CI 构建状态和 AI Skill 工作流接到终端、脚本与发布链路。</p>
+        <div class="actions">
+          <button class="button primary" type="button" data-copy="bun install -g @cloudglab/gerrit-cli">复制安装命令</button>
+          <a class="button" href="https://github.com/cloudglab/gerrit-cli">GitHub</a>
+          <a class="button" href="https://www.npmjs.com/package/@cloudglab/gerrit-cli">npm</a>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="command">
+          <strong>安装 CLI</strong>
+          <div class="copy-row"><code>bun install -g @cloudglab/gerrit-cli</code><button class="copy" type="button" data-copy="bun install -g @cloudglab/gerrit-cli">复制</button></div>
+        </div>
+        <div class="command">
+          <strong>初始化 Gerrit 配置</strong>
+          <div class="copy-row"><code>gerrit-cli setup</code><button class="copy" type="button" data-copy="gerrit-cli setup">复制</button></div>
+        </div>
+        <div class="command">
+          <strong>发布前 smoke</strong>
+          <div class="copy-row"><code>bun run release:smoke-query</code><button class="copy" type="button" data-copy="bun run release:smoke-query">复制</button></div>
+        </div>
+      </div>
+    </section>
 
-<h1>gerrit-cli</h1>
-<p class="subtitle">Gerrit 命令行工具 · <code>bun install -g @cloudglab/gerrit-cli</code></p>
+    <section class="section wiki" aria-labelledby="wiki-title">
+      <div class="wiki-head">
+        <div>
+          <h2 id="wiki-title">Wiki / 检索</h2>
+          <p>先做成静态检索：安装、角色入口、审查、CI、工作区、配置、Skill 和发布前 smoke 都能在本页快速过滤。后续可以扩展为构建期索引，覆盖 README、CHANGELOG 和命令注册表。</p>
+        </div>
+        <div class="wiki-search">
+          <label for="wiki-query">输入关键词</label>
+          <input id="wiki-query" type="search" placeholder="例如：review、CI、smoke、workspace、xml" autocomplete="off">
+        </div>
+      </div>
+      <div class="wiki-status" id="wiki-status">输入关键词后过滤下方命令。</div>
+    </section>
 
-<section>
-  <h2>安装 &amp; 升级</h2>
-  <pre><code># 安装 Bun 运行时
-curl -fsSL https://bun.sh/install | bash
+    <section class="grid" aria-label="命令速查">
+      <div class="section">
+        <h2>常用场景</h2>
+        <ul>
+          <li>查看我的变更<code>gerrit-cli mine</code></li>
+          <li>查看待审查列表<code>gerrit-cli incoming</code></li>
+          <li>查看变更详情<code>gerrit-cli show 12345</code></li>
+          <li>查看变更 diff<code>gerrit-cli diff 12345</code></li>
+          <li>查看评论<code>gerrit-cli comments 12345</code></li>
+          <li>搜索变更<code>gerrit-cli search "owner:self status:open"</code></li>
+        </ul>
+      </div>
+      <div class="section">
+        <h2>基础 / 配置</h2>
+        <ul>
+          <li>安装 Bun<code>curl -fsSL https://bun.sh/install | bash</code></li>
+          <li>安装 CLI<code>bun install -g @cloudglab/gerrit-cli</code></li>
+          <li>CLI 安装入口<code>gerrit install</code></li>
+          <li>初始化配置<code>gerrit-cli setup</code></li>
+          <li>连接状态<code>gerrit-cli status</code></li>
+          <li>更新 CLI<code>gerrit update</code></li>
+          <li>卸载预览<code>gerrit uninstall</code></li>
+          <li>查看配置<code>gerrit-cli config show</code></li>
+          <li>查看版本<code>gerrit-cli version</code></li>
+          <li>生成补全<code>gerrit-cli completion bash</code></li>
+        </ul>
+      </div>
+      <div class="section">
+        <h2>角色入口</h2>
+        <ul>
+          <li>完整能力<code>gerrit-cli --help</code></li>
+          <li>开发者入口<code>gerrit-dev mine</code></li>
+          <li>审查者入口<code>gerrit-reviewer incoming</code></li>
+          <li>CI 入口<code>gerrit-ci build-status 12345 --json</code></li>
+          <li>团队 Lead 入口<code>gerrit-lead groups</code></li>
+        </ul>
+      </div>
+      <div class="section">
+        <h2>审查链路</h2>
+        <ul>
+          <li>待审查列表<code>gerrit-cli incoming</code></li>
+          <li>查看文件列表<code>gerrit-cli files 12345</code></li>
+          <li>查看审查人<code>gerrit-cli reviewers 12345</code></li>
+          <li>添加评论<code>gerrit-cli comment 12345 -m "LGTM, one nit"</code></li>
+          <li>批量行评论<code>echo '[{"file":"src/app.ts","line":42,"message":"Use const"}]' | gerrit-cli comment 12345 --batch</code></li>
+          <li>投票通过<code>gerrit-cli vote 12345 --code-review 2 -m "Approved"</code></li>
+          <li>AI 辅助审查<code>gerrit-cli review 12345 --strategy claude</code></li>
+        </ul>
+      </div>
+      <div class="section">
+        <h2>变更管理</h2>
+        <ul>
+          <li>添加审查人<code>gerrit-cli add-reviewer alice@example.com -c 12345</code></li>
+          <li>移除审查人<code>gerrit-cli remove-reviewer 12345 alice@example.com</code></li>
+          <li>设置 topic<code>gerrit-cli topic 12345 release-0.0.x</code></li>
+          <li>重基变更<code>gerrit-cli rebase 12345</code></li>
+          <li>合入变更<code>gerrit-cli submit 12345</code></li>
+          <li>丢弃变更<code>gerrit-cli abandon 12345</code></li>
+          <li>恢复变更<code>gerrit-cli restore 12345</code></li>
+        </ul>
+      </div>
+      <div class="section">
+        <h2>工作区</h2>
+        <ul>
+          <li>检出变更<code>gerrit-cli checkout 12345</code></li>
+          <li>创建工作区<code>gerrit-cli workspace create 12345</code></li>
+          <li>列出工作树<code>gerrit-cli trees</code></li>
+          <li>创建变更工作树<code>gerrit-cli tree setup 12345</code></li>
+          <li>重基工作树<code>gerrit-cli tree rebase 12345</code></li>
+          <li>清理工作树<code>gerrit-cli tree cleanup --dry-run</code></li>
+          <li>推送 WIP<code>gerrit-cli push -b main -t refactor --wip</code></li>
+        </ul>
+      </div>
+      <div class="section">
+        <h2>CI / 构建</h2>
+        <ul>
+          <li>构建状态<code>gerrit-cli build-status 12345</code></li>
+          <li>JSON 构建状态<code>gerrit-cli build-status 12345 --json</code></li>
+          <li>轮询到完成<code>gerrit-cli build-status 12345 --watch --exit-status</code></li>
+          <li>失败链接<code>gerrit-cli failures 12345</code></li>
+          <li>提取 Jenkins 链接<code>gerrit-cli extract-url "jenkins"</code></li>
+          <li>重新触发构建<code>gerrit-cli retrigger 12345</code></li>
+          <li>分析失败<code>gerrit-cli analyze 12345</code></li>
+        </ul>
+      </div>
+      <div class="section">
+        <h2>输出格式</h2>
+        <ul>
+          <li>默认文本<code>gerrit-cli show 12345</code></li>
+          <li>脚本 JSON<code>gerrit-cli show 12345 --json</code></li>
+          <li>LLM XML<code>gerrit-cli show 12345 --xml</code></li>
+          <li>搜索 JSON<code>gerrit-cli search "status:merged age:7d" --json</code></li>
+          <li>评论 XML<code>gerrit-cli comments 12345 --xml</code></li>
+        </ul>
+      </div>
+      <div class="section">
+        <h2>组 / 团队</h2>
+        <ul>
+          <li>组列表<code>gerrit-cli groups</code></li>
+          <li>组详情<code>gerrit-cli groups-show administrators</code></li>
+          <li>组成员<code>gerrit-cli groups-members project-reviewers</code></li>
+          <li>团队视图<code>gerrit-cli team</code></li>
+          <li>按组添加审查<code>gerrit-cli add-reviewer backend-reviewers --group -c 12345</code></li>
+        </ul>
+      </div>
+      <div class="section">
+        <h2>辅助命令</h2>
+        <ul>
+          <li>打开变更<code>gerrit-cli open 12345</code></li>
+          <li>清理分支<code>gerrit-cli clean --dry-run</code></li>
+          <li>Cherry-pick<code>gerrit-cli cherry 12345</code></li>
+          <li>安装 hook<code>gerrit-cli install-hook</code></li>
+          <li>初始化项目<code>gerrit-cli init</code></li>
+        </ul>
+      </div>
+      <div class="section">
+        <h2>环境变量</h2>
+        <ul>
+          <li>服务地址<code>export GERRIT_HOST="https://gerrit.example.com"</code></li>
+          <li>账号<code>export GERRIT_USERNAME="your-username"</code></li>
+          <li>HTTP 密码<code>export GERRIT_PASSWORD="your-http-password"</code></li>
+          <li>smoke 样本变更<code>export GERRIT_SMOKE_CHANGE_ID="12345"</code></li>
+          <li>smoke 搜索样本<code>export GERRIT_SMOKE_QUERY="status:open"</code></li>
+          <li>smoke 构建关键词<code>export GERRIT_SMOKE_BUILD_KEYWORD="jenkins"</code></li>
+        </ul>
+      </div>
+      <div class="section">
+        <h2>发布 / Skill</h2>
+        <ul>
+          <li>发布前 dry-run<code>bun run release:smoke-query</code></li>
+          <li>真实只读 smoke<code>bun run release:smoke-query:live</code></li>
+          <li>Claude 插件安装<code>/plugin marketplace add cloudglab/gerrit-cli</code></li>
+          <li>安装 workflow skill<code>/plugin install gerrit-workflow@gerrit-cli</code></li>
+          <li>查看 npm 包<code>npm view @cloudglab/gerrit-cli version</code></li>
+        </ul>
+      </div>
+    </section>
 
-# 全局安装
-bun install -g @cloudglab/gerrit-cli
+    <footer>写操作需要显式命令触发；脚本和 AI 集成优先使用 <code>--json</code> 或 <code>--xml</code> 输出。</footer>
+  </main>
+  <script>
+    document.querySelectorAll('li code').forEach((code) => {
+      if (code.parentElement?.classList.contains('copy-row')) return;
+      const row = document.createElement('div');
+      row.className = 'copy-row';
+      const copy = document.createElement('button');
+      copy.className = 'copy';
+      copy.type = 'button';
+      copy.textContent = '复制';
+      copy.dataset.copy = code.textContent.trim();
+      code.before(row);
+      row.append(code, copy);
+    });
 
-# 升级
-bun update -g @cloudglab/gerrit-cli</code></pre>
-</section>
+    async function copyText(text) {
+      if (navigator.clipboard?.writeText) {
+        try {
+          await navigator.clipboard.writeText(text);
+          return true;
+        } catch (error) {
+          void error;
+        }
+      }
 
-<section>
-  <h2>环境变量</h2>
-  <pre><code>export GERRIT_HOST="https://gerrit.example.com"
-export GERRIT_USERNAME="your-username"
-export GERRIT_PASSWORD="your-http-password"</code></pre>
-  <p style="font-size:0.8em;color:#8b949e;">或运行 <code>gerrit-cli setup</code> 写入配置文件。</p>
-</section>
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.setAttribute('readonly', '');
+      textarea.style.position = 'fixed';
+      textarea.style.left = '-9999px';
+      document.body.appendChild(textarea);
+      textarea.select();
+      const ok = document.execCommand('copy');
+      textarea.remove();
+      return ok;
+    }
 
-<section>
-  <h2>角色入口</h2>
-  <div class="grid">
-    <div class="card">
-      <h3>开发者</h3>
-      <p><code>push</code> <code>mine</code> <code>show</code> <code>rebase</code> <code>checkout</code></p>
-    </div>
-    <div class="card">
-      <h3>审查者</h3>
-      <p><code>incoming</code> <code>diff</code> <code>comments</code> <code>comment</code> <code>vote</code></p>
-    </div>
-    <div class="card">
-      <h3>CI/自动化</h3>
-      <p><code>build-status</code> <code>extract-url</code> <code>--json</code> <code>--xml</code></p>
-    </div>
-    <div class="card">
-      <h3>团队 Lead</h3>
-      <p><code>add-reviewer</code> <code>groups</code> <code>groups-members</code> <code>team</code></p>
-    </div>
-  </div>
-</section>
+    document.querySelectorAll('[data-copy]').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const text = button.textContent;
+        const ok = await copyText(button.dataset.copy);
+        button.textContent = ok ? '已复制' : '复制失败';
+        window.setTimeout(() => { button.textContent = text; }, 1200);
+      });
+    });
 
-<section>
-  <h2>输出格式</h2>
-  <table>
-    <tr><th>格式</th><th>标志</th><th>适用</th></tr>
-    <tr><td>纯文本</td><td><em>默认</em></td><td>人类阅读</td></tr>
-    <tr><td>JSON</td><td><code>--json</code></td><td>脚本解析</td></tr>
-    <tr><td>XML</td><td><code>--xml</code></td><td>LLM 消费（CDATA）</td></tr>
-  </table>
-</section>
+    const wikiQuery = document.querySelector('#wiki-query');
+    const wikiStatus = document.querySelector('#wiki-status');
+    const commandSections = [...document.querySelectorAll('.grid .section')].map((section) => {
+      const items = [...section.querySelectorAll('li')].map((item) => ({
+        element: item,
+        text: item.textContent.toLowerCase(),
+      }));
+      return {
+        element: section,
+        text: section.textContent.toLowerCase(),
+        items,
+      };
+    });
 
-<section>
-  <h2>场景速查</h2>
+    function filterWiki() {
+      const query = wikiQuery.value.trim().toLowerCase();
+      let visibleItems = 0;
+      let visibleSections = 0;
 
-  <h3>提交变更</h3>
-  <pre><code>git commit -m "feat: add login"
-gerrit-cli push -t my-feature -r alice@example.com</code></pre>
+      commandSections.forEach((section) => {
+        let sectionHasMatch = false;
+        section.items.forEach((item) => {
+          const itemMatch = !query || item.text.includes(query);
+          item.element.hidden = !itemMatch;
+          if (itemMatch) {
+            sectionHasMatch = true;
+            visibleItems += 1;
+          }
+        });
 
-  <h3>审查</h3>
-  <pre><code>gerrit-cli incoming                                   # 待审查列表
-gerrit-cli show 12345                                 # 变更详情
-gerrit-cli diff 12345                                 # 查看 diff
-gerrit-cli comments 12345                             # 已有评论
-gerrit-cli comment 12345 -m "LGTM, one nit"           # 发布评论
-gerrit-cli vote 12345 --code-review 2 -m "Approved"   # 投票</code></pre>
+        const sectionMatch = !query || section.text.includes(query);
+        section.element.hidden = !(sectionHasMatch || sectionMatch);
+        if (!section.element.hidden) visibleSections += 1;
+      });
 
-  <h3>CI 状态</h3>
-  <pre><code>gerrit-cli build-status 12345                        # 单次快照
-gerrit-cli build-status --watch --exit-status         # 轮询等待
-gerrit-cli extract-url "jenkins" | tail -1            # 提取构建链接</code></pre>
+      if (!query) {
+        wikiStatus.textContent = '输入关键词后过滤下方命令。';
+        return;
+      }
 
-  <h3>工作区</h3>
-  <pre><code>gerrit-cli checkout 12345                            # 检出变更
-gerrit-cli workspace create 12345                     # 创建工作树
-gerrit-cli push -b main -t refactor --wip             # 推送 WIP</code></pre>
+      wikiStatus.textContent = visibleItems
+        ? `找到 ${visibleItems} 条命令，分布在 ${visibleSections} 个分类。`
+        : '没有匹配命令，可以换个关键词。';
+    }
 
-  <h3>变更管理</h3>
-  <pre><code>gerrit-cli rebase 12345                              # 重基
-gerrit-cli submit 12345                               # 合入
-gerrit-cli abandon 12345                              # 丢弃
-gerrit-cli restore 12345                              # 恢复</code></pre>
-
-  <h3>组管理</h3>
-  <pre><code>gerrit-cli groups                                    # 组列表
-gerrit-cli groups-show administrators                 # 组详情
-gerrit-cli groups-members project-reviewers           # 组成员</code></pre>
-
-  <h3>批量管道</h3>
-  <pre><code># 批量行评论
-echo '[{"file":"src/app.ts","line":42,"message":"Use const"}]' \
-  | gerrit-cli comment 12345 --batch
-
-# 批量添加审查人
-gerrit-cli add-reviewer alice bob -c 12345</code></pre>
-
-  <h3>搜索</h3>
-  <pre><code>gerrit-cli search "owner:self status:open"
-gerrit-cli search "project:my-project" -n 10
-gerrit-cli search "status:merged age:7d"</code></pre>
-
-  <h3>配置 &amp; 辅助</h3>
-  <pre><code>gerrit-cli setup                                     # 初始化
-gerrit-cli status                                    # 连接状态
-gerrit-cli config show                               # 显示配置
-gerrit-cli version                                   # 版本号
-gerrit-cli completion bash                           # 生成补全脚本
-gerrit-cli clean --dry-run                           # 清理已合并分支</code></pre>
-</section>
-
-<section>
-  <h2>命令索引</h2>
-  <table>
-    <tr><th>分类</th><th>命令</th></tr>
-    <tr><td>查看</td><td><code>show</code> <code>diff</code> <code>comments</code> <code>search</code> <code>list</code> <code>files</code></td></tr>
-    <tr><td>审查</td><td><code>comment</code> <code>vote</code> <code>review</code> <code>add-reviewer</code> <code>remove-reviewer</code> <code>reviewers</code></td></tr>
-    <tr><td>管理</td><td><code>mine</code> <code>incoming</code> <code>team</code> <code>abandon</code> <code>restore</code> <code>submit</code></td></tr>
-    <tr><td>工作区</td><td><code>checkout</code> <code>push</code> <code>rebase</code> <code>workspace</code> <code>tree</code></td></tr>
-    <tr><td>CI/分析</td><td><code>build-status</code> <code>failures</code> <code>analyze</code> <code>extract-url</code> <code>retrigger</code></td></tr>
-    <tr><td>组</td><td><code>groups</code> <code>groups-show</code> <code>groups-members</code></td></tr>
-    <tr><td>配置</td><td><code>setup</code> <code>config</code> <code>status</code> <code>init</code> <code>install-hook</code></td></tr>
-    <tr><td>辅助</td><td><code>version</code> <code>completion</code> <code>clean</code> <code>open</code> <code>cherry</code> <code>topic</code></td></tr>
-  </table>
-</section>
-
-<section>
-  <h2>Skill 安装</h2>
-  <pre><code># Claude Code 插件
-/plugin marketplace add cloudglab/gerrit-cli
-/plugin install gerrit-workflow@gerrit-cli</code></pre>
-  <p style="font-size:0.8em;color:#8b949e;">安装后可直接用自然语言操作 Gerrit。</p>
-</section>
-
-<section>
-  <h2>扩展</h2>
-  <p>
-    <a href="https://github.com/cloudglab/gerrit-cli">GitHub</a> ·
-    <a href="https://github.com/cloudglab/gerrit-cli/blob/main/EXAMPLES.md">SDK 示例</a> ·
-    <a href="https://github.com/cloudglab/gerrit-cli/blob/main/DEVELOPMENT.md">开发指南</a>
-  </p>
-</section>
-
+    wikiQuery.addEventListener('input', filterWiki);
+  </script>
 </body>
 </html>
