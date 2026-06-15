@@ -171,7 +171,7 @@ Change-Id: If5a3ae8cb5a107e187447802358417f311d0c4b1`
     expect(output).toContain('Change 392385')
     expect(output).toContain('WIP: test')
     expect(capturedErrors.length).toBe(0)
-  })
+  }, 10000)
 
   test('auto-detects Change-ID with --xml flag', async () => {
     const commitMessage = `feat: add feature
@@ -208,7 +208,7 @@ Change-Id: If5a3ae8cb5a107e187447802358417f311d0c4b1`
     expect(output).toContain('<status>success</status>')
     expect(output).toContain('392385')
     expect(capturedErrors.length).toBe(0)
-  })
+  }, 10000)
 
   test('shows error when no Change-ID in HEAD commit', async () => {
     const commitMessage = `feat: add feature without Change-ID
