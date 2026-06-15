@@ -6,6 +6,7 @@
 
 - Release-blocking CI flake in `tests/update-probe.test.ts`: update probe helpers now accept an explicit cache file path so tests no longer depend on the module-level `CHECK_FILE` override under Bun coverage/CI execution.
 - `update-probe` tests now write/read the same explicit temp cache file, restoring stable coverage runs for `bun run check:all` and npm publish workflow validation.
+- `tests/change-id-formats.test.ts` edge-case assertions now use explicit 10s test timeouts so slower coverage/pre-push runs no longer fail on Bun default 5s timeout.
 
 ## 0.0.7 - 2026-06-15
 

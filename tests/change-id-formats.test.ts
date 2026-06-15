@@ -237,7 +237,7 @@ describe('Change ID format support', () => {
       const output = capturedLogs.join('\n')
       expect(output).toContain('Change 392385')
       expect(capturedErrors.length).toBe(0)
-    })
+    }, 10000)
 
     test('validates Change-ID format strictly (uppercase I)', async () => {
       const lowercaseChangeId = 'if5a3ae8cb5a107e187447802358417f311d0c4b1'
@@ -250,7 +250,7 @@ describe('Change ID format support', () => {
 
       const output = capturedErrors.join('\n')
       expect(output).toContain('Invalid change identifier')
-    })
+    }, 10000)
 
     test('rejects Change-ID with incorrect length', async () => {
       const shortChangeId = 'If5a3ae8cb5a107e18744780235841'
@@ -263,6 +263,6 @@ describe('Change ID format support', () => {
 
       const output = capturedErrors.join('\n')
       expect(output).toContain('Invalid change identifier')
-    })
+    }, 10000)
   })
 })
