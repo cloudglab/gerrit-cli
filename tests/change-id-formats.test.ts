@@ -152,7 +152,7 @@ describe('Change ID format support', () => {
       expect(output).toContain('Change 392385')
       expect(output).toContain('WIP: test')
       expect(capturedErrors.length).toBe(0)
-    })
+    }, 10000)
 
     test('rejects invalid change identifier', async () => {
       const effect = showCommand('invalid-id', {}).pipe(

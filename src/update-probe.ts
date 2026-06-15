@@ -58,7 +58,7 @@ function readUpdateCheckState(): UpdateCheckState {
   }
 }
 
-function writeUpdateCheckState(state: UpdateCheckState): void {
+export function writeUpdateCheckState(state: UpdateCheckState): void {
   try {
     const dir = join(homedir(), '.gerrit-cli')
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true, mode: 0o700 })
