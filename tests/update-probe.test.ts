@@ -1,17 +1,19 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { runDailyUpdateProbe, writeUpdateCacheAfterInstall } from '@/update-probe'
 
-const CHECK_FILE = join(homedir(), '.gerrit-cli', 'update-check.json')
+const CHECK_DIR = join(homedir(), '.gerrit-cli')
+const CHECK_FILE = join(CHECK_DIR, 'update-check.json')
+
+function ensureDir(): void {
+  mkdirSync(CHECK_DIR, { recursive: true, mode: 0o700 })
+}
 
 function cleanupCheckFile(): void {
   try {
-    if (existsSync(CHECK_FILE)) {
-      const { unlinkSync } = require('node:fs') as typeof import('node:fs')
-      unlinkSync(CHECK_FILE)
-    }
+    if (existsSync(CHECK_FILE)) unlinkSync(CHECK_FILE)
   } catch {
     // ignore
   }
@@ -22,6 +24,7 @@ describe('update probe', () => {
   let origStderr: typeof process.stderr.write
 
   beforeEach(() => {
+    ensureDir()
     cleanupCheckFile()
     stderrOutput = []
     origStderr = process.stderr.write
@@ -65,8 +68,7 @@ describe('update probe', () => {
 
   test('notifies when cached latestVersion is newer', () => {
     // Write a state with a newer version
-    const dir = join(homedir(), '.gerrit-cli')
-    if (!existsSync(dir)) mkdirSync(dir, { recursive: true, mode: 0o700 })
+    ensureDir()
     writeFileSync(
       CHECK_FILE,
       JSON.stringify(
@@ -86,8 +88,7 @@ describe('update probe', () => {
   })
 
   test('does not notify when cached version matches local', () => {
-    const dir = join(homedir(), '.gerrit-cli')
-    if (!existsSync(dir)) mkdirSync(dir, { recursive: true, mode: 0o700 })
+    ensureDir()
     // Use a version that matches local (0.0.0 is fallback)
     writeFileSync(
       CHECK_FILE,
@@ -105,6 +106,7 @@ describe('update probe', () => {
   })
 
   test('writeUpdateCacheAfterInstall writes current date and version', () => {
+    ensureDir()
     writeUpdateCacheAfterInstall('1.2.3')
 
     expect(existsSync(CHECK_FILE)).toBe(true)
@@ -116,6 +118,7 @@ describe('update probe', () => {
   })
 
   test('writeUpdateCacheAfterInstall uses local version when no arg', () => {
+    ensureDir()
     writeUpdateCacheAfterInstall()
 
     const state = JSON.parse(readFileSync(CHECK_FILE, 'utf8')) as Record<string, unknown>
