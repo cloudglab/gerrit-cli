@@ -6,12 +6,24 @@ import { Context, Effect, Layer } from 'effect'
 import { AppConfig, migrateFromNestedConfig } from '@/schemas/config'
 import { GerritCredentials } from '@/schemas/gerrit'
 
+export type ConfigSource = 'file' | 'env' | 'file+env' | 'unknown'
+
+export interface MaskedAppConfig {
+  readonly host: string
+  readonly username: string
+  readonly hasPassword: boolean
+  readonly retriggerComment?: string
+  readonly source: ConfigSource
+  readonly configPath: string
+}
+
 export interface ConfigServiceImpl {
   readonly getCredentials: Effect.Effect<GerritCredentials, ConfigError>
   readonly saveCredentials: (credentials: GerritCredentials) => Effect.Effect<void, ConfigError>
   readonly deleteCredentials: Effect.Effect<void, ConfigError>
   readonly getFullConfig: Effect.Effect<AppConfig, ConfigError>
   readonly saveFullConfig: (config: AppConfig) => Effect.Effect<void, ConfigError>
+  readonly getMaskedConfig: Effect.Effect<MaskedAppConfig, ConfigError>
   readonly getRetriggerComment: Effect.Effect<string | undefined, ConfigError>
   readonly saveRetriggerComment: (comment: string) => Effect.Effect<void, ConfigError>
 }
@@ -45,18 +57,23 @@ export class ConfigError
 const CONFIG_DIR = path.join(os.homedir(), '.gerrit-cli')
 const CONFIG_FILE = path.join(CONFIG_DIR, 'config.json')
 
-const readEnvConfig = (): unknown | null => {
-  const { GERRIT_HOST, GERRIT_USERNAME, GERRIT_PASSWORD } = process.env
+type EnvConfigValues = {
+  host?: string
+  username?: string
+  password?: string
+  retriggerComment?: string
+}
 
-  if (GERRIT_HOST && GERRIT_USERNAME && GERRIT_PASSWORD) {
-    return {
-      host: GERRIT_HOST,
-      username: GERRIT_USERNAME,
-      password: GERRIT_PASSWORD,
-    }
-  }
+const readEnvConfig = (): EnvConfigValues | null => {
+  const { GERRIT_HOST, GERRIT_USERNAME, GERRIT_PASSWORD, GERRIT_RETRIGGER_COMMENT } = process.env
+  const partial: EnvConfigValues = {}
 
-  return null
+  if (GERRIT_HOST) partial.host = GERRIT_HOST
+  if (GERRIT_USERNAME) partial.username = GERRIT_USERNAME
+  if (GERRIT_PASSWORD) partial.password = GERRIT_PASSWORD
+  if (GERRIT_RETRIGGER_COMMENT) partial.retriggerComment = GERRIT_RETRIGGER_COMMENT
+
+  return Object.keys(partial).length > 0 ? partial : null
 }
 
 const readFileConfig = (): unknown | null => {
@@ -111,38 +128,69 @@ const deleteFileConfig = (): void => {
   }
 }
 
+const fileConfigExists = (): boolean => fs.existsSync(CONFIG_FILE)
+
+const buildConfigSource = (hasFile: boolean, hasEnv: boolean): ConfigSource => {
+  if (hasFile && hasEnv) return 'file+env'
+  if (hasFile) return 'file'
+  if (hasEnv) return 'env'
+  return 'unknown'
+}
+
+export const maskConfig = (config: AppConfig, source: ConfigSource): MaskedAppConfig => ({
+  host: config.host,
+  username: config.username,
+  hasPassword: config.password.length > 0,
+  retriggerComment: config.retriggerComment,
+  source,
+  configPath: CONFIG_FILE,
+})
+
 export const ConfigServiceLive: Layer.Layer<ConfigService, never, never> = Layer.effect(
   ConfigService,
   Effect.sync(() => {
-    const getFullConfig = Effect.gen(function* () {
-      // First try to read from file
-      const fileContent = readFileConfig()
-      if (fileContent) {
-        // Parse as flat config
-        const fullConfigResult = yield* Schema.decodeUnknown(AppConfig)(fileContent).pipe(
-          Effect.mapError(() => new ConfigError({ message: 'Invalid configuration format' })),
-        )
-        return fullConfigResult
-      }
-
-      // Fallback to environment variables
-      const envContent = readEnvConfig()
-      if (envContent) {
-        const fullConfigResult = yield* Schema.decodeUnknown(AppConfig)(envContent).pipe(
-          Effect.mapError(
-            () => new ConfigError({ message: 'Invalid environment configuration format' }),
-          ),
-        )
-        return fullConfigResult
-      }
-
-      // No configuration found
-      return yield* Effect.fail(
-        new ConfigError({
-          message:
-            'Configuration not found. Run "gerrit-cli setup" to set up your credentials or set GERRIT_HOST, GERRIT_USERNAME, and GERRIT_PASSWORD environment variables.',
-        }),
+    const decodeConfig = (input: unknown, sourceLabel: string) =>
+      Schema.decodeUnknown(AppConfig)(input).pipe(
+        Effect.mapError(
+          () => new ConfigError({ message: `Invalid configuration format (${sourceLabel})` }),
+        ),
       )
+
+    const getFullConfig = Effect.gen(function* () {
+      const fileRaw = readFileConfig()
+      const envValues = readEnvConfig()
+      const hasFile = fileRaw !== null
+      const hasEnv = envValues !== null
+
+      if (!hasFile && !hasEnv) {
+        return yield* Effect.fail(
+          new ConfigError({
+            message:
+              'Configuration not found. Run "gerrit-cli setup" to set up your credentials or set GERRIT_HOST, GERRIT_USERNAME, and GERRIT_PASSWORD environment variables.',
+          }),
+        )
+      }
+
+      let merged: Partial<AppConfig> = {}
+      if (fileRaw !== null) {
+        const fileConfig = yield* decodeConfig(fileRaw, 'file')
+        merged = fileConfig
+      }
+      if (envValues !== null) {
+        merged = { ...merged, ...envValues }
+      }
+
+      return yield* decodeConfig(merged, 'merged')
+    })
+
+    const getConfigSource = Effect.sync(() =>
+      buildConfigSource(fileConfigExists(), readEnvConfig() !== null),
+    )
+
+    const getMaskedConfig = Effect.gen(function* () {
+      const config = yield* getFullConfig
+      const source = yield* getConfigSource
+      return maskConfig(config, source)
     })
 
     const saveFullConfig = (config: AppConfig) =>
@@ -225,6 +273,7 @@ export const ConfigServiceLive: Layer.Layer<ConfigService, never, never> = Layer
       deleteCredentials,
       getFullConfig,
       saveFullConfig,
+      getMaskedConfig,
       getRetriggerComment,
       saveRetriggerComment,
     }

@@ -67,9 +67,14 @@ export function registerAnalyticsCommands(program: Command): void {
     .description('Uninstall gerrit-cli global package')
     .option('--confirm', 'Actually run uninstall instead of previewing steps')
     .option('--keep-config', 'Keep ~/.gerrit-cli config directory')
+    .option('--remove-config', 'Delete ~/.gerrit-cli config directory (includes credentials)')
     .action(async (options) => {
       await executeEffect(
-        uninstallCommand({ confirm: options.confirm, keepConfig: options.keepConfig }),
+        uninstallCommand({
+          confirm: options.confirm,
+          keepConfig: options.keepConfig,
+          removeConfig: options.removeConfig,
+        }),
         {},
         'uninstall_result',
       )

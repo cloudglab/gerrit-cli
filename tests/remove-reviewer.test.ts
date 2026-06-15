@@ -57,6 +57,7 @@ describe('remove-reviewer command', () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = removeReviewerCommand(['reviewer@example.com'], {
       change: '12345',
+      confirm: true,
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
     await Effect.runPromise(program)
@@ -77,6 +78,7 @@ describe('remove-reviewer command', () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = removeReviewerCommand(['user1@example.com', 'user2@example.com'], {
       change: '12345',
+      confirm: true,
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
     await Effect.runPromise(program)
@@ -103,6 +105,7 @@ describe('remove-reviewer command', () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = removeReviewerCommand(['reviewer@example.com'], {
       change: '12345',
+      confirm: true,
       notify: 'none',
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
@@ -121,6 +124,7 @@ describe('remove-reviewer command', () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = removeReviewerCommand(['nonexistent@example.com'], {
       change: '12345',
+      confirm: true,
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
     await Effect.runPromise(program)
@@ -147,6 +151,7 @@ describe('remove-reviewer command', () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = removeReviewerCommand([], {
       change: '12345',
+      confirm: true,
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
     const result = await Effect.runPromiseExit(program)
@@ -166,6 +171,7 @@ describe('remove-reviewer command', () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = removeReviewerCommand(['reviewer@example.com'], {
       change: '12345',
+      confirm: true,
       xml: true,
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
@@ -185,6 +191,7 @@ describe('remove-reviewer command', () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = removeReviewerCommand(['reviewer@example.com'], {
       xml: true,
+      confirm: true,
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
     const result = await Effect.runPromiseExit(program)
@@ -208,6 +215,7 @@ describe('remove-reviewer command', () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = removeReviewerCommand(['reviewer@example.com'], {
       change: '12345',
+      confirm: true,
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
     await Effect.runPromise(program)
@@ -232,6 +240,7 @@ describe('remove-reviewer command', () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = removeReviewerCommand(['valid@example.com', 'invalid@example.com'], {
       change: '12345',
+      confirm: true,
       xml: true,
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
@@ -247,6 +256,7 @@ describe('remove-reviewer command', () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = removeReviewerCommand(['reviewer@example.com'], {
       change: '12345',
+      confirm: true,
       notify: 'invalid',
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
@@ -268,6 +278,7 @@ describe('remove-reviewer command', () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = removeReviewerCommand(['1001'], {
       change: '12345',
+      confirm: true,
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
     await Effect.runPromise(program)
@@ -286,6 +297,7 @@ describe('remove-reviewer command', () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = removeReviewerCommand(['johndoe'], {
       change: '12345',
+      confirm: true,
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
     await Effect.runPromise(program)
@@ -307,6 +319,7 @@ describe('remove-reviewer command', () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = removeReviewerCommand(['reviewer@example.com'], {
       change: 'If5a3ae8cb5a107e187447802358417f311d0c4b1',
+      confirm: true,
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
     await Effect.runPromise(program)
@@ -325,6 +338,7 @@ describe('remove-reviewer command', () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = removeReviewerCommand(['user+test@example.com'], {
       change: '12345',
+      confirm: true,
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
     await Effect.runPromise(program)
@@ -343,6 +357,7 @@ describe('remove-reviewer command', () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = removeReviewerCommand(['reviewer@example.com'], {
       change: '12345',
+      confirm: true,
       xml: true,
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 

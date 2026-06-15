@@ -90,6 +90,7 @@ describe('restore command', () => {
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = restoreCommand('12345', {
+      confirm: true,
       message: 'Restoring this change',
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
@@ -111,7 +112,7 @@ describe('restore command', () => {
     )
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
-    const program = restoreCommand('12345', {}).pipe(
+    const program = restoreCommand('12345', { confirm: true }).pipe(
       Effect.provide(GerritApiServiceLive),
       Effect.provide(mockConfigLayer),
     )
@@ -135,6 +136,7 @@ describe('restore command', () => {
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = restoreCommand('12345', {
+      confirm: true,
       xml: true,
       message: 'Restoring for testing',
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
@@ -159,7 +161,7 @@ describe('restore command', () => {
     )
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
-    const program = restoreCommand('12345', { xml: true }).pipe(
+    const program = restoreCommand('12345', { confirm: true, xml: true }).pipe(
       Effect.provide(GerritApiServiceLive),
       Effect.provide(mockConfigLayer),
     )
@@ -181,6 +183,7 @@ describe('restore command', () => {
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = restoreCommand('99999', {
+      confirm: true,
       message: 'Test message',
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
@@ -190,7 +193,7 @@ describe('restore command', () => {
 
   it('should show error when change ID is not provided', async () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
-    const program = restoreCommand(undefined, {}).pipe(
+    const program = restoreCommand(undefined, { confirm: true }).pipe(
       Effect.provide(GerritApiServiceLive),
       Effect.provide(mockConfigLayer),
     )
@@ -211,6 +214,7 @@ describe('restore command', () => {
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = restoreCommand('12345', {
+      confirm: true,
       message: 'Test',
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
@@ -226,7 +230,7 @@ describe('restore command', () => {
     )
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
-    const program = restoreCommand('12345', {}).pipe(
+    const program = restoreCommand('12345', { confirm: true }).pipe(
       Effect.provide(GerritApiServiceLive),
       Effect.provide(mockConfigLayer),
     )

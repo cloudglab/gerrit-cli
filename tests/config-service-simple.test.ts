@@ -43,6 +43,7 @@ describe('Config Service Simple Tests', () => {
       expect(typeof service.deleteCredentials).toBe('object') // Effect object
       expect(typeof service.getFullConfig).toBe('object') // Effect object
       expect(typeof service.saveFullConfig).toBe('function')
+      expect(typeof service.getMaskedConfig).toBe('object') // Effect object
     })
   })
 

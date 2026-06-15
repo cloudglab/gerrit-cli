@@ -1,16 +1,18 @@
 import { Effect } from 'effect'
 import { type ApiError, GerritApiService } from '@/api/gerrit'
+import { assertWriteAllowed, type WriteGuardError } from '@/utils/write-guard'
 
 interface AbandonOptions {
   message?: string
   xml?: boolean
   json?: boolean
+  confirm?: boolean
 }
 
 export const abandonCommand = (
   changeId?: string,
   options: AbandonOptions = {},
-): Effect.Effect<void, ApiError, GerritApiService> =>
+): Effect.Effect<void, ApiError | WriteGuardError, GerritApiService> =>
   Effect.gen(function* () {
     const gerritApi = yield* GerritApiService
 
@@ -19,6 +21,12 @@ export const abandonCommand = (
       console.error('  Usage: gerrit-cli abandon <change-id>')
       return
     }
+
+    yield* assertWriteAllowed({
+      confirm: options.confirm ?? false,
+      operation: 'abandon change',
+      target: changeId,
+    })
 
     try {
       // First get the change details to show what we're abandoning

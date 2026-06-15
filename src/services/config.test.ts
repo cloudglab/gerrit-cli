@@ -98,7 +98,7 @@ describe('ConfigService', () => {
           const configService = yield* ConfigService
           return yield* configService.getFullConfig
         }).pipe(Effect.provide(ConfigServiceLive), Effect.runPromise),
-      ).rejects.toThrow('Configuration not found')
+      ).rejects.toThrow('Invalid configuration format')
     })
 
     test('validates environment variable configuration format', async () => {
@@ -112,7 +112,7 @@ describe('ConfigService', () => {
           const configService = yield* ConfigService
           return yield* configService.getFullConfig
         }).pipe(Effect.provide(ConfigServiceLive), Effect.runPromise),
-      ).rejects.toThrow('Invalid environment configuration format')
+      ).rejects.toThrow('Invalid configuration format')
     })
 
     test('rejects empty environment variables', async () => {
@@ -126,7 +126,7 @@ describe('ConfigService', () => {
           const configService = yield* ConfigService
           return yield* configService.getFullConfig
         }).pipe(Effect.provide(ConfigServiceLive), Effect.runPromise),
-      ).rejects.toThrow('Configuration not found')
+      ).rejects.toThrow('Invalid configuration format')
     })
 
     test('provides helpful error message when no configuration is found', async () => {

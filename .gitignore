@@ -3,3 +3,4 @@ coverage/
 bin/gerrit-cli-binary
 .codegraph
 dist
+.slim/deepwork/

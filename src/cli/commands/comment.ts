@@ -2,6 +2,7 @@ import { ParseResult, Schema, TreeFormatter } from '@effect/schema'
 import { Effect, pipe } from 'effect'
 import { type ApiError, GerritApiService } from '@/api/gerrit'
 import type { ReviewInput } from '@/schemas/gerrit'
+import { assertWriteAllowed, type WriteGuardError } from '@/utils/write-guard'
 
 export const COMMENT_HELP_TEXT = `
 Examples:
@@ -37,6 +38,7 @@ export interface CommentOptions {
   replyTo?: string
   unresolved?: boolean
   batch?: boolean
+  confirm?: boolean
 }
 
 // Schema for batch input validation - array of comments
@@ -357,12 +359,18 @@ export const commentCommandWithInput = (
 export const commentCommand = (
   changeId: string,
   options: CommentOptions,
-): Effect.Effect<void, ApiError | Error, GerritApiService> =>
+): Effect.Effect<void, ApiError | Error | WriteGuardError, GerritApiService> =>
   Effect.gen(function* () {
     const apiService = yield* GerritApiService
 
     // Build the review input
     const review = yield* createReviewInput(options)
+
+    yield* assertWriteAllowed({
+      confirm: options.confirm ?? false,
+      operation: 'post comment',
+      target: changeId,
+    })
 
     // Execute the API calls in sequence
     const change = yield* pipe(

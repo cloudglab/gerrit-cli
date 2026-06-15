@@ -1,9 +1,11 @@
 import { Effect } from 'effect'
 import { type ApiError, GerritApiService } from '@/api/gerrit'
+import { assertWriteAllowed, type WriteGuardError } from '@/utils/write-guard'
 
 interface SubmitOptions {
   xml?: boolean
   json?: boolean
+  confirm?: boolean
 }
 
 /**
@@ -20,7 +22,7 @@ interface SubmitOptions {
 export const submitCommand = (
   changeId?: string,
   options: SubmitOptions = {},
-): Effect.Effect<void, ApiError, GerritApiService> =>
+): Effect.Effect<void, ApiError | WriteGuardError, GerritApiService> =>
   Effect.gen(function* () {
     const gerritApi = yield* GerritApiService
 
@@ -29,6 +31,12 @@ export const submitCommand = (
       console.error('  Usage: gerrit-cli submit <change-id>')
       return
     }
+
+    yield* assertWriteAllowed({
+      confirm: options.confirm ?? false,
+      operation: 'submit change',
+      target: changeId,
+    })
 
     // Pre-check: Fetch change to verify it's submittable
     const change = yield* gerritApi.getChange(changeId)

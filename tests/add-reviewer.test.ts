@@ -70,6 +70,7 @@ describe('add-reviewer command', () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = addReviewerCommand(['reviewer@example.com'], {
       change: '12345',
+      confirm: true,
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
     await Effect.runPromise(program)
@@ -103,6 +104,7 @@ describe('add-reviewer command', () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = addReviewerCommand(['user1@example.com', 'user2@example.com'], {
       change: '12345',
+      confirm: true,
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
     await Effect.runPromise(program)
@@ -137,6 +139,7 @@ describe('add-reviewer command', () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = addReviewerCommand(['cc@example.com'], {
       change: '12345',
+      confirm: true,
       cc: true,
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
@@ -169,6 +172,7 @@ describe('add-reviewer command', () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = addReviewerCommand(['reviewer@example.com'], {
       change: '12345',
+      confirm: true,
       notify: 'none',
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
@@ -193,6 +197,7 @@ describe('add-reviewer command', () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = addReviewerCommand(['nonexistent@example.com'], {
       change: '12345',
+      confirm: true,
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
     await Effect.runPromise(program)
@@ -220,6 +225,7 @@ describe('add-reviewer command', () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = addReviewerCommand([], {
       change: '12345',
+      confirm: true,
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
     const result = await Effect.runPromiseExit(program)
@@ -250,6 +256,7 @@ describe('add-reviewer command', () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = addReviewerCommand(['reviewer@example.com'], {
       change: '12345',
+      confirm: true,
       xml: true,
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
@@ -272,6 +279,7 @@ describe('add-reviewer command', () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = addReviewerCommand(['reviewer@example.com'], {
       xml: true,
+      confirm: true,
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
     const result = await Effect.runPromiseExit(program)
@@ -295,6 +303,7 @@ describe('add-reviewer command', () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = addReviewerCommand(['reviewer@example.com'], {
       change: '12345',
+      confirm: true,
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
     await Effect.runPromise(program)
@@ -335,6 +344,7 @@ describe('add-reviewer command', () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = addReviewerCommand(['valid@example.com', 'invalid@example.com'], {
       change: '12345',
+      confirm: true,
       xml: true,
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
@@ -350,6 +360,7 @@ describe('add-reviewer command', () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = addReviewerCommand(['reviewer@example.com'], {
       change: '12345',
+      confirm: true,
       notify: 'invalid',
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
@@ -385,6 +396,7 @@ describe('add-reviewer command', () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = addReviewerCommand(['reviewer@example.com'], {
       change: '12345',
+      confirm: true,
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
     await Effect.runPromise(program)
@@ -421,6 +433,7 @@ describe('add-reviewer command', () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = addReviewerCommand(['project-reviewers'], {
       change: '12345',
+      confirm: true,
       group: true,
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
@@ -454,6 +467,7 @@ describe('add-reviewer command', () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = addReviewerCommand(['administrators'], {
       change: '12345',
+      confirm: true,
       group: true,
       cc: true,
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
@@ -468,6 +482,7 @@ describe('add-reviewer command', () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = addReviewerCommand([], {
       change: '12345',
+      confirm: true,
       group: true,
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
@@ -499,6 +514,7 @@ describe('add-reviewer command', () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = addReviewerCommand(['project-reviewers'], {
       change: '12345',
+      confirm: true,
       group: true,
       xml: true,
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
@@ -532,6 +548,7 @@ describe('add-reviewer command', () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = addReviewerCommand(['nonexistent-group'], {
       change: '12345',
+      confirm: true,
       group: true,
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
@@ -546,6 +563,7 @@ describe('add-reviewer command', () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = addReviewerCommand(['user@example.com'], {
       change: '12345',
+      confirm: true,
       group: true,
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
@@ -562,6 +580,7 @@ describe('add-reviewer command', () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = addReviewerCommand(['admin@example.com', 'test@example.com'], {
       change: '12345',
+      confirm: true,
       group: true,
       xml: true,
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))

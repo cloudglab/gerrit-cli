@@ -1,10 +1,12 @@
 #!/usr/bin/env bun
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
+import { COMMAND_META } from '../src/cli/command-meta'
 
 const rootDir = resolve(import.meta.dir, '..')
-const cliPath = resolve(rootDir, 'bin/gerrit-cli')
+const cliPath = resolveCliPath()
+const cliRunner = resolveCliRunner(cliPath)
 const dryRun = process.argv.includes('--dry-run')
 const continueOnError = process.argv.includes('--continue-on-error')
 const live = process.env.GERRIT_SMOKE_LIVE === 'true'
@@ -18,6 +20,14 @@ const vars = {
   buildKeyword: smoke('BUILD_KEYWORD', 'jenkins'),
 }
 
+interface ManifestCommand {
+  readonly name: string
+}
+
+interface ManifestFile {
+  readonly commands: readonly ManifestCommand[]
+}
+
 type SmokeCommand = {
   label: string
   args: string[]
@@ -25,41 +35,7 @@ type SmokeCommand = {
   missing?: Array<keyof typeof vars>
 }
 
-const commandSurface = [
-  'setup',
-  'status',
-  'config',
-  'version',
-  'completion',
-  'show',
-  'diff',
-  'comments',
-  'search',
-  'list',
-  'mine',
-  'incoming',
-  'comment',
-  'vote',
-  'review',
-  'add-reviewer',
-  'remove-reviewer',
-  'checkout',
-  'push',
-  'rebase',
-  'submit',
-  'workspace',
-  'tree',
-  'build-status',
-  'failures',
-  'analyze',
-  'extract-url',
-  'groups',
-  'groups-show',
-  'groups-members',
-  'clean',
-  'open',
-  'cherry',
-]
+const commandSurface = loadCommandSurface()
 
 const schemaChecks: SmokeCommand[] = commandSurface.map((name) => cmdAs(`help:${name}`, name, '--help'))
 const liveQueries = [
@@ -74,7 +50,7 @@ const liveQueries = [
 const commands = live ? [...schemaChecks, ...liveQueries] : schemaChecks
 
 if (!existsSync(cliPath)) {
-  console.error('缺少 bin/gerrit-cli，请确认 package files/bin 入口存在。')
+  console.error('缺少可执行入口，请先运行 build 或确认 bin/gerrit-cli-entry.ts 存在。')
   process.exit(1)
 }
 
@@ -98,7 +74,7 @@ for (const item of commands) {
   }
 
   console.log(`RUN  ${printable}`)
-  const result = spawnSync('bun', [cliPath, ...item.args], {
+  const result = spawnSync(cliRunner.command, [...cliRunner.args, ...item.args], {
     cwd: rootDir,
     env: process.env,
     encoding: 'utf8',
@@ -141,4 +117,37 @@ function cmdIf(label: string, required: Array<keyof typeof vars>, ...args: strin
 
 function toEnvName(name: string) {
   return name.replace(/[A-Z]/g, (char) => `_${char}`).toUpperCase()
+}
+
+function loadCommandSurface(): readonly string[] {
+  const manifestPath = resolve(rootDir, 'dist/manifest.json')
+  if (existsSync(manifestPath)) {
+    const parsed: unknown = JSON.parse(readFileSync(manifestPath, 'utf8'))
+    if (isManifestFile(parsed)) return parsed.commands.map((command) => command.name)
+  }
+
+  return COMMAND_META.map((command) => command.name)
+}
+
+function resolveCliPath(): string {
+  const distCli = resolve(rootDir, 'dist/gerrit-cli')
+  if (existsSync(distCli)) return distCli
+  return resolve(rootDir, 'bin/gerrit-cli-entry.ts')
+}
+
+function resolveCliRunner(path: string): { readonly command: string; readonly args: readonly string[] } {
+  if (path.endsWith('.ts')) return { command: 'bun', args: [path] }
+  return { command: path, args: [] }
+}
+
+function isManifestFile(value: unknown): value is ManifestFile {
+  if (!value || typeof value !== 'object') return false
+  const commands = Reflect.get(value, 'commands')
+  if (!Array.isArray(commands)) return false
+  return commands.every(isManifestCommand)
+}
+
+function isManifestCommand(value: unknown): value is ManifestCommand {
+  if (!value || typeof value !== 'object') return false
+  return typeof Reflect.get(value, 'name') === 'string'
 }

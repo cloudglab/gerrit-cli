@@ -1,5 +1,6 @@
 import { Effect } from 'effect'
 import { type ApiError, GerritApiService } from '@/api/gerrit'
+import { assertWriteAllowed, type WriteGuardError } from '@/utils/write-guard'
 
 interface AddReviewerOptions {
   change?: string
@@ -8,6 +9,7 @@ interface AddReviewerOptions {
   xml?: boolean
   json?: boolean
   group?: boolean
+  confirm?: boolean
 }
 
 type NotifyLevel = 'NONE' | 'OWNER' | 'OWNER_REVIEWERS' | 'ALL'
@@ -36,7 +38,7 @@ class ValidationError extends Error {
 export const addReviewerCommand = (
   reviewers: string[],
   options: AddReviewerOptions = {},
-): Effect.Effect<void, ApiError | ValidationError, GerritApiService> =>
+): Effect.Effect<void, ApiError | ValidationError | WriteGuardError, GerritApiService> =>
   Effect.gen(function* () {
     const gerritApi = yield* GerritApiService
 
@@ -107,6 +109,12 @@ export const addReviewerCommand = (
       }
       notify = upperNotify as unknown as NotifyLevel
     }
+
+    yield* assertWriteAllowed({
+      confirm: options.confirm ?? false,
+      operation: 'add reviewer',
+      target: changeId,
+    })
 
     const results: Array<{ reviewer: string; success: boolean; name?: string; error?: string }> = []
 

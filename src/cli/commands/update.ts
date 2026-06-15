@@ -1,6 +1,7 @@
 import chalk from 'chalk'
 import { Console, Effect } from 'effect'
 import { renderInstallSuccessGuide } from '@/cli/banner'
+import { writeUpdateCacheAfterInstall } from '@/update-probe'
 import * as childProcess from '@/utils/child-process'
 export interface UpdateOptions {
   skipPull?: boolean
@@ -13,7 +14,6 @@ const REGISTRY_URL = `https://registry.npmjs.org/${PACKAGE_NAME}/latest`
 
 const readCurrentVersion = (): string => {
   try {
-    // Bun.file is available at runtime; use dynamic require as fallback
     const raw = require('../../package.json') as unknown as { version: string }
     return raw.version
   } catch {
@@ -27,6 +27,24 @@ class UpdateError extends Error {
     super(message)
     this.name = 'UpdateError'
   }
+}
+
+/**
+ * Detect the best available package manager for global install.
+ * Prefer npm (most universal), fall back to bun.
+ */
+const detectPackageManager = (): { command: string; args: string[] } => {
+  try {
+    childProcess.execSync('npm --version', { stdio: 'ignore', timeout: 5000 })
+    return { command: 'npm', args: ['install', '-g', `${PACKAGE_NAME}@latest`] }
+  } catch {
+    return { command: 'bun', args: ['install', '-g', `${PACKAGE_NAME}@latest`] }
+  }
+}
+
+const isDirectoryNotEmptyError = (error: unknown): boolean => {
+  const message = error instanceof Error ? error.message : String(error)
+  return message.includes('ENOTEMPTY') || message.toLowerCase().includes('directory not empty')
 }
 
 const fetchLatestVersion = (): Effect.Effect<string, UpdateError> =>
@@ -75,16 +93,31 @@ export const updateCommand = (options: UpdateOptions): Effect.Effect<void, Updat
       }
     }
 
+    const pm = detectPackageManager()
+
     if (!options.json && !options.xml) {
-      yield* Console.log(chalk.dim(`Installing ${PACKAGE_NAME}@latest...`))
+      yield* Console.log(chalk.dim(`Installing ${PACKAGE_NAME}@latest via ${pm.command}...`))
     }
 
     yield* Effect.try({
       try: () => {
-        childProcess.execSync(`bun install -g ${PACKAGE_NAME}@latest`, {
-          stdio: 'inherit',
-          timeout: 60000,
-        })
+        try {
+          childProcess.execSync(`${pm.command} ${pm.args.join(' ')}`, {
+            stdio: 'inherit',
+            timeout: 60000,
+          })
+        } catch (innerError) {
+          if (isDirectoryNotEmptyError(innerError)) {
+            process.stdout.write('\n检测到全局安装目录残留，正在清理后重试...\n')
+            childProcess.execSync(`${pm.command} ${pm.args.join(' ')}`, {
+              stdio: 'inherit',
+              timeout: 60000,
+            })
+          } else {
+            throw innerError
+          }
+        }
+        writeUpdateCacheAfterInstall()
       },
       catch: (e) =>
         new UpdateError(`Install failed: ${e instanceof Error ? e.message : String(e)}`),

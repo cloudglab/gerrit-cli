@@ -100,6 +100,7 @@ describe('comment command', () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
 
     const program = commentCommand('12345', {
+      confirm: true,
       message: 'This is a test comment',
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
@@ -143,6 +144,7 @@ describe('comment command', () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
 
     const program = commentCommand('12345', {
+      confirm: true,
       message: 'Fix this issue',
       file: 'src/main.js',
       line: 42,
@@ -195,7 +197,7 @@ describe('comment command', () => {
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
 
-    const program = commentCommand('12345', { batch: true }).pipe(
+    const program = commentCommand('12345', { batch: true, confirm: true }).pipe(
       Effect.provide(GerritApiServiceLive),
       Effect.provide(mockConfigLayer),
     )
@@ -247,6 +249,7 @@ describe('comment command', () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
 
     const program = commentCommand('12345', {
+      confirm: true,
       message: 'Fix this',
       file: 'test.js',
       line: 10,
@@ -366,6 +369,7 @@ describe('comment command', () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
 
     const program = commentCommand('12345', {
+      confirm: true,
       file: 'test.js',
       line: 10,
       // Missing message
@@ -385,7 +389,7 @@ describe('comment command', () => {
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
 
-    const program = commentCommand('12345', {}).pipe(
+    const program = commentCommand('12345', { confirm: true }).pipe(
       Effect.provide(GerritApiServiceLive),
       Effect.provide(mockConfigLayer),
     )
@@ -416,6 +420,7 @@ describe('comment command', () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
 
     const program = commentCommand('12345', {
+      confirm: true,
       message: 'Test comment',
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
@@ -445,6 +450,7 @@ describe('comment command', () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
 
     const program = commentCommand('12345', {
+      confirm: true,
       message: 'Test comment',
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
@@ -479,7 +485,7 @@ describe('comment command', () => {
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
 
-    const program = commentCommand('12345', { batch: true, xml: true }).pipe(
+    const program = commentCommand('12345', { batch: true, confirm: true, xml: true }).pipe(
       Effect.provide(GerritApiServiceLive),
       Effect.provide(mockConfigLayer),
     )
@@ -543,7 +549,7 @@ describe('comment command', () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
 
     // Test comment without message option (should read from stdin)
-    const program = commentCommand('12345', {}).pipe(
+    const program = commentCommand('12345', { confirm: true }).pipe(
       Effect.provide(GerritApiServiceLive),
       Effect.provide(mockConfigLayer),
     )
@@ -597,7 +603,7 @@ describe('comment command', () => {
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
 
-    const program = commentCommand('12345', {}).pipe(
+    const program = commentCommand('12345', { confirm: true }).pipe(
       Effect.provide(GerritApiServiceLive),
       Effect.provide(mockConfigLayer),
     )
@@ -645,7 +651,7 @@ describe('comment command', () => {
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
 
-    const program = commentCommand('12345', { batch: true }).pipe(
+    const program = commentCommand('12345', { batch: true, confirm: true }).pipe(
       Effect.provide(GerritApiServiceLive),
       Effect.provide(mockConfigLayer),
     )
@@ -697,6 +703,7 @@ describe('comment command', () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
 
     const program = commentCommand('12345', {
+      confirm: true,
       file: 'missing-file.rb',
       line: 42,
       message: 'Test comment on missing file',

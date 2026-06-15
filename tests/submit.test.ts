@@ -119,7 +119,7 @@ describe('submit command', () => {
     )
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
-    const program = submitCommand('12345', {}).pipe(
+    const program = submitCommand('12345', { confirm: true }).pipe(
       Effect.provide(GerritApiServiceLive),
       Effect.provide(mockConfigLayer),
     )
@@ -147,7 +147,7 @@ describe('submit command', () => {
     )
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
-    const program = submitCommand('12345', {}).pipe(
+    const program = submitCommand('12345', { confirm: true }).pipe(
       Effect.provide(GerritApiServiceLive),
       Effect.provide(mockConfigLayer),
     )
@@ -171,7 +171,7 @@ describe('submit command', () => {
     )
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
-    const program = submitCommand('12345', { xml: true }).pipe(
+    const program = submitCommand('12345', { confirm: true, xml: true }).pipe(
       Effect.provide(GerritApiServiceLive),
       Effect.provide(mockConfigLayer),
     )
@@ -196,7 +196,7 @@ describe('submit command', () => {
     )
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
-    const program = submitCommand('12345', {}).pipe(
+    const program = submitCommand('12345', { confirm: true }).pipe(
       Effect.provide(GerritApiServiceLive),
       Effect.provide(mockConfigLayer),
     )
@@ -218,7 +218,7 @@ describe('submit command', () => {
     )
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
-    const program = submitCommand('12345', {}).pipe(
+    const program = submitCommand('12345', { confirm: true }).pipe(
       Effect.provide(GerritApiServiceLive),
       Effect.provide(mockConfigLayer),
     )
@@ -238,7 +238,7 @@ describe('submit command', () => {
     )
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
-    const program = submitCommand('12345', { xml: true }).pipe(
+    const program = submitCommand('12345', { confirm: true, xml: true }).pipe(
       Effect.provide(GerritApiServiceLive),
       Effect.provide(mockConfigLayer),
     )
@@ -262,7 +262,7 @@ describe('submit command', () => {
     )
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
-    const program = submitCommand('99999', {}).pipe(
+    const program = submitCommand('99999', { confirm: true }).pipe(
       Effect.provide(GerritApiServiceLive),
       Effect.provide(mockConfigLayer),
     )
@@ -273,7 +273,7 @@ describe('submit command', () => {
 
   it('should show error when change ID is not provided', async () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
-    const program = submitCommand(undefined, {}).pipe(
+    const program = submitCommand(undefined, { confirm: true }).pipe(
       Effect.provide(GerritApiServiceLive),
       Effect.provide(mockConfigLayer),
     )
@@ -296,7 +296,7 @@ describe('submit command', () => {
     )
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
-    const program = submitCommand('12345', {}).pipe(
+    const program = submitCommand('12345', { confirm: true }).pipe(
       Effect.provide(GerritApiServiceLive),
       Effect.provide(mockConfigLayer),
     )
@@ -313,7 +313,7 @@ describe('submit command', () => {
     )
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
-    const program = submitCommand('12345', {}).pipe(
+    const program = submitCommand('12345', { confirm: true }).pipe(
       Effect.provide(GerritApiServiceLive),
       Effect.provide(mockConfigLayer),
     )
@@ -333,7 +333,7 @@ describe('submit command', () => {
     )
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
-    const program = submitCommand('12345', {}).pipe(
+    const program = submitCommand('12345', { confirm: true }).pipe(
       Effect.provide(GerritApiServiceLive),
       Effect.provide(mockConfigLayer),
     )

@@ -2,8 +2,14 @@ import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { Command } from 'commander'
+import { applyRoleFilter } from './cli/command-meta'
 import { registerCommands } from './cli/register-commands'
+import { CLI_ROLES, type CliRole, parseCliRole } from './cli/roles'
 import { runDailyUpdateProbe } from './update-probe'
+
+export interface RunCliOptions {
+  readonly role?: CliRole
+}
 
 function getVersion(): string {
   // Prefer build-time injected version (for compiled standalone binaries)
@@ -19,10 +25,14 @@ function getVersion(): string {
   }
 }
 
-function createProgram(): Command {
+function createProgram(role: CliRole): Command {
   const program = new Command()
 
-  program.name('gerrit-cli').description('Gerrit CLI tool').version(getVersion())
+  program
+    .name('gerrit-cli')
+    .description('Gerrit CLI tool')
+    .version(getVersion())
+    .option('-r, --role <role>', `Filter commands by role (${CLI_ROLES.join(', ')})`)
 
   program.addHelpText(
     'after',
@@ -63,8 +73,24 @@ SUBCOMMAND HELP
   )
 
   registerCommands(program)
+  applyRoleFilter(program, role)
 
   return program
+}
+
+function extractRole(argv: readonly string[], defaultRole: CliRole): CliRole {
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index]
+    if (arg === '--role' || arg === '-r') {
+      const role = argv[index + 1]
+      if (!role) throw new Error(`${arg} requires a role (${CLI_ROLES.join(', ')})`)
+      return parseCliRole(role)
+    }
+    if (arg.startsWith('--role=')) {
+      return parseCliRole(arg.slice('--role='.length))
+    }
+  }
+  return defaultRole
 }
 
 // Bun version guard — checked only when running as CLI (not on SDK import)
@@ -94,14 +120,21 @@ function ensureBunVersion(): void {
  * Bootstrap the Gerrit CLI.
  * Architecture aligned with zentao-cli: separate SDK exports from CLI bootstrap.
  */
-export async function runCli(argv: string[]): Promise<void> {
+function extractCommandName(argv: readonly string[]): string | undefined {
+  for (const arg of argv) {
+    if (arg.startsWith('-')) continue
+    return arg
+  }
+  return undefined
+}
+
+export async function runCli(argv: string[], options: RunCliOptions = {}): Promise<void> {
   ensureBunVersion()
 
-  // Non-blocking daily update probe — silently checks npm for newer versions
-  if (process.env.GERRIT_SKIP_UPDATE_CHECK !== 'true') {
-    runDailyUpdateProbe().catch(() => {})
-  }
+  // Non-blocking daily update probe — spawns detached background subprocess
+  runDailyUpdateProbe(extractCommandName(argv))
 
-  const program = createProgram()
+  const role = extractRole(argv, options.role ?? 'full')
+  const program = createProgram(role)
   await program.parseAsync(argv, { from: 'user' })
 }

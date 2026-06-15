@@ -58,6 +58,7 @@ describe('vote command', () => {
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = voteCommand('12345', {
+      confirm: true,
       codeReview: 2,
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
@@ -79,6 +80,7 @@ describe('vote command', () => {
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = voteCommand('12345', {
+      confirm: true,
       codeReview: 1,
       verified: 1,
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
@@ -101,6 +103,7 @@ describe('vote command', () => {
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = voteCommand('12345', {
+      confirm: true,
       codeReview: -2,
       verified: -1,
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
@@ -124,6 +127,7 @@ describe('vote command', () => {
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = voteCommand('12345', {
+      confirm: true,
       codeReview: 2,
       message: 'Looks good to me!',
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
@@ -146,6 +150,7 @@ describe('vote command', () => {
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = voteCommand('12345', {
+      confirm: true,
       codeReview: 2,
       label: ['Custom-Label', '1'],
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
@@ -168,6 +173,7 @@ describe('vote command', () => {
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = voteCommand('12345', {
+      confirm: true,
       label: ['Label-A', '1', 'Label-B', '-1'],
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
@@ -190,6 +196,7 @@ describe('vote command', () => {
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = voteCommand('12345', {
+      confirm: true,
       xml: true,
       codeReview: 2,
       verified: 1,
@@ -218,6 +225,7 @@ describe('vote command', () => {
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = voteCommand('12345', {
+      confirm: true,
       xml: true,
       codeReview: 1,
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
@@ -246,7 +254,7 @@ describe('vote command', () => {
 
   it('should show error when no labels are provided', async () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
-    const program = voteCommand('12345', {}).pipe(
+    const program = voteCommand('12345', { confirm: true }).pipe(
       Effect.provide(GerritApiServiceLive),
       Effect.provide(mockConfigLayer),
     )
@@ -266,6 +274,7 @@ describe('vote command', () => {
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = voteCommand('12345', {
+      confirm: true,
       codeReview: 2,
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
@@ -282,6 +291,7 @@ describe('vote command', () => {
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = voteCommand('99999', {
+      confirm: true,
       codeReview: 2,
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
@@ -292,6 +302,7 @@ describe('vote command', () => {
   it('should reject invalid custom label value', async () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = voteCommand('12345', {
+      confirm: true,
       label: ['Custom-Label', 'not-a-number'],
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
@@ -305,6 +316,7 @@ describe('vote command', () => {
   it('should reject odd number of label arguments', async () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = voteCommand('12345', {
+      confirm: true,
       label: ['Custom-Label', '1', 'Another-Label'],
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 

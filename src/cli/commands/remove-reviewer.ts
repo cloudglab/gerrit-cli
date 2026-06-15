@@ -1,12 +1,14 @@
 import { Effect } from 'effect'
 import { type ApiError, GerritApiService } from '@/api/gerrit'
 import { escapeXML, sanitizeCDATA } from '@/utils/shell-safety'
+import { assertWriteAllowed, type WriteGuardError } from '@/utils/write-guard'
 
 interface RemoveReviewerOptions {
   change?: string
   notify?: string
   xml?: boolean
   json?: boolean
+  confirm?: boolean
 }
 
 type NotifyLevel = 'NONE' | 'OWNER' | 'OWNER_REVIEWERS' | 'ALL'
@@ -35,7 +37,7 @@ class ValidationError extends Error {
 export const removeReviewerCommand = (
   reviewers: string[],
   options: RemoveReviewerOptions = {},
-): Effect.Effect<void, ApiError | ValidationError, GerritApiService> =>
+): Effect.Effect<void, ApiError | ValidationError | WriteGuardError, GerritApiService> =>
   Effect.gen(function* () {
     const gerritApi = yield* GerritApiService
 
@@ -83,6 +85,12 @@ export const removeReviewerCommand = (
       }
       notify = upperNotify
     }
+
+    yield* assertWriteAllowed({
+      confirm: options.confirm ?? false,
+      operation: 'remove reviewer',
+      target: changeId,
+    })
 
     const results: Array<{ reviewer: string; success: boolean; error?: string }> = []
 

@@ -1,10 +1,12 @@
 import { Effect } from 'effect'
 import { type ApiError, GerritApiService } from '@/api/gerrit'
+import { assertWriteAllowed, type WriteGuardError } from '@/utils/write-guard'
 
 interface RestoreOptions {
   message?: string
   xml?: boolean
   json?: boolean
+  confirm?: boolean
 }
 
 /**
@@ -19,7 +21,7 @@ interface RestoreOptions {
 export const restoreCommand = (
   changeId?: string,
   options: RestoreOptions = {},
-): Effect.Effect<void, ApiError, GerritApiService> =>
+): Effect.Effect<void, ApiError | WriteGuardError, GerritApiService> =>
   Effect.gen(function* () {
     const gerritApi = yield* GerritApiService
 
@@ -28,6 +30,12 @@ export const restoreCommand = (
       console.error('  Usage: gerrit-cli restore <change-id>')
       return
     }
+
+    yield* assertWriteAllowed({
+      confirm: options.confirm ?? false,
+      operation: 'restore change',
+      target: changeId,
+    })
 
     // Perform the restore - this returns the restored change info
     const change = yield* gerritApi.restoreChange(changeId, options.message)

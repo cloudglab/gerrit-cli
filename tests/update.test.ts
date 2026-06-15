@@ -32,7 +32,7 @@ describe('update command', () => {
     expect(execSpy.mock.calls.length).toBe(0)
   })
 
-  test('runs bun install when newer version available', async () => {
+  test('runs npm install when newer version available', async () => {
     execSpy = spyOn(childProcess, 'execSync').mockImplementation((() =>
       Buffer.from('')) as unknown as typeof childProcess.execSync)
     global.fetch = (async () => Response.json({ version: '999.0.0' })) as unknown as typeof fetch
@@ -49,7 +49,11 @@ describe('update command', () => {
 
     const calls = (execSpy.mock.calls as unknown as [string][]).map(([c]) => c)
     expect(
-      calls.some((c) => c.includes('bun install -g') && c.includes('@cloudglab/gerrit-cli')),
+      calls.some(
+        (c) =>
+          (c.includes('npm install -g') || c.includes('bun install -g')) &&
+          c.includes('@cloudglab/gerrit-cli'),
+      ),
     ).toBe(true)
     expect(logs.join('\n')).toContain('更新完成')
   })
@@ -64,7 +68,9 @@ describe('update command', () => {
 
     expect(fetchSpy.mock.calls.length).toBe(0)
     const calls = (execSpy.mock.calls as unknown as [string][]).map(([c]) => c)
-    expect(calls.some((c) => c.includes('bun install -g'))).toBe(true)
+    expect(calls.some((c) => c.includes('npm install -g') || c.includes('bun install -g'))).toBe(
+      true,
+    )
   })
 
   test('fails when registry is unreachable', async () => {
@@ -86,7 +92,7 @@ describe('update command', () => {
     expect(result._tag).toBe('Left')
   })
 
-  test('install command runs global bun install', async () => {
+  test('install command runs global npm install', async () => {
     execSpy = spyOn(childProcess, 'execSync').mockImplementation((() =>
       Buffer.from('')) as unknown as typeof childProcess.execSync)
 
@@ -102,7 +108,11 @@ describe('update command', () => {
 
     const calls = (execSpy.mock.calls as unknown as [string][]).map(([c]) => c)
     expect(
-      calls.some((c) => c.includes('bun install -g') && c.includes('@cloudglab/gerrit-cli')),
+      calls.some(
+        (c) =>
+          (c.includes('npm install -g') || c.includes('bun install -g')) &&
+          c.includes('@cloudglab/gerrit-cli'),
+      ),
     ).toBe(true)
     expect(logs.join('\n')).toContain('安装完成')
   })

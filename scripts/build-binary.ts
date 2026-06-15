@@ -11,6 +11,8 @@ const ENTRIES = [
 
 if (!existsSync('dist')) mkdirSync('dist')
 
+execSync('bun scripts/generate-manifest.ts', { stdio: 'inherit' })
+
 const pkg = JSON.parse(readFileSync('package.json', 'utf8'))
 const version = pkg.version
 

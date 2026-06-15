@@ -12,6 +12,27 @@ npm install -g @cloudglab/gerrit-cli
 
 安装完成后会打印 ASCII banner 和快速开始指引。
 
+### 无预装方式（npx）
+
+如果不想先全局安装，可以直接用 npx 运行：
+
+```bash
+# 首次安装（无需预装）
+npx -y @cloudglab/gerrit-cli@latest install
+
+# 更新到最新版
+npx -y @cloudglab/gerrit-cli@latest update
+
+# 卸载
+npx -y @cloudglab/gerrit-cli@latest uninstall --confirm
+
+# 直接运行任意命令
+npx -y @cloudglab/gerrit-cli@latest --help
+npx -y @cloudglab/gerrit-cli@latest setup
+```
+
+> `npx` 方式适合本机 CLI 已损坏或不想依赖本地旧版本时使用。
+
 ## 升级
 
 ```bash
@@ -19,6 +40,9 @@ npm update -g @cloudglab/gerrit-cli
 
 # 或走 CLI 更新入口
 gerrit update
+
+# 或通过 npx 直接更新
+npx -y @cloudglab/gerrit-cli@latest update
 ```
 
 ## 卸载
@@ -29,6 +53,12 @@ gerrit uninstall
 
 # 确认执行
 gerrit uninstall --confirm
+
+# 同时删除 ~/.gerrit-cli 配置目录（含凭证）
+gerrit uninstall --confirm --remove-config
+
+# 通过 npx 卸载（适合 CLI 已损坏时）
+npx -y @cloudglab/gerrit-cli@latest uninstall --confirm
 ```
 
 ## 命令速查页
@@ -49,6 +79,12 @@ gerrit-cli setup
 
 # 验证连接
 gerrit-cli status
+
+# 查看当前身份与配置来源
+gerrit-cli whoami
+
+# 诊断本地环境（配置、连接、git remote、commit-msg hook）
+gerrit-cli doctor
 ```
 
 ## 角色入口
@@ -60,7 +96,7 @@ gerrit-cli status
 | `gerrit-ci` | 构建检查、脚本集成 | `build-status --watch`, `extract-url`, `--json`, `--xml` |
 | `gerrit-lead` | 分配审查、组管理 | `add-reviewer`, `groups`, `groups-members`, `team` |
 
-> 这些入口与 `gerrit-cli` 使用同一套权限和命令，只是给不同角色提供更清晰的安装后入口。
+> 这些入口与 `gerrit-cli` 共享同一套命令，但会自动过滤为该角色常用的命令子集，减少干扰。用 `--role` 可在任意入口切换角色视角。
 
 ## 日常场景
 
@@ -134,6 +170,20 @@ export GERRIT_PASSWORD="your-http-password"
 
 配置优先级：命令行参数 > 环境变量 > `~/.gerrit-cli/config.json`
 
+## 写保护
+
+所有写操作（评论、投票、提交、放弃、恢复、添加/移除审查人）默认为预览模式，需要 `--confirm` 才会真正执行：
+
+```bash
+# 预览（不执行）
+gerrit-cli vote 12345 --code-review 2
+
+# 确认执行
+gerrit-cli vote 12345 --code-review 2 --confirm
+```
+
+可通过 `GERRIT_DISABLE_WRITE=true` 临时禁用所有写操作。
+
 ## 输出格式
 
 大多数命令支持三种输出：
@@ -146,14 +196,14 @@ export GERRIT_PASSWORD="your-http-password"
 
 ## Skill / Agent 用法
 
-本仓库包含 `skills/gerrit-workflow` 技能包，适合 AI Agent 和 IDE 插件使用。
+本仓库包含 `skills/gerrit-cli` 技能包，适合 AI Agent 和 IDE 插件使用。
 
 ### 安装 Skill
 
 ```bash
 # 通过 Claude Code 插件系统安装
 /plugin marketplace add cloudglab/gerrit-cli
-/plugin install gerrit-workflow@gerrit-cli
+/plugin install gerrit-cli@gerrit-cli
 ```
 
 ### 自然语言示例
@@ -168,10 +218,8 @@ export GERRIT_PASSWORD="your-http-password"
 ### Skill 包结构
 
 ```
-skills/gerrit-workflow/
-├── SKILL.md         # 主指令
-├── reference.md     # 完整命令索引
-└── examples.md      # 真实场景示例
+skills/gerrit-cli/
+└── SKILL.md         # 主指令（命令索引、角色入口、场景链路、写保护说明）
 ```
 
 ## LLM 集成

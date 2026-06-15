@@ -13,6 +13,7 @@ import { commentsCommand } from './commands/comments'
 import { renderCompletion } from './commands/completion'
 import { configShowCommand, configTestCommand } from './commands/config'
 import { diffCommand } from './commands/diff'
+import { doctorCommand, outputDoctorReport } from './commands/doctor'
 import { filesCommand } from './commands/files'
 import { openCommand } from './commands/open'
 import { projectsCommand } from './commands/projects'
@@ -29,6 +30,7 @@ import { submitCommand } from './commands/submit'
 import { TOPIC_HELP_TEXT, topicCommand } from './commands/topic'
 import { versionCommand } from './commands/version'
 import { voteCommand } from './commands/vote'
+import { whoamiCommand } from './commands/whoami'
 import { workspaceCommand } from './commands/workspace'
 import { registerAnalyticsCommands } from './register-analytics-commands'
 import { registerCicdCommands } from './register-cicd-commands'
@@ -89,6 +91,7 @@ export function registerCommands(program: Command): void {
     )
     .option('--unresolved', 'Mark comment as unresolved (requires human attention)')
     .option('--batch', 'Read batch comments from stdin as JSON (see examples below)')
+    .option('--confirm', 'Confirm and execute this write operation')
     .option('--xml', 'XML output for LLM consumption')
     .option('--json', 'JSON output for programmatic consumption')
     .addHelpText('after', COMMENT_HELP_TEXT)
@@ -207,6 +210,7 @@ export function registerCommands(program: Command): void {
   program
     .command('submit <change-id>')
     .description('Submit a change for merging (accepts change number or Change-ID)')
+    .option('--confirm', 'Confirm and execute this write operation')
     .option('--xml', 'XML output for LLM consumption')
     .option('--json', 'JSON output for programmatic consumption')
     .action(async (changeId, options) => {
@@ -247,6 +251,7 @@ export function registerCommands(program: Command): void {
     .option('--verified <value>', 'Verified vote (-1 to +1)', parseInt)
     .option('--label <name> <value>', 'Custom label vote (can be used multiple times)')
     .option('-m, --message <message>', 'Comment with vote')
+    .option('--confirm', 'Confirm and execute this write operation')
     .option('--xml', 'XML output for LLM consumption')
     .option('--json', 'JSON output for programmatic consumption')
     .action(async (changeId, options) => {
@@ -541,5 +546,46 @@ Examples:
     .option('--xml', 'XML output')
     .action((options) => {
       versionCommand(options)
+    })
+
+  program
+    .command('whoami')
+    .description('Show current Gerrit identity and connection status')
+    .option('--json', 'JSON output')
+    .option('--xml', 'XML output')
+    .action(async (options: { json?: boolean; xml?: boolean }) => {
+      await executeEffect(
+        whoamiCommand(options).pipe(
+          Effect.provide(GerritApiServiceLive),
+          Effect.provide(ConfigServiceLive),
+        ),
+        options,
+        'whoami',
+      )
+    })
+
+  program
+    .command('doctor')
+    .description('Run local Gerrit CLI environment diagnostics')
+    .option('--json', 'JSON output')
+    .option('--xml', 'XML output')
+    .action(async (options: { json?: boolean; xml?: boolean }) => {
+      if (options.xml && options.json) {
+        console.error('✗ Error: --xml and --json are mutually exclusive')
+        process.exit(1)
+      }
+
+      const report = await Effect.runPromise(
+        doctorCommand().pipe(
+          Effect.provide(CommitHookServiceLive),
+          Effect.provide(GerritApiServiceLive),
+          Effect.provide(ConfigServiceLive),
+        ),
+      )
+
+      outputDoctorReport(report, options)
+      if (!report.ok) {
+        process.exit(1)
+      }
     })
 }

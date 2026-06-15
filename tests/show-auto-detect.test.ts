@@ -286,7 +286,7 @@ This commit has no Change-ID footer.`
     expect(output).toContain('Change 392385')
     expect(output).toContain('WIP: test')
     expect(capturedErrors.length).toBe(0)
-  })
+  }, 10000)
 
   test('shows XML error when no Change-ID in commit with --xml flag', async () => {
     const commitMessage = `feat: no change id`

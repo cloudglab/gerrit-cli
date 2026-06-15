@@ -51,6 +51,7 @@ export function registerReviewerCommands(program: Command): void {
     .option('-c, --change <change-id>', 'Change ID (required until auto-detection is implemented)')
     .option('--cc', 'Add as CC instead of reviewer')
     .option('--group', 'Add as group instead of individual reviewer')
+    .option('--confirm', 'Confirm and execute this write operation')
     .option(
       '--notify <level>',
       'Notification level: none, owner, owner_reviewers, all (default: all)',
@@ -88,6 +89,7 @@ Examples:
       '--notify <level>',
       'Notification level: none, owner, owner_reviewers, all (default: all)',
     )
+    .option('--confirm', 'Confirm and execute this write operation')
     .option('--xml', 'XML output for LLM consumption')
     .option('--json', 'JSON output for programmatic consumption')
     .addHelpText(

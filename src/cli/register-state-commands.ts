@@ -40,6 +40,7 @@ export function registerStateCommands(program: Command): void {
       'Abandon a change (interactive mode if no change-id provided; accepts change number or Change-ID)',
     )
     .option('-m, --message <message>', 'Abandon message')
+    .option('--confirm', 'Confirm and execute this write operation')
     .option('--xml', 'XML output for LLM consumption')
     .option('--json', 'JSON output for programmatic consumption')
     .action(async (changeId, options) => {
@@ -57,6 +58,7 @@ export function registerStateCommands(program: Command): void {
     .command('restore <change-id>')
     .description('Restore an abandoned change (accepts change number or Change-ID)')
     .option('-m, --message <message>', 'Restoration message')
+    .option('--confirm', 'Confirm and execute this write operation')
     .option('--xml', 'XML output for LLM consumption')
     .option('--json', 'JSON output for programmatic consumption')
     .action(async (changeId, options) => {

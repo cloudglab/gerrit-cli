@@ -63,7 +63,7 @@ describe('Gerrit API Compliance Tests', () => {
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
 
-    const program = commentCommand('12345', { batch: true }).pipe(
+    const program = commentCommand('12345', { batch: true, confirm: true }).pipe(
       Effect.provide(GerritApiServiceLive),
       Effect.provide(mockConfigLayer),
     )
@@ -169,7 +169,7 @@ describe('Gerrit API Compliance Tests', () => {
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
 
-    const program = commentCommand('12345', { batch: true }).pipe(
+    const program = commentCommand('12345', { batch: true, confirm: true }).pipe(
       Effect.provide(GerritApiServiceLive),
       Effect.provide(mockConfigLayer),
     )
@@ -363,7 +363,7 @@ describe('Gerrit API Compliance Tests', () => {
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
 
-    const program = commentCommand('12345', { batch: true }).pipe(
+    const program = commentCommand('12345', { batch: true, confirm: true }).pipe(
       Effect.provide(GerritApiServiceLive),
       Effect.provide(mockConfigLayer),
     )

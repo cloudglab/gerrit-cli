@@ -1,7 +1,7 @@
 import { Effect } from 'effect'
 import type { AppConfig } from '@/schemas/config'
 import type { GerritCredentials } from '@/schemas/gerrit'
-import type { ConfigServiceImpl } from '@/services/config'
+import { type ConfigServiceImpl, maskConfig } from '@/services/config'
 
 export const createMockConfigService = (
   credentials: GerritCredentials = {
@@ -20,6 +20,17 @@ export const createMockConfigService = (
     password: credentials.password,
     retriggerComment,
   } as AppConfig),
+  getMaskedConfig: Effect.succeed(
+    maskConfig(
+      {
+        host: credentials.host,
+        username: credentials.username,
+        password: credentials.password,
+        retriggerComment,
+      } as AppConfig,
+      'file',
+    ),
+  ),
   saveFullConfig: () => Effect.succeed(undefined as void),
   getRetriggerComment: Effect.succeed(retriggerComment),
   saveRetriggerComment: () => Effect.succeed(undefined as void),

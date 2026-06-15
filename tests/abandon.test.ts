@@ -88,6 +88,7 @@ describe('abandon command', () => {
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = abandonCommand('12345', {
+      confirm: true,
       message: 'No longer needed',
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
@@ -112,7 +113,7 @@ describe('abandon command', () => {
     )
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
-    const program = abandonCommand('12345', {}).pipe(
+    const program = abandonCommand('12345', { confirm: true }).pipe(
       Effect.provide(GerritApiServiceLive),
       Effect.provide(mockConfigLayer),
     )
@@ -139,6 +140,7 @@ describe('abandon command', () => {
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = abandonCommand('12345', {
+      confirm: true,
       xml: true,
       message: 'Abandoning for testing',
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
@@ -166,7 +168,7 @@ describe('abandon command', () => {
     )
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
-    const program = abandonCommand('12345', { xml: true }).pipe(
+    const program = abandonCommand('12345', { confirm: true, xml: true }).pipe(
       Effect.provide(GerritApiServiceLive),
       Effect.provide(mockConfigLayer),
     )
@@ -188,6 +190,7 @@ describe('abandon command', () => {
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = abandonCommand('99999', {
+      confirm: true,
       message: 'Test message',
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
@@ -197,7 +200,7 @@ describe('abandon command', () => {
 
   it('should show error when change ID is not provided', async () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
-    const program = abandonCommand(undefined, {}).pipe(
+    const program = abandonCommand(undefined, { confirm: true }).pipe(
       Effect.provide(GerritApiServiceLive),
       Effect.provide(mockConfigLayer),
     )
@@ -221,6 +224,7 @@ describe('abandon command', () => {
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = abandonCommand('12345', {
+      confirm: true,
       message: 'Test',
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 

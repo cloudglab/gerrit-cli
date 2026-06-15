@@ -1,6 +1,7 @@
 import { Effect } from 'effect'
 import { type ApiError, GerritApiService } from '@/api/gerrit'
 import type { ReviewInput } from '@/schemas/gerrit'
+import { assertWriteAllowed, type WriteGuardError } from '@/utils/write-guard'
 
 interface VoteOptions {
   codeReview?: number
@@ -9,6 +10,7 @@ interface VoteOptions {
   message?: string
   xml?: boolean
   json?: boolean
+  confirm?: boolean
 }
 
 /**
@@ -29,7 +31,7 @@ interface VoteOptions {
 export const voteCommand = (
   changeId?: string,
   options: VoteOptions = {},
-): Effect.Effect<void, ApiError, GerritApiService> =>
+): Effect.Effect<void, ApiError | WriteGuardError, GerritApiService> =>
   Effect.gen(function* () {
     const gerritApi = yield* GerritApiService
 
@@ -84,6 +86,12 @@ export const voteCommand = (
       )
       return
     }
+
+    yield* assertWriteAllowed({
+      confirm: options.confirm ?? false,
+      operation: 'cast vote',
+      target: changeId,
+    })
 
     // Build ReviewInput
     const reviewInput: ReviewInput = {

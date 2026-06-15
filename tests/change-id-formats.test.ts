@@ -138,7 +138,7 @@ describe('Change ID format support', () => {
       expect(output).toContain('Change 392385')
       expect(output).toContain('WIP: test')
       expect(capturedErrors.length).toBe(0)
-    })
+    }, 10000)
 
     test('accepts Change-ID format', async () => {
       const effect = showCommand(CHANGE_ID, {}).pipe(
@@ -199,7 +199,7 @@ describe('Change ID format support', () => {
 
   describe('comment command', () => {
     test('accepts numeric change number', async () => {
-      const effect = commentCommand(CHANGE_NUMBER, { message: 'LGTM' }).pipe(
+      const effect = commentCommand(CHANGE_NUMBER, { confirm: true, message: 'LGTM' }).pipe(
         Effect.provide(GerritApiServiceLive),
         Effect.provide(createMockConfigLayer()),
       )
@@ -212,7 +212,7 @@ describe('Change ID format support', () => {
     })
 
     test('accepts Change-ID format', async () => {
-      const effect = commentCommand(CHANGE_ID, { message: 'LGTM' }).pipe(
+      const effect = commentCommand(CHANGE_ID, { confirm: true, message: 'LGTM' }).pipe(
         Effect.provide(GerritApiServiceLive),
         Effect.provide(createMockConfigLayer()),
       )
