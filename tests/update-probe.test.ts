@@ -1,26 +1,20 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { readFileSync, unlinkSync } from 'node:fs'
-import { homedir } from 'node:os'
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { tmpdir } from 'node:os'
 import {
   runDailyUpdateProbe,
+  setCheckFileForTesting,
   writeUpdateCacheAfterInstall,
   writeUpdateCheckState,
 } from '@/update-probe'
 
-const CHECK_FILE = join(homedir(), '.gerrit-cli', 'update-check.json')
-
-function cleanupCheckFile(): void {
-  try {
-    unlinkSync(CHECK_FILE)
-  } catch {
-    // ignore ENOENT
-  }
-}
+const TEST_DIR = join(tmpdir(), `gerrit-update-probe-test-${process.pid}`)
+const TEST_FILE = join(TEST_DIR, 'update-check.json')
 
 function readState(): Record<string, unknown> {
   try {
-    return JSON.parse(readFileSync(CHECK_FILE, 'utf8')) as Record<string, unknown>
+    return JSON.parse(readFileSync(TEST_FILE, 'utf8')) as Record<string, unknown>
   } catch {
     return {}
   }
@@ -31,7 +25,8 @@ describe('update probe', () => {
   let origStderr: typeof process.stderr.write
 
   beforeEach(() => {
-    cleanupCheckFile()
+    mkdirSync(TEST_DIR, { recursive: true })
+    setCheckFileForTesting(TEST_FILE)
     stderrOutput = []
     origStderr = process.stderr.write
     process.stderr.write = ((chunk: unknown) => {
@@ -42,7 +37,11 @@ describe('update probe', () => {
 
   afterEach(() => {
     process.stderr.write = origStderr
-    cleanupCheckFile()
+    try {
+      rmSync(TEST_DIR, { recursive: true, force: true })
+    } catch {
+      // ignore
+    }
     delete process.env.GERRIT_SKIP_UPDATE_CHECK
   })
 
@@ -103,7 +102,6 @@ describe('update probe', () => {
     writeUpdateCacheAfterInstall('1.2.3')
 
     const state = readState()
-    expect(state.lastCheckedDate).toBeDefined()
     expect(state.lastCheckedDate).toBe(new Date().toISOString().slice(0, 10))
     expect(state.latestVersion).toBe('1.2.3')
   })

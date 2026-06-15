@@ -1,10 +1,15 @@
 import { spawn } from 'node:child_process'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 
 const PACKAGE_NAME = '@cloudglab/gerrit-cli'
-const CHECK_FILE = join(homedir(), '.gerrit-cli', 'update-check.json')
+let CHECK_FILE = join(homedir(), '.gerrit-cli', 'update-check.json')
+
+/** Override check file path for testing only. */
+export function setCheckFileForTesting(filePath: string): void {
+  CHECK_FILE = filePath
+}
 
 const SKIP_COMMANDS = new Set([
   'help',
@@ -59,7 +64,7 @@ function readUpdateCheckState(): UpdateCheckState {
 }
 
 export function writeUpdateCheckState(state: UpdateCheckState): void {
-  const dir = join(homedir(), '.gerrit-cli')
+  const dir = dirname(CHECK_FILE)
   const data = `${JSON.stringify(state, null, 2)}\n`
   for (let attempt = 0; attempt < 2; attempt += 1) {
     try {
