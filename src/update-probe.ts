@@ -59,12 +59,16 @@ function readUpdateCheckState(): UpdateCheckState {
 }
 
 export function writeUpdateCheckState(state: UpdateCheckState): void {
-  try {
-    const dir = join(homedir(), '.gerrit-cli')
-    if (!existsSync(dir)) mkdirSync(dir, { recursive: true, mode: 0o700 })
-    writeFileSync(CHECK_FILE, `${JSON.stringify(state, null, 2)}\n`, { mode: 0o600 })
-  } catch {
-    // Silently ignore write failures
+  const dir = join(homedir(), '.gerrit-cli')
+  const data = `${JSON.stringify(state, null, 2)}\n`
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      mkdirSync(dir, { recursive: true, mode: 0o700 })
+      writeFileSync(CHECK_FILE, data, { mode: 0o600 })
+      return
+    } catch {
+      // ENOENT race: dir deleted between mkdir and write; retry once
+    }
   }
 }
 

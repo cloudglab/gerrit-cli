@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { existsSync, readFileSync, unlinkSync } from 'node:fs'
+import { readFileSync, unlinkSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import {
@@ -12,15 +12,18 @@ const CHECK_FILE = join(homedir(), '.gerrit-cli', 'update-check.json')
 
 function cleanupCheckFile(): void {
   try {
-    if (existsSync(CHECK_FILE)) unlinkSync(CHECK_FILE)
+    unlinkSync(CHECK_FILE)
   } catch {
-    // ignore
+    // ignore ENOENT
   }
 }
 
 function readState(): Record<string, unknown> {
-  if (!existsSync(CHECK_FILE)) return {}
-  return JSON.parse(readFileSync(CHECK_FILE, 'utf8')) as Record<string, unknown>
+  try {
+    return JSON.parse(readFileSync(CHECK_FILE, 'utf8')) as Record<string, unknown>
+  } catch {
+    return {}
+  }
 }
 
 describe('update probe', () => {
@@ -99,8 +102,8 @@ describe('update probe', () => {
   test('writeUpdateCacheAfterInstall writes current date and version', () => {
     writeUpdateCacheAfterInstall('1.2.3')
 
-    expect(existsSync(CHECK_FILE)).toBe(true)
     const state = readState()
+    expect(state.lastCheckedDate).toBeDefined()
     expect(state.lastCheckedDate).toBe(new Date().toISOString().slice(0, 10))
     expect(state.latestVersion).toBe('1.2.3')
   })
