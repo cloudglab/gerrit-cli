@@ -6,6 +6,10 @@ import { dirname, join } from 'node:path'
 const PACKAGE_NAME = '@cloudglab/gerrit-cli'
 let CHECK_FILE = join(homedir(), '.gerrit-cli', 'update-check.json')
 
+export interface UpdateProbeOptions {
+  readonly checkFile?: string
+}
+
 /** Override check file path for testing only. */
 export function setCheckFileForTesting(filePath: string): void {
   CHECK_FILE = filePath
@@ -50,10 +54,10 @@ function getLocalVersion(): string {
   }
 }
 
-function readUpdateCheckState(): UpdateCheckState {
+function readUpdateCheckStateFrom(checkFile: string): UpdateCheckState {
   try {
-    if (!existsSync(CHECK_FILE)) return {}
-    const parsed = JSON.parse(readFileSync(CHECK_FILE, 'utf8')) as unknown
+    if (!existsSync(checkFile)) return {}
+    const parsed = JSON.parse(readFileSync(checkFile, 'utf8')) as unknown
     if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
       return parsed as UpdateCheckState
     }
@@ -63,13 +67,16 @@ function readUpdateCheckState(): UpdateCheckState {
   }
 }
 
-export function writeUpdateCheckState(state: UpdateCheckState): void {
-  const dir = dirname(CHECK_FILE)
+export function writeUpdateCheckState(
+  state: UpdateCheckState,
+  checkFile: string = CHECK_FILE,
+): void {
+  const dir = dirname(checkFile)
   const data = `${JSON.stringify(state, null, 2)}\n`
   for (let attempt = 0; attempt < 2; attempt += 1) {
     try {
       mkdirSync(dir, { recursive: true, mode: 0o700 })
-      writeFileSync(CHECK_FILE, data, { mode: 0o600 })
+      writeFileSync(checkFile, data, { mode: 0o600 })
       return
     } catch {
       // ENOENT race: dir deleted between mkdir and write; retry once
@@ -163,23 +170,27 @@ function triggerBackgroundVersionCheck(): void {
  * Respects `GERRIT_SKIP_UPDATE_CHECK=true` to disable the check entirely.
  * Skips check for commands in SKIP_COMMANDS (help, version, install, etc.).
  */
-export function runDailyUpdateProbe(commandName?: string): void {
+export function runDailyUpdateProbe(commandName?: string, options: UpdateProbeOptions = {}): void {
   if (commandName && SKIP_COMMANDS.has(commandName)) return
   if (process.env.GERRIT_SKIP_UPDATE_CHECK === 'true') return
 
   try {
+    const checkFile = options.checkFile ?? CHECK_FILE
     const today = new Date().toISOString().slice(0, 10)
-    const state = readUpdateCheckState()
+    const state = readUpdateCheckStateFrom(checkFile)
 
     notifyIfUpdateAvailable(state.latestVersion)
 
     if (state.lastCheckedDate === today) return
 
-    writeUpdateCheckState({
-      ...state,
-      lastCheckedDate: today,
-      currentVersion: getLocalVersion(),
-    })
+    writeUpdateCheckState(
+      {
+        ...state,
+        lastCheckedDate: today,
+        currentVersion: getLocalVersion(),
+      },
+      checkFile,
+    )
     triggerBackgroundVersionCheck()
   } catch {
     // Update check failure must not block the main command
@@ -191,11 +202,17 @@ export function runDailyUpdateProbe(commandName?: string): void {
  * Prevents the probe from immediately reporting an available update
  * right after the user just installed/updated.
  */
-export function writeUpdateCacheAfterInstall(version?: string): void {
+export function writeUpdateCacheAfterInstall(
+  version?: string,
+  checkFile: string = CHECK_FILE,
+): void {
   const today = new Date().toISOString().slice(0, 10)
-  writeUpdateCheckState({
-    lastCheckedDate: today,
-    latestVersion: version ?? getLocalVersion(),
-    currentVersion: getLocalVersion(),
-  })
+  writeUpdateCheckState(
+    {
+      lastCheckedDate: today,
+      latestVersion: version ?? getLocalVersion(),
+      currentVersion: getLocalVersion(),
+    },
+    checkFile,
+  )
 }

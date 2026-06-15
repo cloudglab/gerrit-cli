@@ -4,7 +4,6 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import {
   runDailyUpdateProbe,
-  setCheckFileForTesting,
   writeUpdateCacheAfterInstall,
   writeUpdateCheckState,
 } from '@/update-probe'
@@ -26,7 +25,6 @@ describe('update probe', () => {
 
   beforeEach(() => {
     mkdirSync(TEST_DIR, { recursive: true })
-    setCheckFileForTesting(TEST_FILE)
     stderrOutput = []
     origStderr = process.stderr.write
     process.stderr.write = ((chunk: unknown) => {
@@ -72,14 +70,17 @@ describe('update probe', () => {
   })
 
   test('notifies when cached latestVersion is newer', () => {
-    writeUpdateCheckState({
-      lastCheckedDate: '2099-01-01',
-      latestVersion: '999.0.0',
-      currentVersion: '0.0.0',
-    })
+    writeUpdateCheckState(
+      {
+        lastCheckedDate: '2099-01-01',
+        latestVersion: '999.0.0',
+        currentVersion: '0.0.0',
+      },
+      TEST_FILE,
+    )
 
     stderrOutput.length = 0
-    runDailyUpdateProbe('show')
+    runDailyUpdateProbe('show', { checkFile: TEST_FILE })
 
     const output = stderrOutput.join('')
     expect(output).toContain('999.0.0')
@@ -87,19 +88,22 @@ describe('update probe', () => {
   })
 
   test('does not notify when cached version matches local', () => {
-    writeUpdateCheckState({
-      lastCheckedDate: '2099-01-01',
-      latestVersion: '0.0.0',
-      currentVersion: '0.0.0',
-    })
+    writeUpdateCheckState(
+      {
+        lastCheckedDate: '2099-01-01',
+        latestVersion: '0.0.0',
+        currentVersion: '0.0.0',
+      },
+      TEST_FILE,
+    )
 
     stderrOutput.length = 0
-    runDailyUpdateProbe('show')
+    runDailyUpdateProbe('show', { checkFile: TEST_FILE })
     expect(stderrOutput.length).toBe(0)
   })
 
   test('writeUpdateCacheAfterInstall writes current date and version', () => {
-    writeUpdateCacheAfterInstall('1.2.3')
+    writeUpdateCacheAfterInstall('1.2.3', TEST_FILE)
 
     const state = readState()
     expect(state.lastCheckedDate).toBe(new Date().toISOString().slice(0, 10))
@@ -107,7 +111,7 @@ describe('update probe', () => {
   })
 
   test('writeUpdateCacheAfterInstall uses local version when no arg', () => {
-    writeUpdateCacheAfterInstall()
+    writeUpdateCacheAfterInstall(undefined, TEST_FILE)
 
     const state = readState()
     expect(state.lastCheckedDate).toBe(new Date().toISOString().slice(0, 10))
