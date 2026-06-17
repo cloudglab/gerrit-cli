@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.0.12 - 2026-06-17
+
+### Fixed
+
+- CI publish failure for `v0.0.10`: install/uninstall commands now import `execFileSync` directly from `node:child_process` to avoid ESM namespace binding issues under Bun 1.3.14.
+- `tests/update-probe.test.ts` parallel flakiness: each test now manages its own isolated temp cache file path, eliminating describe-scoped variable races under Bun's default parallel test runner.
+
 ## 0.0.11 - 2026-06-17
 
 ### Fixed

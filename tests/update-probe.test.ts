@@ -29,11 +29,8 @@ function readState(checkFile: string): Record<string, unknown> {
 describe('update probe', () => {
   let stderrOutput: string[]
   let origStderr: typeof process.stderr.write
-  let testFile: string
 
   beforeEach(() => {
-    testFile = makeTestFile()
-    mkdirSync(join(testFile, '..'), { recursive: true })
     stderrOutput = []
     origStderr = process.stderr.write
     process.stderr.write = ((chunk: unknown) => {
@@ -44,11 +41,6 @@ describe('update probe', () => {
 
   afterEach(() => {
     process.stderr.write = origStderr
-    try {
-      rmSync(join(testFile, '..'), { recursive: true, force: true })
-    } catch {
-      // ignore
-    }
     delete process.env.GERRIT_SKIP_UPDATE_CHECK
   })
 
@@ -79,51 +71,75 @@ describe('update probe', () => {
   })
 
   test('notifies when cached latestVersion is newer', () => {
-    writeUpdateCheckState(
-      {
-        lastCheckedDate: '2099-01-01',
-        latestVersion: '999.0.0',
-        currentVersion: '0.0.0',
-      },
-      testFile,
-    )
+    const testFile = makeTestFile()
+    mkdirSync(join(testFile, '..'), { recursive: true })
+    try {
+      writeUpdateCheckState(
+        {
+          lastCheckedDate: '2099-01-01',
+          latestVersion: '999.0.0',
+          currentVersion: '0.0.0',
+        },
+        testFile,
+      )
 
-    stderrOutput.length = 0
-    runDailyUpdateProbe('show', { checkFile: testFile })
+      stderrOutput.length = 0
+      runDailyUpdateProbe('show', { checkFile: testFile })
 
-    const output = stderrOutput.join('')
-    expect(output).toContain('999.0.0')
-    expect(output).toContain('gerrit update')
+      const output = stderrOutput.join('')
+      expect(output).toContain('999.0.0')
+      expect(output).toContain('gerrit update')
+    } finally {
+      rmSync(join(testFile, '..'), { recursive: true, force: true })
+    }
   })
 
   test('does not notify when cached version matches local', () => {
-    writeUpdateCheckState(
-      {
-        lastCheckedDate: '2099-01-01',
-        latestVersion: '0.0.0',
-        currentVersion: '0.0.0',
-      },
-      testFile,
-    )
+    const testFile = makeTestFile()
+    mkdirSync(join(testFile, '..'), { recursive: true })
+    try {
+      writeUpdateCheckState(
+        {
+          lastCheckedDate: '2099-01-01',
+          latestVersion: '0.0.0',
+          currentVersion: '0.0.0',
+        },
+        testFile,
+      )
 
-    stderrOutput.length = 0
-    runDailyUpdateProbe('show', { checkFile: testFile })
-    expect(stderrOutput.length).toBe(0)
+      stderrOutput.length = 0
+      runDailyUpdateProbe('show', { checkFile: testFile })
+      expect(stderrOutput.length).toBe(0)
+    } finally {
+      rmSync(join(testFile, '..'), { recursive: true, force: true })
+    }
   })
 
   test('writeUpdateCacheAfterInstall writes current date and version', () => {
-    writeUpdateCacheAfterInstall('1.2.3', testFile)
+    const testFile = makeTestFile()
+    mkdirSync(join(testFile, '..'), { recursive: true })
+    try {
+      writeUpdateCacheAfterInstall('1.2.3', testFile)
 
-    const state = readState(testFile)
-    expect(state.lastCheckedDate).toBe(new Date().toISOString().slice(0, 10))
-    expect(state.latestVersion).toBe('1.2.3')
+      const state = readState(testFile)
+      expect(state.lastCheckedDate).toBe(new Date().toISOString().slice(0, 10))
+      expect(state.latestVersion).toBe('1.2.3')
+    } finally {
+      rmSync(join(testFile, '..'), { recursive: true, force: true })
+    }
   })
 
   test('writeUpdateCacheAfterInstall uses local version when no arg', () => {
-    writeUpdateCacheAfterInstall(undefined, testFile)
+    const testFile = makeTestFile()
+    mkdirSync(join(testFile, '..'), { recursive: true })
+    try {
+      writeUpdateCacheAfterInstall(undefined, testFile)
 
-    const state = readState(testFile)
-    expect(state.lastCheckedDate).toBe(new Date().toISOString().slice(0, 10))
-    expect(typeof state.currentVersion).toBe('string')
+      const state = readState(testFile)
+      expect(state.lastCheckedDate).toBe(new Date().toISOString().slice(0, 10))
+      expect(typeof state.currentVersion).toBe('string')
+    } finally {
+      rmSync(join(testFile, '..'), { recursive: true, force: true })
+    }
   })
 })
