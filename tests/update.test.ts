@@ -7,9 +7,11 @@ import * as childProcess from '@/utils/child-process'
 
 describe('update command', () => {
   let execSpy: ReturnType<typeof spyOn>
+  let execFileSpy: ReturnType<typeof spyOn>
 
   afterEach(() => {
     execSpy?.mockRestore()
+    execFileSpy?.mockRestore()
     global.fetch = fetch
   })
 
@@ -93,26 +95,34 @@ describe('update command', () => {
   })
 
   test('install command runs global npm install', async () => {
-    execSpy = spyOn(childProcess, 'execSync').mockImplementation((() =>
-      Buffer.from('')) as unknown as typeof childProcess.execSync)
+    execFileSpy = spyOn(childProcess, 'execFileSync').mockImplementation(((
+      command: string,
+      args?: readonly string[],
+    ) => {
+      if (command === 'npm' && Array.isArray(args) && args.join(' ') === 'root -g') {
+        return '/tmp/gerrit-cli-node-modules\n'
+      }
+      return Buffer.from('')
+    }) as unknown as typeof childProcess.execFileSync)
 
     const logs: string[] = []
     const origLog = console.log
     console.log = (...args: unknown[]) => logs.push(String(args[0]))
 
     try {
-      await Effect.runPromise(installCommand({ skipConfigCheck: true }))
+      await Effect.runPromise(installCommand({ skipConfigCheck: true, skillSource: 'git' }))
     } finally {
       console.log = origLog
     }
 
-    const calls = (execSpy.mock.calls as unknown as [string][]).map(([c]) => c)
+    const calls = (execFileSpy.mock.calls as unknown as [string, string[]][]).map(
+      ([command, args]) => `${command} ${args.join(' ')}`,
+    )
     expect(
-      calls.some(
-        (c) =>
-          (c.includes('npm install -g') || c.includes('bun install -g')) &&
-          c.includes('@cloudglab/gerrit-cli'),
-      ),
+      calls.some((c) => c.includes('npm install -g') && c.includes('@cloudglab/gerrit-cli')),
+    ).toBe(true)
+    expect(
+      calls.some((c) => c.includes('npx -y skills add cloudglab/gerrit-cli --yes --global')),
     ).toBe(true)
     expect(logs.join('\n')).toContain('安装完成')
   })
@@ -135,9 +145,16 @@ describe('update command', () => {
     expect(execSpy.mock.calls.length).toBe(0)
   })
 
-  test('uninstall command runs global bun remove with confirm', async () => {
-    execSpy = spyOn(childProcess, 'execSync').mockImplementation((() =>
-      Buffer.from('')) as unknown as typeof childProcess.execSync)
+  test('uninstall command runs global npm uninstall with confirm', async () => {
+    execFileSpy = spyOn(childProcess, 'execFileSync').mockImplementation(((
+      command: string,
+      args?: readonly string[],
+    ) => {
+      if (command === 'npm' && Array.isArray(args) && args.join(' ') === 'root -g') {
+        return '/tmp/gerrit-cli-node-modules\n'
+      }
+      return Buffer.from('')
+    }) as unknown as typeof childProcess.execFileSync)
 
     const logs: string[] = []
     const origLog = console.log
@@ -149,10 +166,13 @@ describe('update command', () => {
       console.log = origLog
     }
 
-    const calls = (execSpy.mock.calls as unknown as [string][]).map(([c]) => c)
+    const calls = (execFileSpy.mock.calls as unknown as [string, string[]][]).map(
+      ([command, args]) => `${command} ${args.join(' ')}`,
+    )
     expect(
-      calls.some((c) => c.includes('bun remove -g') && c.includes('@cloudglab/gerrit-cli')),
+      calls.some((c) => c.includes('npm uninstall -g') && c.includes('@cloudglab/gerrit-cli')),
     ).toBe(true)
+    expect(calls.some((c) => c.includes('npx -y skills remove gerrit-cli --yes'))).toBe(true)
     expect(logs.join('\n')).toContain('卸载完成')
   })
 })

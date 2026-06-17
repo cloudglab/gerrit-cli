@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.0.10 - 2026-06-17
+
+### Added
+
+- `upgrade` and `remove` aliases for `update` and `uninstall` commands, matching `zentao-cli` common command surface.
+- `install` / `update` now support `--skill-source local|git|npm` and `--skill-local-path`, and always install the opencode skill globally via `npx -y skills add ... --global`.
+- `uninstall` now supports `--cli-only`, `--skill-only`, `--keep-config`, and `--remove-config`, and removes the skill globally via `npx -y skills remove ... --yes --global`.
+- `install`, `update`, `upgrade`, `uninstall`, and `remove` are now visible across all role entrypoints (`dev`, `reviewer`, `lead`, `ci`).
+- `whoami` is explicitly surfaced as a common command for all roles.
+
+### Changed
+
+- `install` / `update` global CLI installation now uses `npm install -g @cloudglab/gerrit-cli@latest` consistently, with npm/npx residue cleanup and ENOTEMPTY retry.
+- `uninstall` now uses `npm uninstall -g @cloudglab/gerrit-cli` instead of `bun remove -g`.
+
+### Fixed
+
+- `register-analytics-commands.ts` no longer double-registers `install` / `update` / `uninstall`, fixing `gerrit --help` startup failure.
+- `tests/change-id-formats.test.ts` mock now handles `MESSAGES` detail option and uses `onUnhandledRequest: 'error'` for stricter request validation.
+
+## 0.0.9 - 2026-06-15
+
+### Fixed
+
+- Release version and changelog alignment for `v0.0.9`.
+- `tests/change-id-formats.test.ts` mock handler minor consistency updates.
+
 ## 0.0.8 - 2026-06-15
 
 ### Fixed

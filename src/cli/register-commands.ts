@@ -15,6 +15,7 @@ import { configShowCommand, configTestCommand } from './commands/config'
 import { diffCommand } from './commands/diff'
 import { doctorCommand, outputDoctorReport } from './commands/doctor'
 import { filesCommand } from './commands/files'
+import { installCommand, updateCommand } from './commands/install'
 import { openCommand } from './commands/open'
 import { projectsCommand } from './commands/projects'
 import { PUSH_HELP_TEXT, pushCommand } from './commands/push'
@@ -28,6 +29,7 @@ import { SHOW_HELP_TEXT, showCommand } from './commands/show'
 import { statusCommand } from './commands/status'
 import { submitCommand } from './commands/submit'
 import { TOPIC_HELP_TEXT, topicCommand } from './commands/topic'
+import { uninstallCommand } from './commands/uninstall'
 import { versionCommand } from './commands/version'
 import { voteCommand } from './commands/vote'
 import { whoamiCommand } from './commands/whoami'
@@ -56,6 +58,52 @@ export function registerCommands(program: Command): void {
     .action(async () => {
       await setup()
     })
+
+  const addInstallOptions = (command: Command): Command =>
+    command
+      .option('--skip-config-check', 'Skip post-install config guidance')
+      .option('--skill-source <source>', 'Skill source: local, git, or npm', 'local')
+      .option('--skill-local-path <path>', 'Install skill from a local directory')
+      .option('--cli-only', 'Only install/update the global CLI package')
+      .option('--skill-only', 'Only install/update the opencode skill')
+
+  addInstallOptions(
+    program.command('install').description('Install Gerrit CLI and opencode skill'),
+  ).action(async (options) => {
+    await executeEffect(installCommand(options), options, 'install_result')
+  })
+
+  addInstallOptions(
+    program.command('update').description('Update Gerrit CLI and opencode skill'),
+  ).action(async (options) => {
+    await executeEffect(updateCommand(options), options, 'update_result')
+  })
+
+  addInstallOptions(program.command('upgrade').description('Alias for update')).action(
+    async (options) => {
+      await executeEffect(updateCommand(options), options, 'update_result')
+    },
+  )
+
+  const addUninstallOptions = (command: Command): Command =>
+    command
+      .option('--confirm', 'Confirm and execute uninstall')
+      .option('--keep-config', 'Keep ~/.gerrit-cli configuration')
+      .option('--remove-config', 'Remove ~/.gerrit-cli configuration')
+      .option('--cli-only', 'Only uninstall the global CLI package')
+      .option('--skill-only', 'Only uninstall the opencode skill')
+
+  addUninstallOptions(
+    program.command('uninstall').description('Uninstall Gerrit CLI and opencode skill'),
+  ).action(async (options) => {
+    await executeEffect(uninstallCommand(options), options, 'uninstall_result')
+  })
+
+  addUninstallOptions(program.command('remove').description('Alias for uninstall')).action(
+    async (options) => {
+      await executeEffect(uninstallCommand(options), options, 'uninstall_result')
+    },
+  )
 
   // status command
   program

@@ -74,9 +74,11 @@ export const COMMAND_META: readonly CommandMeta[] = [
   { name: 'groups-show', group: 'groups', isWrite: false, roles: ['full', 'lead'] },
   { name: 'groups-members', group: 'groups', isWrite: false, roles: ['full', 'lead'] },
 
-  { name: 'install', group: 'utility', isWrite: true, roles: ['full'] },
-  { name: 'update', group: 'utility', isWrite: true, roles: ['full'] },
-  { name: 'uninstall', group: 'utility', isWrite: true, roles: ['full'] },
+  { name: 'install', group: 'utility', isWrite: true, roles: allRoles },
+  { name: 'update', group: 'utility', isWrite: true, roles: allRoles },
+  { name: 'upgrade', group: 'utility', isWrite: true, roles: allRoles },
+  { name: 'uninstall', group: 'utility', isWrite: true, roles: allRoles },
+  { name: 'remove', group: 'utility', isWrite: true, roles: allRoles },
 ] as const satisfies readonly CommandMeta[]
 
 export function getCommandMeta(name: string): CommandMeta | undefined {

@@ -41,6 +41,9 @@ npm update -g @cloudglab/gerrit-cli
 # 或走 CLI 更新入口
 gerrit update
 
+# update 的别名
+gerrit upgrade
+
 # 或通过 npx 直接更新
 npx -y @cloudglab/gerrit-cli@latest update
 ```
@@ -51,6 +54,9 @@ npx -y @cloudglab/gerrit-cli@latest update
 # 先看预览
 gerrit uninstall
 
+# uninstall 的别名
+gerrit remove
+
 # 确认执行
 gerrit uninstall --confirm
 
@@ -60,6 +66,8 @@ gerrit uninstall --confirm --remove-config
 # 通过 npx 卸载（适合 CLI 已损坏时）
 npx -y @cloudglab/gerrit-cli@latest uninstall --confirm
 ```
+
+> `install` / `update` 会同时把 opencode skill 安装到**全局**；`uninstall` / `remove` 也会从全局移除 skill。可用 `--cli-only` 或 `--skill-only` 只操作其中一部分。
 
 ## 命令速查页
 

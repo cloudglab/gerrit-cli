@@ -31,6 +31,16 @@ const mockChange = generateMockChange({
     name: 'Test User',
     email: 'test@example.com',
   },
+  reviewers: {
+    REVIEWER: [
+      {
+        _account_id: 1002,
+        name: 'Reviewer User',
+        email: 'reviewer@example.com',
+      },
+    ],
+    CC: [],
+  },
 })
 
 const mockDiff = `--- a/test.txt
@@ -49,10 +59,15 @@ const server = setupServer(
   }),
 
   // Handler that matches both change number and Change-ID
-  http.get('*/a/changes/:changeId', ({ params }) => {
+  http.get('*/a/changes/:changeId', ({ params, request }) => {
     const { changeId } = params
+    const url = new URL(request.url)
     // Accept both formats
     if (changeId === CHANGE_NUMBER || changeId === CHANGE_ID) {
+      if (url.searchParams.get('o') === 'MESSAGES') {
+        return HttpResponse.text(`)]}'
+${JSON.stringify({ messages: [] })}`)
+      }
       return HttpResponse.text(`)]}'
 ${JSON.stringify(mockChange)}`)
     }
@@ -100,7 +115,7 @@ const originalConsoleLog = console.log
 const originalConsoleError = console.error
 
 beforeAll(() => {
-  server.listen({ onUnhandledRequest: 'bypass' })
+  server.listen({ onUnhandledRequest: 'error' })
   // @ts-ignore
   console.log = mockConsoleLog
   // @ts-ignore
