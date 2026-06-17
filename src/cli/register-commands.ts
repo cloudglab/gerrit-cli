@@ -64,6 +64,7 @@ export function registerCommands(program: Command): void {
       .option('--skip-config-check', 'Skip post-install config guidance')
       .option('--skill-source <source>', 'Skill source: local, git, or npm', 'local')
       .option('--skill-local-path <path>', 'Install skill from a local directory')
+      .option('--skill-global [boolean]', 'Install skill to global agent directory', true)
       .option('--cli-only', 'Only install/update the global CLI package')
       .option('--skill-only', 'Only install/update the opencode skill')
 

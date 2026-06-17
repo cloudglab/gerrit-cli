@@ -17,6 +17,7 @@ export interface InstallOptions {
   skipConfigCheck?: boolean
   skillSource?: SkillSource
   skillLocalPath?: string
+  skillGlobal?: boolean | string
   cliOnly?: boolean
   skillOnly?: boolean
 }
@@ -112,14 +113,17 @@ const runNpxStepWithRetry = async (title: string, args: readonly string[]): Prom
   }
 }
 
-const createSkillAddArgs = (source: string): string[] => [
-  '-y',
-  'skills',
-  'add',
-  source,
-  '--yes',
-  '--global',
-]
+const GLOBAL_SKILL_AGENT = 'universal'
+
+const isSkillGlobalEnabled = (value: boolean | string | undefined): boolean => {
+  if (typeof value === 'string') return value.toLowerCase() !== 'false'
+  return value ?? true
+}
+
+const createSkillAddArgs = (source: string, global = true): string[] => {
+  const globalArgs = global ? ['--global', '--agent', GLOBAL_SKILL_AGENT] : []
+  return ['-y', 'skills', 'add', source, ...globalArgs, '--yes']
+}
 
 const installGlobalCli = async (action: '安装' | '更新'): Promise<void> => {
   const args = ['install', '-g', `${PACKAGE_NAME}@latest`]
@@ -142,20 +146,28 @@ const getInstalledPackageSkillPath = (): string => {
   return path.join(globalNodeModules, PACKAGE_NAME, 'skills', SKILL_NAME)
 }
 
-const installSkillFromInstalledPackage = async (action: '安装' | '更新'): Promise<void> => {
+const installSkillFromInstalledPackage = async (
+  action: '安装' | '更新',
+  global: boolean,
+): Promise<void> => {
   const skillPath = getInstalledPackageSkillPath()
   try {
     await access(skillPath)
   } catch {
-    throw new Error(
-      `未找到已安装包内的 Gerrit skill：${skillPath}。可重试 --skill-source npm 或 --skill-source git。`,
+    process.stdout.write(
+      `\n未找到已安装包内的 Gerrit skill：${skillPath}，自动回退到 npm 包解压安装...\n`,
     )
+    await installSkillFromNpmPackage(action, global)
+    return
   }
 
-  await runNpxStepWithRetry(`${action} Gerrit skill`, createSkillAddArgs(skillPath))
+  await runNpxStepWithRetry(`${action} Gerrit skill`, createSkillAddArgs(skillPath, global))
 }
 
-const installSkillFromNpmPackage = async (action: '安装' | '更新'): Promise<void> => {
+const installSkillFromNpmPackage = async (
+  action: '安装' | '更新',
+  global: boolean,
+): Promise<void> => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), 'gerrit-cli-skill-'))
   try {
     const stdout = runCommandOutput('npm', [
@@ -171,7 +183,7 @@ const installSkillFromNpmPackage = async (action: '安装' | '更新'): Promise<
     runStep('解压 Gerrit npm 包', 'tar', ['-xzf', path.join(tempDir, tarballName), '-C', tempDir])
     await runNpxStepWithRetry(
       `${action} Gerrit skill`,
-      createSkillAddArgs(path.join(tempDir, 'package')),
+      createSkillAddArgs(path.join(tempDir, 'package'), global),
     )
   } finally {
     await rm(tempDir, { recursive: true, force: true })
@@ -179,25 +191,30 @@ const installSkillFromNpmPackage = async (action: '安装' | '更新'): Promise<
 }
 
 const installSkill = async (action: '安装' | '更新', options: InstallOptions): Promise<void> => {
+  const skillGlobal = isSkillGlobalEnabled(options.skillGlobal)
+
   if (options.skillLocalPath) {
     await runNpxStepWithRetry(
       `${action} Gerrit skill`,
-      createSkillAddArgs(path.resolve(options.skillLocalPath)),
+      createSkillAddArgs(path.resolve(options.skillLocalPath), skillGlobal),
     )
     return
   }
 
   if ((options.skillSource ?? 'local') === 'local') {
-    await installSkillFromInstalledPackage(action)
+    await installSkillFromInstalledPackage(action, skillGlobal)
     return
   }
 
   if (options.skillSource === 'git') {
-    await runNpxStepWithRetry(`${action} Gerrit skill`, createSkillAddArgs(GIT_SKILL_SOURCE))
+    await runNpxStepWithRetry(
+      `${action} Gerrit skill`,
+      createSkillAddArgs(GIT_SKILL_SOURCE, skillGlobal),
+    )
     return
   }
 
-  await installSkillFromNpmPackage(action)
+  await installSkillFromNpmPackage(action, skillGlobal)
 }
 
 const installPackageAndSkill = async (

@@ -67,7 +67,7 @@ gerrit uninstall --confirm --remove-config
 npx -y @cloudglab/gerrit-cli@latest uninstall --confirm
 ```
 
-> `install` / `update` 会同时把 opencode skill 安装到**全局**；`uninstall` / `remove` 也会从全局移除 skill。可用 `--cli-only` 或 `--skill-only` 只操作其中一部分。
+> `install` / `update` 默认会把 opencode skill 安装到全局 agent 目录，并通过 `skills --agent universal` 避开 PromptScript 不支持全局安装的问题；如需项目级安装，可显式传 `--skill-global false`。`uninstall` / `remove` 会清理项目级与全局级残留。可用 `--cli-only` 或 `--skill-only` 只操作其中一部分。
 
 ## 命令速查页
 

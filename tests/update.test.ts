@@ -18,7 +18,7 @@ describe('update command', () => {
   test('skips install when already up to date', async () => {
     execSpy = spyOn(childProcess, 'execSync').mockImplementation((() =>
       Buffer.from('')) as unknown as typeof childProcess.execSync)
-    global.fetch = (async () => Response.json({ version: '0.0.14' })) as unknown as typeof fetch
+    global.fetch = (async () => Response.json({ version: '0.0.15' })) as unknown as typeof fetch
 
     const logs: string[] = []
     const origLog = console.log
@@ -92,7 +92,7 @@ describe('update command', () => {
     expect(result._tag).toBe('Left')
   })
 
-  test('install command runs global npm install', async () => {
+  test('install command installs skill globally from package source by default', async () => {
     execFileSpy = spyOn(childProcess, 'execFileSync').mockImplementation(((
       command: string,
       args?: readonly string[],
@@ -120,9 +120,105 @@ describe('update command', () => {
       calls.some((c) => c.includes('npm install -g') && c.includes('@cloudglab/gerrit-cli')),
     ).toBe(true)
     expect(
-      calls.some((c) => c.includes('npx -y skills add cloudglab/gerrit-cli --yes --global')),
+      calls.some((c) =>
+        c.includes('npx -y skills add cloudglab/gerrit-cli --global --agent universal --yes'),
+      ),
     ).toBe(true)
     expect(logs.join('\n')).toContain('安装完成')
+  })
+
+  test('install command can disable global scope explicitly', async () => {
+    execFileSpy = spyOn(childProcess, 'execFileSync').mockImplementation(((
+      command: string,
+      args?: readonly string[],
+    ) => {
+      if (command === 'npm' && Array.isArray(args) && args.join(' ') === 'root -g') {
+        return '/tmp/gerrit-cli-node-modules\n'
+      }
+      return Buffer.from('')
+    }) as unknown as typeof childProcess.execFileSync)
+
+    await Effect.runPromise(
+      installCommand({ skipConfigCheck: true, skillSource: 'git', skillGlobal: false }),
+    )
+
+    const calls = (execFileSpy.mock.calls as unknown as [string, string[]][]).map(
+      ([command, args]) => `${command} ${args.join(' ')}`,
+    )
+    expect(calls.some((c) => c.includes('npx -y skills add cloudglab/gerrit-cli --yes'))).toBe(true)
+    expect(
+      calls.some((c) =>
+        c.includes('npx -y skills add cloudglab/gerrit-cli --global --agent universal --yes'),
+      ),
+    ).toBe(false)
+  })
+
+  test('install command can disable global scope with string option', async () => {
+    execFileSpy = spyOn(childProcess, 'execFileSync').mockImplementation(((
+      command: string,
+      args?: readonly string[],
+    ) => {
+      if (command === 'npm' && Array.isArray(args) && args.join(' ') === 'root -g') {
+        return '/tmp/gerrit-cli-node-modules\n'
+      }
+      return Buffer.from('')
+    }) as unknown as typeof childProcess.execFileSync)
+
+    await Effect.runPromise(
+      installCommand({ skipConfigCheck: true, skillSource: 'git', skillGlobal: 'false' }),
+    )
+
+    const calls = (execFileSpy.mock.calls as unknown as [string, string[]][]).map(
+      ([command, args]) => `${command} ${args.join(' ')}`,
+    )
+    expect(calls.some((c) => c.includes('npx -y skills add cloudglab/gerrit-cli --yes'))).toBe(true)
+    expect(calls.some((c) => c.includes('--global'))).toBe(false)
+    expect(calls.some((c) => c.includes('--agent universal'))).toBe(false)
+  })
+
+  test('install command falls back to npm package extraction when bundled skill path is missing', async () => {
+    execFileSpy = spyOn(childProcess, 'execFileSync').mockImplementation(((
+      command: string,
+      args?: readonly string[],
+    ) => {
+      if (command === 'npm' && Array.isArray(args) && args.join(' ') === 'root -g') {
+        return '/tmp/gerrit-cli-node-modules\n'
+      }
+      if (
+        command === 'npm' &&
+        Array.isArray(args) &&
+        args[0] === 'pack' &&
+        args[1] === '@cloudglab/gerrit-cli@latest'
+      ) {
+        return 'cloudglab-gerrit-cli-0.0.14.tgz\n'
+      }
+      return Buffer.from('')
+    }) as unknown as typeof childProcess.execFileSync)
+
+    const logs: string[] = []
+    const origWrite = process.stdout.write.bind(process.stdout)
+    process.stdout.write = ((chunk: string | Uint8Array) => {
+      logs.push(typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString('utf8'))
+      return true
+    }) as typeof process.stdout.write
+
+    try {
+      await Effect.runPromise(installCommand({ skipConfigCheck: true, skillSource: 'local' }))
+    } finally {
+      process.stdout.write = origWrite
+    }
+
+    const calls = (execFileSpy.mock.calls as unknown as [string, string[]][]).map(
+      ([command, args]) => `${command} ${args.join(' ')}`,
+    )
+    expect(calls.some((c) => c.includes('npm pack @cloudglab/gerrit-cli@latest'))).toBe(true)
+    expect(calls.some((c) => c.includes('tar -xzf'))).toBe(true)
+    expect(
+      calls.some(
+        (c) => c.includes('npx -y skills add') && c.includes('--global --agent universal --yes'),
+      ),
+    ).toBe(true)
+    expect(logs.join('')).toContain('自动回退到 npm 包解压安装')
   })
 
   test('uninstall command previews without confirm', async () => {

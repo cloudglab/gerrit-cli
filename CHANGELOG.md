@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.0.15 - 2026-06-17
+
+### Fixed
+
+- `install` / `update` 默认全局安装 skill 时改为 `skills --agent universal`，避开 PromptScript 不支持全局安装的问题。
+- `install` / `update` 支持通过 `--skill-global false` 显式切到项目级；若全局 CLI 包里缺少 `skills/gerrit-cli`，会自动回退到 npm 包解压安装。
+
 ## 0.0.14 - 2026-06-17
 
 ### Changed
@@ -33,7 +40,7 @@
 ### Added
 
 - `upgrade` and `remove` aliases for `update` and `uninstall` commands, matching `zentao-cli` common command surface.
-- `install` / `update` now support `--skill-source local|git|npm` and `--skill-local-path`, and always install the opencode skill globally via `npx -y skills add ... --global`.
+- `install` / `update` now support `--skill-source local|git|npm` and `--skill-local-path`, and install the opencode skill at project scope by default to stay compatible with agents that do not support global skill installation.
 - `uninstall` now supports `--cli-only`, `--skill-only`, `--keep-config`, and `--remove-config`, and removes the skill globally via `npx -y skills remove ... --yes --global`.
 - `install`, `update`, `upgrade`, `uninstall`, and `remove` are now visible across all role entrypoints (`dev`, `reviewer`, `lead`, `ci`).
 - `whoami` is explicitly surfaced as a common command for all roles.
