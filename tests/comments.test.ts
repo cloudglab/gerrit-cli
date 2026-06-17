@@ -1,4 +1,13 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, mock } from 'bun:test'
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  mock,
+} from '@test/compat'
 import { Effect, Layer } from 'effect'
 import { delay, HttpResponse, http } from 'msw'
 import { setupServer } from 'msw/node'

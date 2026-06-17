@@ -1,5 +1,4 @@
-import { afterEach, describe, expect, mock, spyOn, test } from 'bun:test'
-import * as nodeChildProcess from 'node:child_process'
+import { afterEach, describe, expect, mock, spyOn, test } from '@test/compat'
 import { Effect } from 'effect'
 import { installCommand } from '@/cli/commands/install'
 import { uninstallCommand } from '@/cli/commands/uninstall'
@@ -19,7 +18,7 @@ describe('update command', () => {
   test('skips install when already up to date', async () => {
     execSpy = spyOn(childProcess, 'execSync').mockImplementation((() =>
       Buffer.from('')) as unknown as typeof childProcess.execSync)
-    global.fetch = (async () => Response.json({ version: '0.0.0' })) as unknown as typeof fetch
+    global.fetch = (async () => Response.json({ version: '0.0.14' })) as unknown as typeof fetch
 
     const logs: string[] = []
     const origLog = console.log
@@ -54,7 +53,7 @@ describe('update command', () => {
     expect(
       calls.some(
         (c) =>
-          (c.includes('npm install -g') || c.includes('bun install -g')) &&
+          (c.includes('npm install -g') || c.includes('pnpm add -g')) &&
           c.includes('@cloudglab/gerrit-cli'),
       ),
     ).toBe(true)
@@ -71,9 +70,7 @@ describe('update command', () => {
 
     expect(fetchSpy.mock.calls.length).toBe(0)
     const calls = (execSpy.mock.calls as unknown as [string][]).map(([c]) => c)
-    expect(calls.some((c) => c.includes('npm install -g') || c.includes('bun install -g'))).toBe(
-      true,
-    )
+    expect(calls.some((c) => c.includes('npm install -g') || c.includes('pnpm add -g'))).toBe(true)
   })
 
   test('fails when registry is unreachable', async () => {
@@ -87,7 +84,7 @@ describe('update command', () => {
 
   test('fails when install command fails', async () => {
     execSpy = spyOn(childProcess, 'execSync').mockImplementation((() => {
-      throw new Error('bun not found')
+      throw new Error('install command failed')
     }) as unknown as typeof childProcess.execSync)
     global.fetch = (async () => Response.json({ version: '999.0.0' })) as unknown as typeof fetch
 
@@ -96,7 +93,7 @@ describe('update command', () => {
   })
 
   test('install command runs global npm install', async () => {
-    execFileSpy = spyOn(nodeChildProcess, 'execFileSync').mockImplementation(((
+    execFileSpy = spyOn(childProcess, 'execFileSync').mockImplementation(((
       command: string,
       args?: readonly string[],
     ) => {
@@ -147,7 +144,7 @@ describe('update command', () => {
   })
 
   test('uninstall command runs global npm uninstall with confirm', async () => {
-    execFileSpy = spyOn(nodeChildProcess, 'execFileSync').mockImplementation(((
+    execFileSpy = spyOn(childProcess, 'execFileSync').mockImplementation(((
       command: string,
       args?: readonly string[],
     ) => {

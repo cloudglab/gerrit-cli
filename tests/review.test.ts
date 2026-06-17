@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test'
+import { afterEach, beforeEach, describe, expect, spyOn, test } from '@test/compat'
 import { Effect, Layer } from 'effect'
 import { GitWorktreeService, WorktreeCreationError } from '@/services/git-worktree'
 

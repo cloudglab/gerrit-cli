@@ -1,4 +1,13 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, mock } from 'bun:test'
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  mock,
+} from '@test/compat'
 import { Effect, Layer } from 'effect'
 import { HttpResponse, http } from 'msw'
 import { setupServer } from 'msw/node'
@@ -91,7 +100,7 @@ describe('files command', () => {
     const parsed = JSON.parse(output) as { status: string; change_id: string; files: unknown[] }
     expect(parsed.status).toBe('success')
     expect(parsed.change_id).toBe('12345')
-    expect(parsed.files).toBeArray()
+    expect(Array.isArray(parsed.files)).toBe(true)
     const paths = (parsed.files as Array<{ path: string }>).map((f) => f.path)
     expect(paths).not.toContain('/COMMIT_MSG')
     expect(paths).toContain('src/foo.ts')

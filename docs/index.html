@@ -374,7 +374,7 @@
         <h1>命令速查</h1>
         <p class="lead">把 Gerrit 变更查看、审查、投票、工作区、CI 构建状态和 AI Skill 工作流接到终端、脚本与发布链路。</p>
         <div class="actions">
-          <button class="button primary" type="button" data-copy="bun install -g @cloudglab/gerrit-cli">复制安装命令</button>
+          <button class="button primary" type="button" data-copy="npm install -g @cloudglab/gerrit-cli">复制安装命令</button>
           <a class="button" href="https://github.com/cloudglab/gerrit-cli">GitHub</a>
           <a class="button" href="https://www.npmjs.com/package/@cloudglab/gerrit-cli">npm</a>
         </div>
@@ -382,7 +382,7 @@
       <div class="stack">
         <div class="command">
           <strong>安装 CLI</strong>
-          <div class="copy-row"><code>bun install -g @cloudglab/gerrit-cli</code><button class="copy" type="button" data-copy="bun install -g @cloudglab/gerrit-cli">复制</button></div>
+          <div class="copy-row"><code>npm install -g @cloudglab/gerrit-cli</code><button class="copy" type="button" data-copy="npm install -g @cloudglab/gerrit-cli">复制</button></div>
         </div>
         <div class="command">
           <strong>初始化 Gerrit 配置</strong>
@@ -390,7 +390,7 @@
         </div>
         <div class="command">
           <strong>发布前 smoke</strong>
-          <div class="copy-row"><code>bun run release:smoke-query</code><button class="copy" type="button" data-copy="bun run release:smoke-query">复制</button></div>
+          <div class="copy-row"><code>pnpm run release:smoke-query</code><button class="copy" type="button" data-copy="pnpm run release:smoke-query">复制</button></div>
         </div>
       </div>
     </section>
@@ -424,8 +424,8 @@
       <div class="section">
         <h2>基础 / 配置</h2>
         <ul>
-          <li>安装 Bun<code>curl -fsSL https://bun.sh/install | bash</code></li>
-          <li>安装 CLI<code>bun install -g @cloudglab/gerrit-cli</code></li>
+          <li>安装 Node.js<code>node --version</code></li>
+          <li>安装 CLI<code>npm install -g @cloudglab/gerrit-cli</code></li>
           <li>CLI 安装入口<code>gerrit install</code></li>
           <li>初始化配置<code>gerrit-cli setup</code></li>
           <li>连接状态<code>gerrit-cli status</code></li>
@@ -538,8 +538,8 @@
       <div class="section">
         <h2>发布 / Skill</h2>
         <ul>
-          <li>发布前 dry-run<code>bun run release:smoke-query</code></li>
-          <li>真实只读 smoke<code>bun run release:smoke-query:live</code></li>
+          <li>发布前 dry-run<code>pnpm run release:smoke-query</code></li>
+          <li>真实只读 smoke<code>pnpm run release:smoke-query:live</code></li>
           <li>Claude 插件安装<code>/plugin marketplace add cloudglab/gerrit-cli</code></li>
           <li>安装 workflow skill<code>/plugin install gerrit-workflow@gerrit-cli</code></li>
           <li>查看 npm 包<code>npm view @cloudglab/gerrit-cli version</code></li>

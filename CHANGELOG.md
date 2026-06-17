@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.0.14 - 2026-06-17
+
+### Changed
+
+- CLI 开发、构建与发布产物改为标准 Node.js 入口，`dist/bin/*.js` 不再使用 `bun build --compile` 独立二进制模式。
+- 仓库开发流统一到 `pnpm` + `tsx` + `tsup` + `Vitest`；GitHub Actions、Husky、smoke 脚本和文档入口同步调整。
+- 发布仍保持单一自动入口 `.github/workflows/publish.yml`，tag push 后通过 npm Trusted Publisher 完成校验与发布。
+
+## 0.0.13 - 2026-06-17
+
+### Fixed
+
+- CI publish failure for `v0.0.10`/`v0.0.12`: `tests/update-probe.test.ts` now uses `mkdtempSync` per test and writes/reads cache files directly, eliminating filesystem race conditions under Bun's parallel runner on GitHub Actions Ubuntu runners.
+
 ## 0.0.12 - 2026-06-17
 
 ### Fixed

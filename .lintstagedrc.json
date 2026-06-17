@@ -1,6 +1,6 @@
 {
   "*.ts": [
-    "bun oxlint",
-    "bun biome format --write"
+    "oxlint",
+    "biome format --write"
   ]
 }

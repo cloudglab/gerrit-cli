@@ -142,12 +142,12 @@
 
 ## 10. 发布与构建流程对齐（低优先级）
 
-**差异**：zentao-cli 的 build 是标准 `tsc` + manifest 生成；gerrit-cli 用 `bun build --compile` 产出独立二进制，体验更好。两者不必互相替换，但 release smoke 可以互相学习。
+**状态**：gerrit-cli 已改为 Node.js 产物发布，入口位于 `dist/bin/*.js`，不再使用 `bun build --compile` 产出独立二进制。
 
 **落地动作**：
 1. `scripts/release-query-smoke.ts` 增加 `--dry-run` 默认行为（与 zentao 一致），避免误跑真实查询。
 2. smoke 脚本读取 `dist/manifest.json` 动态生成命令面，而不是手写 `commandSurface`。
-3. 保留 `bun build --compile`，但在 build 前插入 `generate-manifest` 步骤。
+3. 构建产物保持 Node.js CLI 入口，并在 build 前生成 manifest。
 
 ## 建议实施顺序
 
@@ -164,8 +164,8 @@ Phase 3（生态与发布）：
 
 ## 验证标准
 
-- `bun run check:all` 通过。
-- `bun run release:smoke-query` 33/33 通过，且命令面从 manifest 读取。
+- `pnpm run check:all` 通过。
+- `pnpm run release:smoke-query` 通过，且命令面从 manifest 读取。
 - 每个写命令缺 `--confirm` 时输出 preview，不执行真实写入。
 - `gerrit --role reviewer --help` 只显示 reviewer 可见命令。
 - 新增 `gerrit whoami` 能校验并输出 mask 后的配置。

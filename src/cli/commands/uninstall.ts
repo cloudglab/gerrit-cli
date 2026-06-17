@@ -1,9 +1,9 @@
-import { execFileSync } from 'node:child_process'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import chalk from 'chalk'
 import { Console, Effect } from 'effect'
+import * as childProcess from '@/utils/child-process'
 
 const PACKAGE_NAME = '@cloudglab/gerrit-cli'
 const SKILL_NAME = 'gerrit-cli'
@@ -67,11 +67,11 @@ const isDirectoryNotEmptyError = (error: unknown): boolean => {
 }
 
 const runCommand = (command: string, args: readonly string[]): void => {
-  execFileSync(command, [...args], { stdio: 'inherit', timeout: 60000 })
+  childProcess.execFileSync(command, [...args], { stdio: 'inherit', timeout: 60000 })
 }
 
 const runCommandOutput = (command: string, args: readonly string[]): string =>
-  execFileSync(command, [...args], {
+  childProcess.execFileSync(command, [...args], {
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'pipe'],
     timeout: 60000,

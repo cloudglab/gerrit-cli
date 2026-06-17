@@ -3,6 +3,7 @@ import { Console, Effect } from 'effect'
 import { renderInstallSuccessGuide } from '@/cli/banner'
 import { writeUpdateCacheAfterInstall } from '@/update-probe'
 import * as childProcess from '@/utils/child-process'
+import { getCliVersion } from '@/version'
 export interface UpdateOptions {
   skipPull?: boolean
   xml?: boolean
@@ -13,12 +14,7 @@ const PACKAGE_NAME = '@cloudglab/gerrit-cli'
 const REGISTRY_URL = `https://registry.npmjs.org/${PACKAGE_NAME}/latest`
 
 const readCurrentVersion = (): string => {
-  try {
-    const raw = require('../../package.json') as unknown as { version: string }
-    return raw.version
-  } catch {
-    return '0.0.0'
-  }
+  return getCliVersion()
 }
 
 class UpdateError extends Error {
@@ -31,14 +27,14 @@ class UpdateError extends Error {
 
 /**
  * Detect the best available package manager for global install.
- * Prefer npm (most universal), fall back to bun.
+ * Prefer npm (most universal), fall back to pnpm.
  */
 const detectPackageManager = (): { command: string; args: string[] } => {
   try {
     childProcess.execSync('npm --version', { stdio: 'ignore', timeout: 5000 })
     return { command: 'npm', args: ['install', '-g', `${PACKAGE_NAME}@latest`] }
   } catch {
-    return { command: 'bun', args: ['install', '-g', `${PACKAGE_NAME}@latest`] }
+    return { command: 'pnpm', args: ['add', '-g', `${PACKAGE_NAME}@latest`] }
   }
 }
 

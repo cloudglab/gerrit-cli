@@ -1,5 +1,5 @@
-import { afterAll, afterEach, beforeAll, describe, expect, test } from 'bun:test'
 import { EventEmitter } from 'node:events'
+import { afterAll, afterEach, beforeAll, describe, expect, test } from '@test/compat'
 import { Effect, Layer } from 'effect'
 import { HttpResponse, http } from 'msw'
 import { setupServer } from 'msw/node'

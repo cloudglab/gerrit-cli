@@ -3,7 +3,7 @@
     "lib": ["ESNext"],
     "module": "esnext",
     "target": "ESNext",
-    "moduleResolution": "bundler",
+    "moduleResolution": "Bundler",
     "moduleDetection": "force",
     "allowImportingTsExtensions": true,
     "noEmit": true,
@@ -14,9 +14,7 @@
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     "allowJs": false,
-    "types": [
-      "bun-types"
-    ],
+    "types": ["node", "vitest"],
     "declaration": true,
     "isolatedDeclarations": true,
     "noImplicitAny": true,
@@ -32,7 +30,8 @@
     "rootDir": "./",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@test/compat": ["tests/helpers/test-compat.ts"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.json", "tests/**/*.ts", "scripts/**/*.ts"],

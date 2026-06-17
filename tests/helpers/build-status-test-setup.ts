@@ -1,5 +1,5 @@
-import type { Mock } from 'bun:test'
-import { mock } from 'bun:test'
+import type { Mock } from '@test/compat'
+import { mock } from '@test/compat'
 import { Layer } from 'effect'
 import { HttpResponse, http } from 'msw'
 import type { SetupServer } from 'msw/node'

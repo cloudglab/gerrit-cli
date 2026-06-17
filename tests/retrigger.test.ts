@@ -1,15 +1,24 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, mock } from 'bun:test'
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  mock,
+  spyOn,
+} from '@test/compat'
 import { Effect, Layer } from 'effect'
 import { HttpResponse, http } from 'msw'
 import { setupServer } from 'msw/node'
 import { GerritApiServiceLive } from '@/api/gerrit'
 import { retriggerCommand } from '@/cli/commands/retrigger'
 import { ConfigService } from '@/services/config'
+import * as prompts from '@/utils/prompts'
 import { createMockConfigService } from './helpers/config-mock'
 
-// Mock @inquirer/prompts so tests don't block on stdin
 const mockInput = mock(async () => 'trigger-build')
-mock.module('@inquirer/prompts', () => ({ input: mockInput }))
 
 const server = setupServer(
   http.get('*/a/accounts/self', () =>
@@ -24,6 +33,7 @@ afterAll(() => server.close())
 describe('retrigger command', () => {
   let mockConsoleLog: ReturnType<typeof mock>
   let mockConsoleError: ReturnType<typeof mock>
+  let inputSpy: ReturnType<typeof spyOn>
 
   beforeEach(() => {
     mockConsoleLog = mock()
@@ -32,10 +42,14 @@ describe('retrigger command', () => {
     console.error = mockConsoleError
     mockInput.mockReset()
     mockInput.mockResolvedValue('trigger-build')
+    inputSpy = spyOn(prompts, 'input').mockImplementation(
+      mockInput as unknown as typeof prompts.input,
+    )
     server.resetHandlers()
   })
 
   afterEach(() => {
+    inputSpy?.mockRestore()
     server.resetHandlers()
   })
 

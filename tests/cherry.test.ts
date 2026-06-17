@@ -1,5 +1,5 @@
-import { afterAll, afterEach, beforeAll, describe, expect, spyOn, test } from 'bun:test'
 import type { SpawnSyncReturns } from 'node:child_process'
+import { afterAll, afterEach, beforeAll, describe, expect, spyOn, test } from '@test/compat'
 import { Effect, Layer } from 'effect'
 import { HttpResponse, http } from 'msw'
 import { setupServer } from 'msw/node'

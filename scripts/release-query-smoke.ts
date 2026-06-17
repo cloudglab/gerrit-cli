@@ -1,10 +1,10 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { COMMAND_META } from '../src/cli/command-meta'
 
-const rootDir = resolve(import.meta.dir, '..')
+const rootDir = resolve(import.meta.dirname, '..')
 const cliPath = resolveCliPath()
 const cliRunner = resolveCliRunner(cliPath)
 const dryRun = process.argv.includes('--dry-run')
@@ -50,7 +50,7 @@ const liveQueries = [
 const commands = live ? [...schemaChecks, ...liveQueries] : schemaChecks
 
 if (!existsSync(cliPath)) {
-  console.error('缺少可执行入口，请先运行 build 或确认 bin/gerrit-cli-entry.ts 存在。')
+  console.error('缺少可执行入口，请先运行 build 或确认 src/cli/index.ts 可直接运行。')
   process.exit(1)
 }
 
@@ -130,13 +130,13 @@ function loadCommandSurface(): readonly string[] {
 }
 
 function resolveCliPath(): string {
-  const distCli = resolve(rootDir, 'dist/gerrit-cli')
+  const distCli = resolve(rootDir, 'dist/bin/gerrit-cli.js')
   if (existsSync(distCli)) return distCli
-  return resolve(rootDir, 'bin/gerrit-cli-entry.ts')
+  return resolve(rootDir, 'src/cli/index.ts')
 }
 
 function resolveCliRunner(path: string): { readonly command: string; readonly args: readonly string[] } {
-  if (path.endsWith('.ts')) return { command: 'bun', args: [path] }
+  if (path.endsWith('.ts')) return { command: 'tsx', args: [path] }
   return { command: path, args: [] }
 }
 

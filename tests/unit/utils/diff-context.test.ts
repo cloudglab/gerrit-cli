@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'bun:test'
+import { describe, expect, it } from '@test/compat'
 import type { FileDiffContent } from '@/schemas/gerrit'
 import { extractDiffContext } from '@/utils/diff-context'
 

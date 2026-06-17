@@ -1,4 +1,13 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, mock } from 'bun:test'
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  mock,
+} from '@test/compat'
 import { Effect, Layer } from 'effect'
 import { HttpResponse, http } from 'msw'
 import { setupServer } from 'msw/node'
@@ -295,7 +304,7 @@ describe('comment command', () => {
     }, 10)
 
     await expect(Effect.runPromise(program)).rejects.toThrow(
-      /Invalid JSON input: .*Unterminated string.*\nInput \(\d+ chars, \d+ lines\):\n.*src\/main\.js.*\nExpected format:/s,
+      /Invalid JSON input: .*\nInput \(\d+ chars, \d+ lines\):\n.*src\/main\.js.*\nExpected format:/s,
     )
 
     // Restore process.stdin

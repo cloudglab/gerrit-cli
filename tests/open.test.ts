@@ -1,10 +1,11 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, mock, test } from 'bun:test'
+import { afterAll, beforeAll, beforeEach, describe, expect, mock, spyOn, test } from '@test/compat'
 import { Effect, Layer } from 'effect'
 import { HttpResponse, http } from 'msw'
 import { setupServer } from 'msw/node'
 import { GerritApiServiceLive } from '@/api/gerrit'
 import { openCommand } from '@/cli/commands/open'
 import { ConfigService } from '@/services/config'
+import * as childProcess from '@/utils/child-process'
 
 import { createMockConfigService } from './helpers/config-mock'
 
@@ -36,14 +37,11 @@ const mockExecImplementation = (
   })
 }
 
-mock.module('@/utils/child-process', () => ({
-  exec: mockExec,
-  execSync: mockExecSync,
-  spawn: mockSpawn,
-  spawnSync: mockSpawnSync,
-}))
-
 const server = setupServer()
+let execSpy: ReturnType<typeof spyOn>
+let execSyncSpy: ReturnType<typeof spyOn>
+let spawnSpy: ReturnType<typeof spyOn>
+let spawnSyncSpy: ReturnType<typeof spyOn>
 
 beforeAll(() => {
   server.listen()
@@ -55,9 +53,25 @@ beforeEach(() => {
   mockSpawn.mockReset()
   mockSpawnSync.mockReset()
   mockSpawn.mockImplementation(mockGitLogWithoutChangeId)
+  execSpy = spyOn(childProcess, 'exec').mockImplementation(
+    mockExec as unknown as typeof childProcess.exec,
+  )
+  execSyncSpy = spyOn(childProcess, 'execSync').mockImplementation(
+    mockExecSync as unknown as typeof childProcess.execSync,
+  )
+  spawnSpy = spyOn(childProcess, 'spawn').mockImplementation(
+    mockSpawn as unknown as typeof childProcess.spawn,
+  )
+  spawnSyncSpy = spyOn(childProcess, 'spawnSync').mockImplementation(
+    mockSpawnSync as unknown as typeof childProcess.spawnSync,
+  )
 })
 
 afterAll(() => {
+  execSpy?.mockRestore()
+  execSyncSpy?.mockRestore()
+  spawnSpy?.mockRestore()
+  spawnSyncSpy?.mockRestore()
   server.close()
 })
 

@@ -28,11 +28,11 @@
 
 ## 技术栈
 
-- **Runtime**：Bun（源码直跑开发，`bun build --compile` 产出独立二进制）
+- **Runtime**：Node.js（开发用 `tsx`，构建产物发布到 `dist/bin/*.js`）
 - **语言**：TypeScript，`isolatedDeclarations: true`
 - **CLI 框架**：Commander.js + Ink 终端 UI
 - **状态管理**：Effect + Effect Schema
-- **测试**：Bun test + MSW HTTP mock
+- **测试**：Vitest + MSW HTTP mock
 - **数据库**：SQLite 本地缓存
 - **Lint**：oxlint
 - **格式化**：Biome
@@ -55,7 +55,7 @@
 
 ### 发布前核查清单
 
-1. `bun run check:all` 通过
+1. `pnpm run check:all` 通过
 2. `package.json` version 与 tag 一致
 3. 本地至少执行一次真实 Gerrit 查询或 msw 集成测试通过
 
@@ -156,13 +156,13 @@ export GERRIT_PASSWORD="your-http-password"
 Pages 速查页源码在 `docs/index.html`；它由 workflow 单独部署，不随 npm tarball 发布。
 
 发布前本地 smoke：
-- `bun run release:smoke-query`：默认 dry-run，检查命令 help 面是否可达
-- `bun run release:smoke-query:live`：需要 `GERRIT_*` 配置，做真实 Gerrit 只读查询回归
+- `pnpm run release:smoke-query`：默认 dry-run，检查命令 help 面是否可达
+- `pnpm run release:smoke-query:live`：需要 `GERRIT_*` 配置，做真实 Gerrit 只读查询回归
 - live smoke 可用 `GERRIT_SMOKE_CHANGE_ID`、`GERRIT_SMOKE_QUERY`、`GERRIT_SMOKE_BUILD_KEYWORD` 覆盖默认查询样本
 
 发版步骤：
-1. 确保本地 `bun run check:all` 通过
-2. 执行 `bun run release:smoke-query`
+1. 确保本地 `pnpm run check:all` 通过
+2. 执行 `pnpm run release:smoke-query`
 3. 更新 `package.json` 中 `version` 和 `CHANGELOG.md`
 4. `git tag v0.x.x && git push origin main && git push origin v0.x.x`
 5. 等待 publish workflow 完成，并验证 npm 包版本

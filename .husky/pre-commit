@@ -1,10 +1,10 @@
 # Husky pre-commit hook
 
 # Run lint-staged
-bun lint-staged
+pnpm exec lint-staged
 
 # Check file sizes
-bun scripts/check-file-size.ts
+pnpm exec tsx scripts/check-file-size.ts
 
 # Run ast-grep to check for banned 'as' typecasting
 echo "Checking for banned patterns..."
@@ -13,4 +13,4 @@ echo "Checking for banned patterns..."
 
 # Check test coverage
 echo "Checking test coverage..."
-bun run test:coverage:check
+pnpm exec tsx scripts/check-coverage.ts

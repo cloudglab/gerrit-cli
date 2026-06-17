@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test'
+import { describe, expect, test } from '@test/compat'
 import { extractChangeNumber, isValidChangeId, normalizeGerritHost } from './url-parser'
 
 describe('extractChangeNumber', () => {

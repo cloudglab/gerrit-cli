@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test'
 import { EventEmitter } from 'node:events'
+import { afterEach, beforeEach, describe, expect, spyOn, test } from '@test/compat'
 import { Effect } from 'effect'
 import * as childProcess from '@/utils/child-process'
 import {

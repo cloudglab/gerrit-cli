@@ -1,4 +1,4 @@
-import { afterAll, afterEach, beforeAll, describe, expect, test } from 'bun:test'
+import { afterAll, afterEach, beforeAll, describe, expect, test } from '@test/compat'
 import { Effect } from 'effect'
 import { HttpResponse, http } from 'msw'
 import { GerritApiServiceLive } from '@/api/gerrit'

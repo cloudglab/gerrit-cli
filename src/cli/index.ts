@@ -1,5 +1,5 @@
-#!/usr/bin/env bun
-// Gerrit CLI entry (bun run entry point) — delegates to cli-bootstrap
+#!/usr/bin/env node
+// Gerrit CLI entry (tsx dev entry point) — delegates to cli-bootstrap
 
 import { runCli } from '../cli-bootstrap'
 

@@ -1,28 +1,12 @@
-import { readFileSync } from 'node:fs'
-import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { Command } from 'commander'
 import { applyRoleFilter } from './cli/command-meta'
 import { registerCommands } from './cli/register-commands'
 import { CLI_ROLES, type CliRole, parseCliRole } from './cli/roles'
 import { runDailyUpdateProbe } from './update-probe'
+import { getCliVersion } from './version'
 
 export interface RunCliOptions {
   readonly role?: CliRole
-}
-
-function getVersion(): string {
-  // Prefer build-time injected version (for compiled standalone binaries)
-  if (process.env.GERRIT_CLI_VERSION) return process.env.GERRIT_CLI_VERSION
-  try {
-    const __filename = fileURLToPath(import.meta.url)
-    const __dirname = dirname(__filename)
-    const packageJsonPath = join(__dirname, '..', 'package.json')
-    const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'))
-    return packageJson.version || '0.0.0'
-  } catch {
-    return '0.0.0'
-  }
 }
 
 function createProgram(role: CliRole): Command {
@@ -31,7 +15,7 @@ function createProgram(role: CliRole): Command {
   program
     .name('gerrit-cli')
     .description('Gerrit CLI tool')
-    .version(getVersion())
+    .version(getCliVersion())
     .option('-r, --role <role>', `Filter commands by role (${CLI_ROLES.join(', ')})`)
 
   program.addHelpText(
@@ -93,29 +77,6 @@ function extractRole(argv: readonly string[], defaultRole: CliRole): CliRole {
   return defaultRole
 }
 
-// Bun version guard — checked only when running as CLI (not on SDK import)
-declare const Bun: { version: string } | undefined
-
-function ensureBunVersion(): void {
-  const MIN_BUN_VERSION = '1.2.0'
-  if (typeof Bun === 'undefined') return // running under Node, skip check
-  const bunVersion = Bun.version
-  const parseVersion = (v: string) => v.split('.').map((n) => parseInt(n, 10))
-  const [aMajor, aMinor = 0, aPatch = 0] = parseVersion(bunVersion)
-  const [bMajor, bMinor = 0, bPatch = 0] = parseVersion(MIN_BUN_VERSION)
-
-  if (
-    aMajor < bMajor ||
-    (aMajor === bMajor && aMinor < bMinor) ||
-    (aMajor === bMajor && aMinor === bMinor && aPatch < bPatch)
-  ) {
-    console.error(`✗ Error: Bun version ${MIN_BUN_VERSION} or higher is required`)
-    console.error(`  Current version: ${bunVersion}`)
-    console.error(`  Please upgrade Bun: bun upgrade`)
-    process.exit(1)
-  }
-}
-
 /**
  * Bootstrap the Gerrit CLI.
  * Architecture aligned with zentao-cli: separate SDK exports from CLI bootstrap.
@@ -129,8 +90,6 @@ function extractCommandName(argv: readonly string[]): string | undefined {
 }
 
 export async function runCli(argv: string[], options: RunCliOptions = {}): Promise<void> {
-  ensureBunVersion()
-
   // Non-blocking daily update probe — spawns detached background subprocess
   runDailyUpdateProbe(extractCommandName(argv))
 

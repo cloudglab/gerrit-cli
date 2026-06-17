@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
+import { afterEach, beforeEach, describe, expect, test } from '@test/compat'
 import { generateMockChange } from '@/test-utils/mock-generator'
 import { colors, formatDate, getStatusIndicator } from '@/utils/formatters'
 

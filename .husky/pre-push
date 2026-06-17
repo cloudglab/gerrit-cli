@@ -2,20 +2,20 @@
 
 # Type checking
 echo "Running type check..."
-bun tsc --noEmit
+pnpm exec tsc --noEmit
 
 # Run all tests with coverage and check thresholds
 echo "Running tests with coverage check..."
-bun run test:coverage:check
+pnpm exec tsx scripts/check-coverage.ts
 
 # Run linters and formatter
 echo "Running linters..."
-bun oxlint src/ tests/
-bun biome format --write src/ tests/
+pnpm exec oxlint src/ tests/
+pnpm exec biome format --write src/ tests/
 
 # Check file sizes
 echo "Checking file sizes..."
-bun scripts/check-file-size.ts
+pnpm exec tsx scripts/check-file-size.ts
 
 # Run ast-grep to check for banned 'as' typecasting
 echo "Checking for banned patterns..."

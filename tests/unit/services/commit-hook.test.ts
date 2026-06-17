@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test'
+import { describe, expect, test } from '@test/compat'
 import { CHANGE_ID_PATTERN } from '@/services/commit-hook'
 
 // Tests for commit-hook service patterns

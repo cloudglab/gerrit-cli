@@ -4,8 +4,12 @@ export type { GerritApiServiceImpl, ApiErrorFields } from './src/api/gerrit-type
 
 // ─── Services ──────────────────────────────────────────────────────────────
 export { ConfigService, ConfigServiceLive } from './src/services/config'
+export { GitWorktreeService, GitWorktreeServiceLive } from './src/services/git-worktree'
 
 // ─── Core Schemas & Types ──────────────────────────────────────────────────
+export { AppConfig, migrateFromNestedConfig } from './src/schemas/config'
+export type { AppConfig as AppConfigShape } from './src/schemas/config'
+
 export type {
   GerritCredentials,
   ChangeInfo,

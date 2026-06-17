@@ -247,10 +247,10 @@ gerrit-cli show 12345 | llm "Summarize this change and review status"
 
 ```bash
 # 默认只检查命令 help 面，适合 release 前无凭证环境
-bun run release:smoke-query
+pnpm run release:smoke-query
 
 # 如需真实 Gerrit 查询，先配置 GERRIT_*，再打开 live 模式
-bun run release:smoke-query:live
+pnpm run release:smoke-query:live
 ```
 
 live 模式默认只做只读查询，可用下面变量覆盖样本：
@@ -264,7 +264,7 @@ export GERRIT_SMOKE_BUILD_KEYWORD="jenkins"
 如果当前机器没有全局 CLI，也可以在仓库内直接运行脚本做发布前 smoke：
 
 ```bash
-bun run release:smoke-query
+pnpm run release:smoke-query
 ```
 
 ## License

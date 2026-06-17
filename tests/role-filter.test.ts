@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test'
+import { describe, expect, test } from '@test/compat'
 import { Command } from 'commander'
 import { applyRoleFilter, getCommandMeta } from '@/cli/command-meta'
 import { registerCommands } from '@/cli/register-commands'

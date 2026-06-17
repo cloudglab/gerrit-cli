@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test'
+import { describe, expect, test } from '@test/compat'
 import { generateMockChange } from '@/test-utils/mock-generator'
 import {
   DEFAULT_STATUS_INDICATORS,

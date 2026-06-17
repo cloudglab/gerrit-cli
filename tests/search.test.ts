@@ -1,4 +1,14 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, mock } from 'bun:test'
+import { spawn } from 'node:child_process'
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  mock,
+} from '@test/compat'
 import { Effect, Layer } from 'effect'
 import { HttpResponse, http } from 'msw'
 import { setupServer } from 'msw/node'
@@ -652,9 +662,8 @@ describe('search command', () => {
 describe('search command CLI integration', () => {
   it('should output XML error format when --xml flag is used and request fails', async () => {
     // Use environment variables to configure an invalid host that will fail to connect
-    const proc = Bun.spawn(['bun', 'run', 'src/cli/index.ts', 'search', '--xml'], {
+    const proc = spawn('tsx', ['src/cli/index.ts', 'search', '--xml'], {
       env: {
-        // Preserve PATH for bun to be found
         PATH: process.env.PATH,
         // Override with invalid host - connection will fail
         GERRIT_HOST: 'http://localhost:59999',
@@ -663,12 +672,10 @@ describe('search command CLI integration', () => {
         // Set HOME to temp dir to prevent reading real config
         HOME: '/tmp',
       },
-      stdout: 'pipe',
-      stderr: 'pipe',
     })
 
-    const stdout = await new Response(proc.stdout).text()
-    const exitCode = await proc.exited
+    const stdout = await readStream(proc.stdout)
+    const exitCode = await waitForExit(proc)
 
     // Should exit with error code
     expect(exitCode).toBe(1)
@@ -684,9 +691,8 @@ describe('search command CLI integration', () => {
 
   it('should output plain error format when request fails without --xml', async () => {
     // Use environment variables to configure an invalid host that will fail to connect
-    const proc = Bun.spawn(['bun', 'run', 'src/cli/index.ts', 'search'], {
+    const proc = spawn('tsx', ['src/cli/index.ts', 'search'], {
       env: {
-        // Preserve PATH for bun to be found
         PATH: process.env.PATH,
         // Override with invalid host - connection will fail
         GERRIT_HOST: 'http://localhost:59999',
@@ -695,12 +701,10 @@ describe('search command CLI integration', () => {
         // Set HOME to temp dir to prevent reading real config
         HOME: '/tmp',
       },
-      stdout: 'pipe',
-      stderr: 'pipe',
     })
 
-    const stderr = await new Response(proc.stderr).text()
-    const exitCode = await proc.exited
+    const stderr = await readStream(proc.stderr)
+    const exitCode = await waitForExit(proc)
 
     // Should exit with error code
     expect(exitCode).toBe(1)
@@ -710,3 +714,18 @@ describe('search command CLI integration', () => {
     expect(stderr).not.toContain('<?xml')
   })
 })
+
+async function readStream(stream: NodeJS.ReadableStream | null): Promise<string> {
+  if (!stream) return ''
+  const chunks: Buffer[] = []
+  for await (const chunk of stream) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk)))
+  }
+  return Buffer.concat(chunks).toString('utf8')
+}
+
+async function waitForExit(process: ReturnType<typeof spawn>): Promise<number | null> {
+  return await new Promise((resolve) => {
+    process.on('exit', (code) => resolve(code))
+  })
+}

@@ -2,6 +2,7 @@ import { spawn } from 'node:child_process'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
+import { getCliVersion } from './version'
 
 const PACKAGE_NAME = '@cloudglab/gerrit-cli'
 let CHECK_FILE = join(homedir(), '.gerrit-cli', 'update-check.json')
@@ -36,22 +37,7 @@ interface UpdateCheckState {
 }
 
 function getLocalVersion(): string {
-  try {
-    const pkgPath = join(import.meta.dirname!, '..', 'package.json')
-    const pkg = JSON.parse(readFileSync(pkgPath, 'utf8')) as unknown
-    if (
-      typeof pkg === 'object' &&
-      pkg !== null &&
-      !Array.isArray(pkg) &&
-      'version' in pkg &&
-      typeof (pkg as Record<string, unknown>).version === 'string'
-    ) {
-      return (pkg as Record<string, unknown>).version as string
-    }
-    return '0.0.0'
-  } catch {
-    return '0.0.0'
-  }
+  return getCliVersion()
 }
 
 function readUpdateCheckStateFrom(checkFile: string): UpdateCheckState {

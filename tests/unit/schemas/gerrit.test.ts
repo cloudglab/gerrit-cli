@@ -1,5 +1,5 @@
-import { describe, expect, test } from 'bun:test'
 import { Schema } from '@effect/schema'
+import { describe, expect, test } from '@test/compat'
 import { CommentInput, FileDiffContent, GerritCredentials } from '@/schemas/gerrit'
 
 describe('Gerrit Schemas', () => {

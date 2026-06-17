@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test'
+import { describe, expect, test } from '@test/compat'
 import { Effect } from 'effect'
 import {
   escapeXML,

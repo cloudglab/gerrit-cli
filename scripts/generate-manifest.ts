@@ -1,10 +1,10 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { COMMAND_META } from '../src/cli/command-meta'
 import { CLI_ROLES, type CliRole } from '../src/cli/roles'
 
-const rootDir = resolve(import.meta.dir, '..')
+const rootDir = resolve(import.meta.dirname, '..')
 const distDir = resolve(rootDir, 'dist')
 const manifestPath = resolve(distDir, 'manifest.json')
 const packageJsonPath = resolve(rootDir, 'package.json')

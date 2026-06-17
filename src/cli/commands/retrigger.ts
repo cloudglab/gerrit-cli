@@ -1,9 +1,9 @@
-import { input } from '@inquirer/prompts'
 import chalk from 'chalk'
 import { Effect } from 'effect'
 import { type ApiError, GerritApiService, type GerritApiServiceImpl } from '@/api/gerrit'
 import { type ConfigError, ConfigService, type ConfigServiceImpl } from '@/services/config'
 import { type GitError, getChangeIdFromHead, type NoChangeIdError } from '@/utils/git-commit'
+import { input } from '@/utils/prompts'
 
 export const RETRIGGER_HELP_TEXT = `
 Examples:

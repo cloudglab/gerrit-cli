@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test'
+import { describe, expect, test } from '@test/compat'
 import { Effect, Layer } from 'effect'
 import { GitWorktreeService, WorktreeInfo } from '@/services/git-worktree'
 

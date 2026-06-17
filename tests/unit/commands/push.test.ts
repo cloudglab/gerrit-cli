@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test'
+import { describe, expect, test } from '@test/compat'
 import { buildPushRefspec, PushError, validateEmails } from '@/cli/commands/push'
 
 describe('Push Command', () => {

@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 
 import { execSync } from 'child_process'
 
@@ -12,11 +12,11 @@ console.log('Running tests with coverage...\n')
 
 try {
   // Run tests with coverage and capture both stdout and stderr
-  const output = execSync('bun test --coverage 2>&1', { encoding: 'utf8' })
-  
+  const output = execSync('pnpm run test:coverage 2>&1', { encoding: 'utf8' })
+
   // Print the output
   console.log(output)
-  
+
   // Parse coverage from output
   const coverageMatch = output.match(/All files\s*\|\s*([\d.]+)\s*\|\s*([\d.]+)\s*\|/)
   if (!coverageMatch) {
@@ -53,17 +53,19 @@ try {
     console.log('\n✅ Coverage meets all thresholds!')
     process.exit(0)
   }
-} catch (error: any) {
+} catch (error: unknown) {
+  const coverageError = error as { readonly status?: number; readonly stdout?: unknown; readonly message?: string }
+
   // If tests failed, the exit code will be non-zero
-  if (error.status !== 0) {
+  if (coverageError.status !== 0) {
     console.log('\n❌ Tests failed!')
     // Still print the output if available
-    if (error.stdout) {
-      console.log(error.stdout.toString())
+    if (coverageError.stdout) {
+      console.log(String(coverageError.stdout))
     }
     process.exit(1)
   }
   // Other errors
-  console.error('Error running coverage check:', error.message)
+  console.error('Error running coverage check:', coverageError.message ?? String(error))
   process.exit(1)
 }

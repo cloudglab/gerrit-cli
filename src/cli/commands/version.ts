@@ -1,26 +1,12 @@
-import { readFileSync } from 'node:fs'
-import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { getCliVersion } from '@/version'
 
 interface VersionOptions {
   json?: boolean
   xml?: boolean
 }
 
-function readPackageVersion(): string {
-  try {
-    const __filename = fileURLToPath(import.meta.url)
-    const __dirname = dirname(__filename)
-    const packageJsonPath = join(__dirname, '..', '..', 'package.json')
-    const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'))
-    return packageJson.version || '0.0.0'
-  } catch {
-    return 'unknown'
-  }
-}
-
 export function versionCommand(options: VersionOptions): void {
-  const version = readPackageVersion()
+  const version = getCliVersion()
 
   if (options.json) {
     console.log(

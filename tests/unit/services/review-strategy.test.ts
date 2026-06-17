@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, mock } from 'bun:test'
+import { beforeEach, describe, expect, it, mock } from '@test/compat'
 import { Effect } from 'effect'
 
 // Create testable versions of the strategies by injecting dependencies

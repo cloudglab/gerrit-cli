@@ -21,7 +21,7 @@ export function renderQuickStartGuide(): string {
 常用配置：
   gerrit config show                   查看当前配置
   gerrit-ci build-status <change-id>   查看构建状态
-  bun run release:smoke-query          发布前 dry-run smoke
+  pnpm run release:smoke-query         发布前 dry-run smoke
 
 写操作提示：评论、投票、submit、abandon、restore、push 都需要显式命令触发。`
 }

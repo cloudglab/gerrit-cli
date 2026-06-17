@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'bun:test'
+import { afterEach, describe, expect, it } from '@test/compat'
 import { Effect, Exit } from 'effect'
 import { assertWriteAllowed } from '@/utils/write-guard'
 

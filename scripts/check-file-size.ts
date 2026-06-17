@@ -1,6 +1,6 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 
-import { readdir, stat } from 'node:fs/promises'
+import { readdir, readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
 const MAX_LINES = 700
@@ -17,7 +17,7 @@ async function checkFileSize(dir: string): Promise<void> {
     if (file.isDirectory() && !['node_modules', 'dist', 'tmp', '.git'].includes(file.name)) {
       await checkFileSize(fullPath)
     } else if (file.isFile() && file.name.endsWith('.ts')) {
-      const content = await Bun.file(fullPath).text()
+      const content = await readFile(fullPath, 'utf8')
       const lines = content.split('\n').length
       
       if (lines > MAX_LINES) {

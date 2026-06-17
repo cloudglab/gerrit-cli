@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test'
+import { describe, expect, test } from '@test/compat'
 import { Effect } from 'effect'
 import { collectDoctorReport, outputDoctorReport } from '@/cli/commands/doctor'
 import type { MaskedAppConfig } from '@/services/config'

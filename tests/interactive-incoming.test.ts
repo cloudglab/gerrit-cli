@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test'
+import { describe, expect, test } from '@test/compat'
 import { incomingCommand } from '@/cli/commands/incoming'
 import { generateMockChange } from '@/test-utils/mock-generator'
 import { getOpenCommand, sanitizeUrlSync } from '@/utils/shell-safety'

@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test'
+import { describe, expect, test } from '@test/compat'
 import { Effect } from 'effect'
 import { AppConfig } from '@/schemas/config'
 import { GerritCredentials } from '@/schemas/gerrit'

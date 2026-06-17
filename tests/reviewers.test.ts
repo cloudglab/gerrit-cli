@@ -1,4 +1,13 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, mock } from 'bun:test'
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  mock,
+} from '@test/compat'
 import { Effect, Layer } from 'effect'
 import { HttpResponse, http } from 'msw'
 import { setupServer } from 'msw/node'
@@ -127,7 +136,7 @@ describe('reviewers command', () => {
     }
     expect(parsed.status).toBe('success')
     expect(parsed.change_id).toBe('12345')
-    expect(parsed.reviewers).toBeArray()
+    expect(Array.isArray(parsed.reviewers)).toBe(true)
     expect(parsed.reviewers.length).toBe(2)
     expect(parsed.reviewers[0].name).toBe('Alice Smith')
     expect(parsed.reviewers[1].email).toBe('bob@example.com')

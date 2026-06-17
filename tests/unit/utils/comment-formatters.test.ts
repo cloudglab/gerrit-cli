@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
+import { afterEach, beforeEach, describe, expect, mock, test } from '@test/compat'
 import type { CommentInfo } from '@/schemas/gerrit'
 import {
   CommentWithContext,

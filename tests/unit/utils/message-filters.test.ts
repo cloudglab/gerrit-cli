@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test'
+import { describe, expect, test } from '@test/compat'
 import type { MessageInfo } from '@/schemas/gerrit'
 import { filterMeaningfulMessages, sortMessagesByDate } from '@/utils/message-filters'
 

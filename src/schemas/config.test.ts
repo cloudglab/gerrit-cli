@@ -1,5 +1,5 @@
-import { describe, expect, test } from 'bun:test'
 import { Schema } from '@effect/schema'
+import { describe, expect, test } from '@test/compat'
 import { Effect } from 'effect'
 import { AppConfig, migrateFromNestedConfig } from './config'
 
