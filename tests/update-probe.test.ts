@@ -8,12 +8,19 @@ import {
   writeUpdateCheckState,
 } from '@/update-probe'
 
-const TEST_DIR = join(tmpdir(), `gerrit-update-probe-test-${process.pid}`)
-const TEST_FILE = join(TEST_DIR, 'update-check.json')
+let testCounter = 0
+function makeTestFile(): string {
+  testCounter += 1
+  return join(
+    tmpdir(),
+    `gerrit-update-probe-test-${process.pid}-${testCounter}`,
+    'update-check.json',
+  )
+}
 
-function readState(): Record<string, unknown> {
+function readState(checkFile: string): Record<string, unknown> {
   try {
-    return JSON.parse(readFileSync(TEST_FILE, 'utf8')) as Record<string, unknown>
+    return JSON.parse(readFileSync(checkFile, 'utf8')) as Record<string, unknown>
   } catch {
     return {}
   }
@@ -22,9 +29,11 @@ function readState(): Record<string, unknown> {
 describe('update probe', () => {
   let stderrOutput: string[]
   let origStderr: typeof process.stderr.write
+  let testFile: string
 
   beforeEach(() => {
-    mkdirSync(TEST_DIR, { recursive: true })
+    testFile = makeTestFile()
+    mkdirSync(join(testFile, '..'), { recursive: true })
     stderrOutput = []
     origStderr = process.stderr.write
     process.stderr.write = ((chunk: unknown) => {
@@ -36,7 +45,7 @@ describe('update probe', () => {
   afterEach(() => {
     process.stderr.write = origStderr
     try {
-      rmSync(TEST_DIR, { recursive: true, force: true })
+      rmSync(join(testFile, '..'), { recursive: true, force: true })
     } catch {
       // ignore
     }
@@ -76,11 +85,11 @@ describe('update probe', () => {
         latestVersion: '999.0.0',
         currentVersion: '0.0.0',
       },
-      TEST_FILE,
+      testFile,
     )
 
     stderrOutput.length = 0
-    runDailyUpdateProbe('show', { checkFile: TEST_FILE })
+    runDailyUpdateProbe('show', { checkFile: testFile })
 
     const output = stderrOutput.join('')
     expect(output).toContain('999.0.0')
@@ -94,26 +103,26 @@ describe('update probe', () => {
         latestVersion: '0.0.0',
         currentVersion: '0.0.0',
       },
-      TEST_FILE,
+      testFile,
     )
 
     stderrOutput.length = 0
-    runDailyUpdateProbe('show', { checkFile: TEST_FILE })
+    runDailyUpdateProbe('show', { checkFile: testFile })
     expect(stderrOutput.length).toBe(0)
   })
 
   test('writeUpdateCacheAfterInstall writes current date and version', () => {
-    writeUpdateCacheAfterInstall('1.2.3', TEST_FILE)
+    writeUpdateCacheAfterInstall('1.2.3', testFile)
 
-    const state = readState()
+    const state = readState(testFile)
     expect(state.lastCheckedDate).toBe(new Date().toISOString().slice(0, 10))
     expect(state.latestVersion).toBe('1.2.3')
   })
 
   test('writeUpdateCacheAfterInstall uses local version when no arg', () => {
-    writeUpdateCacheAfterInstall(undefined, TEST_FILE)
+    writeUpdateCacheAfterInstall(undefined, testFile)
 
-    const state = readState()
+    const state = readState(testFile)
     expect(state.lastCheckedDate).toBe(new Date().toISOString().slice(0, 10))
     expect(typeof state.currentVersion).toBe('string')
   })

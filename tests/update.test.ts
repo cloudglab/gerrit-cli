@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, mock, spyOn, test } from 'bun:test'
+import * as nodeChildProcess from 'node:child_process'
 import { Effect } from 'effect'
 import { installCommand } from '@/cli/commands/install'
 import { uninstallCommand } from '@/cli/commands/uninstall'
@@ -95,7 +96,7 @@ describe('update command', () => {
   })
 
   test('install command runs global npm install', async () => {
-    execFileSpy = spyOn(childProcess, 'execFileSync').mockImplementation(((
+    execFileSpy = spyOn(nodeChildProcess, 'execFileSync').mockImplementation(((
       command: string,
       args?: readonly string[],
     ) => {
@@ -146,7 +147,7 @@ describe('update command', () => {
   })
 
   test('uninstall command runs global npm uninstall with confirm', async () => {
-    execFileSpy = spyOn(childProcess, 'execFileSync').mockImplementation(((
+    execFileSpy = spyOn(nodeChildProcess, 'execFileSync').mockImplementation(((
       command: string,
       args?: readonly string[],
     ) => {
