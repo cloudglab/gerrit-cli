@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>gerrit-cli · Gerrit 命令速查</title>
-  <meta name="description" content="gerrit-cli 极简命令速查、安装、审查和发布前 smoke 入口。">
+  <meta name="description" content="gerrit-cli 安装、配置与 Gerrit 使用命令速查页。">
   <style>
     :root {
       color-scheme: light;
@@ -372,7 +372,7 @@
       <div class="panel">
         <div class="eyebrow">Gerrit CLI</div>
         <h1>命令速查</h1>
-        <p class="lead">把 Gerrit 变更查看、审查、投票、工作区、CI 构建状态和 AI Skill 工作流接到终端、脚本与发布链路。</p>
+        <p class="lead">集中展示 gerrit-cli 的安装、配置和 Gerrit 日常使用命令，适合直接复制到终端执行。</p>
         <div class="actions">
           <button class="button primary" type="button" data-copy="npm install -g @cloudglab/gerrit-cli">复制安装命令</button>
           <a class="button" href="https://github.com/cloudglab/gerrit-cli">GitHub</a>
@@ -389,8 +389,8 @@
           <div class="copy-row"><code>gerrit-cli setup</code><button class="copy" type="button" data-copy="gerrit-cli setup">复制</button></div>
         </div>
         <div class="command">
-          <strong>发布前 smoke</strong>
-          <div class="copy-row"><code>pnpm run release:smoke-query</code><button class="copy" type="button" data-copy="pnpm run release:smoke-query">复制</button></div>
+          <strong>验证当前身份</strong>
+          <div class="copy-row"><code>gerrit-cli whoami</code><button class="copy" type="button" data-copy="gerrit-cli whoami">复制</button></div>
         </div>
       </div>
     </section>
@@ -398,12 +398,12 @@
     <section class="section wiki" aria-labelledby="wiki-title">
       <div class="wiki-head">
         <div>
-          <h2 id="wiki-title">Wiki / 检索</h2>
-          <p>先做成静态检索：安装、角色入口、审查、CI、工作区、配置、Skill 和发布前 smoke 都能在本页快速过滤。后续可以扩展为构建期索引，覆盖 README、CHANGELOG 和命令注册表。</p>
+          <h2 id="wiki-title">命令检索</h2>
+          <p>本页只保留安装、配置、查看变更、审查、工作区和构建状态等 Gerrit 使用命令，不再混入项目开发或发布命令。</p>
         </div>
         <div class="wiki-search">
           <label for="wiki-query">输入关键词</label>
-          <input id="wiki-query" type="search" placeholder="例如：review、CI、smoke、workspace、xml" autocomplete="off">
+          <input id="wiki-query" type="search" placeholder="例如：setup、show、incoming、vote、checkout" autocomplete="off">
         </div>
       </div>
       <div class="wiki-status" id="wiki-status">输入关键词后过滤下方命令。</div>
@@ -411,29 +411,26 @@
 
     <section class="grid" aria-label="命令速查">
       <div class="section">
-        <h2>常用场景</h2>
+        <h2>快速开始</h2>
+        <ul>
+          <li>全局安装<code>npm install -g @cloudglab/gerrit-cli</code></li>
+          <li>初始化配置<code>gerrit-cli setup</code></li>
+          <li>检查连接状态<code>gerrit-cli status</code></li>
+          <li>查看当前身份<code>gerrit-cli whoami</code></li>
+          <li>诊断本地环境<code>gerrit-cli doctor</code></li>
+          <li>查看版本<code>gerrit-cli version</code></li>
+        </ul>
+      </div>
+      <div class="section">
+        <h2>查看变更</h2>
         <ul>
           <li>查看我的变更<code>gerrit-cli mine</code></li>
           <li>查看待审查列表<code>gerrit-cli incoming</code></li>
           <li>查看变更详情<code>gerrit-cli show 12345</code></li>
           <li>查看变更 diff<code>gerrit-cli diff 12345</code></li>
+          <li>查看文件列表<code>gerrit-cli files 12345</code></li>
           <li>查看评论<code>gerrit-cli comments 12345</code></li>
           <li>搜索变更<code>gerrit-cli search "owner:self status:open"</code></li>
-        </ul>
-      </div>
-      <div class="section">
-        <h2>基础 / 配置</h2>
-        <ul>
-          <li>安装 Node.js<code>node --version</code></li>
-          <li>安装 CLI<code>npm install -g @cloudglab/gerrit-cli</code></li>
-          <li>CLI 安装入口<code>gerrit install</code></li>
-          <li>初始化配置<code>gerrit-cli setup</code></li>
-          <li>连接状态<code>gerrit-cli status</code></li>
-          <li>更新 CLI<code>gerrit update</code></li>
-          <li>卸载预览<code>gerrit uninstall</code></li>
-          <li>查看配置<code>gerrit-cli config show</code></li>
-          <li>查看版本<code>gerrit-cli version</code></li>
-          <li>生成补全<code>gerrit-cli completion bash</code></li>
         </ul>
       </div>
       <div class="section">
@@ -442,7 +439,7 @@
           <li>完整能力<code>gerrit-cli --help</code></li>
           <li>开发者入口<code>gerrit-dev mine</code></li>
           <li>审查者入口<code>gerrit-reviewer incoming</code></li>
-          <li>CI 入口<code>gerrit-ci build-status 12345 --json</code></li>
+          <li>CI 入口<code>gerrit-ci build-status 12345</code></li>
           <li>团队 Lead 入口<code>gerrit-lead groups</code></li>
         </ul>
       </div>
@@ -453,9 +450,8 @@
           <li>查看文件列表<code>gerrit-cli files 12345</code></li>
           <li>查看审查人<code>gerrit-cli reviewers 12345</code></li>
           <li>添加评论<code>gerrit-cli comment 12345 -m "LGTM, one nit"</code></li>
-          <li>批量行评论<code>echo '[{"file":"src/app.ts","line":42,"message":"Use const"}]' | gerrit-cli comment 12345 --batch</code></li>
           <li>投票通过<code>gerrit-cli vote 12345 --code-review 2 -m "Approved"</code></li>
-          <li>AI 辅助审查<code>gerrit-cli review 12345 --strategy claude</code></li>
+          <li>补充审查意见<code>gerrit-cli comment 12345 -m "Please add test coverage"</code></li>
         </ul>
       </div>
       <div class="section">
@@ -468,29 +464,30 @@
           <li>合入变更<code>gerrit-cli submit 12345</code></li>
           <li>丢弃变更<code>gerrit-cli abandon 12345</code></li>
           <li>恢复变更<code>gerrit-cli restore 12345</code></li>
+          <li>设为 WIP<code>gerrit-cli set-wip 12345</code></li>
+          <li>设为 Ready<code>gerrit-cli set-ready 12345</code></li>
         </ul>
       </div>
       <div class="section">
         <h2>工作区</h2>
         <ul>
           <li>检出变更<code>gerrit-cli checkout 12345</code></li>
-          <li>创建工作区<code>gerrit-cli workspace create 12345</code></li>
+          <li>查看工作区信息<code>gerrit-cli workspace 12345</code></li>
           <li>列出工作树<code>gerrit-cli trees</code></li>
           <li>创建变更工作树<code>gerrit-cli tree setup 12345</code></li>
           <li>重基工作树<code>gerrit-cli tree rebase 12345</code></li>
-          <li>清理工作树<code>gerrit-cli tree cleanup --dry-run</code></li>
+          <li>清理工作树<code>gerrit-cli tree cleanup 12345</code></li>
           <li>推送 WIP<code>gerrit-cli push -b main -t refactor --wip</code></li>
         </ul>
       </div>
       <div class="section">
-        <h2>CI / 构建</h2>
+        <h2>构建状态</h2>
         <ul>
           <li>构建状态<code>gerrit-cli build-status 12345</code></li>
           <li>JSON 构建状态<code>gerrit-cli build-status 12345 --json</code></li>
           <li>轮询到完成<code>gerrit-cli build-status 12345 --watch --exit-status</code></li>
           <li>失败链接<code>gerrit-cli failures 12345</code></li>
-          <li>提取 Jenkins 链接<code>gerrit-cli extract-url "jenkins"</code></li>
-          <li>重新触发构建<code>gerrit-cli retrigger 12345</code></li>
+          <li>提取 Jenkins 链接<code>gerrit-cli extract-url "jenkins" 12345</code></li>
           <li>分析失败<code>gerrit-cli analyze 12345</code></li>
         </ul>
       </div>
@@ -530,24 +527,11 @@
           <li>服务地址<code>export GERRIT_HOST="https://gerrit.example.com"</code></li>
           <li>账号<code>export GERRIT_USERNAME="your-username"</code></li>
           <li>HTTP 密码<code>export GERRIT_PASSWORD="your-http-password"</code></li>
-          <li>smoke 样本变更<code>export GERRIT_SMOKE_CHANGE_ID="12345"</code></li>
-          <li>smoke 搜索样本<code>export GERRIT_SMOKE_QUERY="status:open"</code></li>
-          <li>smoke 构建关键词<code>export GERRIT_SMOKE_BUILD_KEYWORD="jenkins"</code></li>
-        </ul>
-      </div>
-      <div class="section">
-        <h2>发布 / Skill</h2>
-        <ul>
-          <li>发布前 dry-run<code>pnpm run release:smoke-query</code></li>
-          <li>真实只读 smoke<code>pnpm run release:smoke-query:live</code></li>
-          <li>Claude 插件安装<code>/plugin marketplace add cloudglab/gerrit-cli</code></li>
-          <li>安装 workflow skill<code>/plugin install gerrit-workflow@gerrit-cli</code></li>
-          <li>查看 npm 包<code>npm view @cloudglab/gerrit-cli version</code></li>
         </ul>
       </div>
     </section>
 
-    <footer>写操作需要显式命令触发；脚本和 AI 集成优先使用 <code>--json</code> 或 <code>--xml</code> 输出。</footer>
+    <footer>页面只展示 gerrit-cli 安装、配置和 Gerrit 使用命令；写操作需要显式命令触发。</footer>
   </main>
   <script>
     document.querySelectorAll('li code').forEach((code) => {

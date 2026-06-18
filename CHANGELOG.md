@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.0.16 - 2026-06-18
+
+### Fixed
+
+- `docs/index.html`: 速查页只保留 `gerrit-cli` 的安装、配置与 Gerrit 使用命令，移除混入的开发命令、发布 smoke 与不准确的 CI 命令示例；顶部 hero、命令分类与 footer 文案同步收敛。
+- 修正速查页中 `extract-url` 调用为 `gerrit-cli extract-url "jenkins" 12345`，并补充 `set-wip` / `set-ready` 等真实命令示例。
+
 ## 0.0.15 - 2026-06-17
 
 ### Fixed
