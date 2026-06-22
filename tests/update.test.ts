@@ -4,6 +4,7 @@ import { installCommand } from '@/cli/commands/install'
 import { uninstallCommand } from '@/cli/commands/uninstall'
 import { updateCommand } from '@/cli/commands/update'
 import * as childProcess from '@/utils/child-process'
+import { getCliVersion } from '@/version'
 
 describe('update command', () => {
   let execSpy: ReturnType<typeof spyOn>
@@ -18,7 +19,8 @@ describe('update command', () => {
   test('skips install when already up to date', async () => {
     execSpy = spyOn(childProcess, 'execSync').mockImplementation((() =>
       Buffer.from('')) as unknown as typeof childProcess.execSync)
-    global.fetch = (async () => Response.json({ version: '0.0.16' })) as unknown as typeof fetch
+    global.fetch = (async () =>
+      Response.json({ version: getCliVersion() })) as unknown as typeof fetch
 
     const logs: string[] = []
     const origLog = console.log

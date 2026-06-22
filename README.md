@@ -2,7 +2,7 @@
 
 ![gerrit-cli hero](./assets/readme/gerrit-cli-hero.png)
 
-让 Gerrit 代码审查流程进入命令行。支持查看变更、提交评论、管理审查、检查 CI 构建状态，以及直接面向 LLM 和自动化脚本输出结构化数据。
+让 Gerrit 代码审查流程进入命令行。支持查看变更、提交评论、管理审查、检查 CI 构建状态、生成日报/周报/月报/季报，以及直接面向 LLM 和自动化脚本输出结构化数据。
 
 ## 安装
 
@@ -147,6 +147,24 @@ gerrit-cli build-status --watch --exit-status && deploy.sh
 gerrit-cli extract-url "jenkins.inst-ci.net" | tail -1
 ```
 
+### 日报 / 周报 / 月报
+
+```bash
+# 默认看本人的周报（本周一 00:00 起）
+gerrit-cli report weekly
+
+# alias 写法
+gerrit-cli daily
+gerrit-cli monthly --md > monthly-report.md
+gerrit-cli quarterly --json
+
+# 按项目 / 作者切换视角
+gerrit-cli report monthly --view project
+gerrit-cli report monthly --view author
+```
+
+`report` 默认同时统计 `merged` / `open` / `abandoned`，并按周期输出汇总；`--md` 适合直接保存到邮件、日报或发布记录。
+
 ### 管理工作区
 
 ```bash
@@ -201,6 +219,8 @@ gerrit-cli vote 12345 --code-review 2 --confirm
 | 纯文本 | 默认 | 人类阅读 |
 | JSON | `--json` | 脚本解析、jq 管道 |
 | XML | `--xml` | LLM 消费（CDATA 包裹） |
+
+其中 `report` 系列额外支持 `--md`，用于 Markdown 落盘。
 
 ## Skill / Agent 用法
 

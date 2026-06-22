@@ -665,10 +665,11 @@ describe('search command CLI integration', () => {
     const proc = spawn('tsx', ['src/cli/index.ts', 'search', '--xml'], {
       env: {
         PATH: process.env.PATH,
-        // Override with invalid host - connection will fail
-        GERRIT_HOST: 'http://localhost:59999',
+        // Override with invalid host - connection will fail fast
+        GERRIT_HOST: 'http://127.0.0.1:1',
         GERRIT_USERNAME: 'test',
         GERRIT_PASSWORD: 'test',
+        GERRIT_SKIP_UPDATE_CHECK: 'true',
         // Set HOME to temp dir to prevent reading real config
         HOME: '/tmp',
       },
@@ -694,10 +695,11 @@ describe('search command CLI integration', () => {
     const proc = spawn('tsx', ['src/cli/index.ts', 'search'], {
       env: {
         PATH: process.env.PATH,
-        // Override with invalid host - connection will fail
-        GERRIT_HOST: 'http://localhost:59999',
+        // Override with invalid host - connection will fail fast
+        GERRIT_HOST: 'http://127.0.0.1:1',
         GERRIT_USERNAME: 'test',
         GERRIT_PASSWORD: 'test',
+        GERRIT_SKIP_UPDATE_CHECK: 'true',
         // Set HOME to temp dir to prevent reading real config
         HOME: '/tmp',
       },

@@ -11,14 +11,44 @@ export type CommandGroup =
   | 'analytics'
   | 'utility'
 
+export type CostHint = 'low' | 'medium' | 'high'
+
 export interface CommandMeta {
   readonly name: string
   readonly group: CommandGroup
   readonly isWrite: boolean
   readonly roles: readonly CliRole[]
+  readonly costHint?: CostHint
+  readonly nextBestTools?: readonly string[]
 }
 
 const allRoles: readonly CliRole[] = CLI_ROLES
+
+const defaultNextByGroup: Readonly<Record<CommandGroup, readonly string[]>> = {
+  config: ['whoami', 'doctor', 'status', 'setup'],
+  review: ['show', 'diff', 'comments', 'comment', 'vote', 'incoming'],
+  change: ['show', 'search', 'mine', 'incoming', 'report'],
+  workspace: ['checkout', 'push', 'rebase', 'tree', 'cherry'],
+  ci: ['build-status', 'failures', 'extract-url', 'retrigger'],
+  groups: ['groups', 'groups-show', 'groups-members'],
+  analytics: ['report', 'analyze', 'failures', 'build-status'],
+  utility: ['version', 'completion', 'whoami', 'doctor'],
+}
+
+export const defaultCostHint = (meta: Pick<CommandMeta, 'group' | 'isWrite'>): CostHint => {
+  if (meta.isWrite) return 'high'
+  if (meta.group === 'analytics') return 'medium'
+  return 'low'
+}
+
+export const defaultNextBestTools = (meta: Pick<CommandMeta, 'group'>): readonly string[] =>
+  defaultNextByGroup[meta.group]
+
+export const effectiveCostHint = (meta: CommandMeta): CostHint =>
+  meta.costHint ?? defaultCostHint(meta)
+
+export const effectiveNextBestTools = (meta: CommandMeta): readonly string[] =>
+  meta.nextBestTools ?? defaultNextBestTools(meta)
 
 export const COMMAND_META: readonly CommandMeta[] = [
   { name: 'setup', group: 'config', isWrite: false, roles: allRoles },
@@ -47,6 +77,11 @@ export const COMMAND_META: readonly CommandMeta[] = [
   { name: 'projects', group: 'change', isWrite: false, roles: ['full', 'dev', 'lead'] },
   { name: 'files', group: 'change', isWrite: false, roles: ['full', 'dev', 'reviewer'] },
   { name: 'open', group: 'change', isWrite: false, roles: ['full', 'dev', 'reviewer', 'lead'] },
+  { name: 'report', group: 'analytics', isWrite: false, roles: ['full', 'dev', 'lead'] },
+  { name: 'daily', group: 'analytics', isWrite: false, roles: ['full', 'dev', 'lead'] },
+  { name: 'weekly', group: 'analytics', isWrite: false, roles: ['full', 'dev', 'lead'] },
+  { name: 'monthly', group: 'analytics', isWrite: false, roles: ['full', 'dev', 'lead'] },
+  { name: 'quarterly', group: 'analytics', isWrite: false, roles: ['full', 'dev', 'lead'] },
   { name: 'topic', group: 'change', isWrite: true, roles: ['full', 'dev', 'lead'] },
   { name: 'submit', group: 'change', isWrite: true, roles: ['full', 'lead'] },
   { name: 'abandon', group: 'change', isWrite: true, roles: ['full', 'lead'] },
@@ -65,7 +100,7 @@ export const COMMAND_META: readonly CommandMeta[] = [
 
   { name: 'build-status', group: 'ci', isWrite: false, roles: ['full', 'dev', 'reviewer', 'ci'] },
   { name: 'failures', group: 'ci', isWrite: false, roles: ['full', 'dev', 'reviewer', 'ci'] },
-  { name: 'analyze', group: 'ci', isWrite: false, roles: ['full', 'lead', 'ci'] },
+  { name: 'analyze', group: 'analytics', isWrite: false, roles: ['full', 'lead', 'ci'] },
   { name: 'extract-url', group: 'ci', isWrite: false, roles: ['full', 'dev', 'reviewer', 'ci'] },
   { name: 'retrigger', group: 'ci', isWrite: true, roles: ['full', 'dev', 'ci'] },
   { name: 'install-hook', group: 'ci', isWrite: true, roles: ['full', 'dev'] },
@@ -97,4 +132,35 @@ export function applyRoleFilter(program: Command, role: CliRole): void {
     return meta ? commandVisibleForRole(meta, role) : true
   })
   Reflect.set(program, 'commands', visibleCommands)
+}
+
+/**
+ * Build the help text block (预估成本 / 下一步推荐) for a given command name.
+ * Returns empty string if no metadata is registered for the command.
+ */
+export function metaHelpText(name: string): string {
+  const meta = getCommandMeta(name)
+  if (!meta) return ''
+  const cost = effectiveCostHint(meta)
+  const next = effectiveNextBestTools(meta)
+  let text = '\n预估成本: '
+  text += cost
+  text += '\n'
+  if (next.length > 0) {
+    text += `下一步推荐: ${next.join(', ')}\n`
+  }
+  return text
+}
+
+/**
+ * Apply the meta help text (cost / next) to every registered subcommand.
+ * Idempotent: addHelpText('after', ...) appends, so we only call once per command.
+ */
+export function applyMetaHelp(program: Command): void {
+  for (const command of program.commands) {
+    const block = metaHelpText(command.name())
+    if (block) {
+      command.addHelpText('after', block)
+    }
+  }
 }

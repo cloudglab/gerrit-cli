@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.0.17 - 2026-06-22
+
+### Added
+
+- `report [period]` 聚合报表命令，以及 `daily` / `weekly` / `monthly` / `quarterly` alias；支持默认文本、`--json`、`--xml`、`--md` 四种输出，用于查看个人日/周/月/季变更产出。
+- 周报新增按日分布，月报新增项目 Top 10 / 作者 Top 5，季报新增月度趋势，方便直接落盘到运维日报或邮件正文。
+
+### Changed
+
+- 所有命令 help 新增 `预估成本` 与 `下一步推荐`，便于 CLI 用户和 Agent 更快判断调用代价与后续链路。
+- `report` / `daily` / `weekly` / `monthly` / `quarterly` / `analyze` 统一归到 `analytics` 分组，并使用同一套默认推荐链。
+
+### Fixed
+
+- `src/cli/command-helpers.ts` 的结构化错误输出现在带 `code`、`recoverable`、`statusCode`、`hint`，JSON/XML 脚本消费更稳定。
+- `.github/workflows/publish.yml` 改为明确执行 `pnpm run check:all`，与 npm Trusted Publisher 发布前校验要求保持一致。
+
 ## 0.0.16 - 2026-06-18
 
 ### Fixed

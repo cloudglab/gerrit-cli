@@ -1,5 +1,5 @@
 import { Command } from 'commander'
-import { applyRoleFilter } from './cli/command-meta'
+import { applyMetaHelp, applyRoleFilter } from './cli/command-meta'
 import { registerCommands } from './cli/register-commands'
 import { CLI_ROLES, type CliRole, parseCliRole } from './cli/roles'
 import { runDailyUpdateProbe } from './update-probe'
@@ -57,6 +57,7 @@ SUBCOMMAND HELP
   )
 
   registerCommands(program)
+  applyMetaHelp(program)
   applyRoleFilter(program, role)
 
   return program
