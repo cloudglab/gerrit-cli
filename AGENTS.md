@@ -12,7 +12,7 @@
 
 - 优先使用本机 `gerrit-cli` / `gerrit` / 角色入口，不要默认退回临时脚本。
 - 查询当前仓库对应的变更时，优先尝试 HEAD commit message 里的 `Change-Id`，再要求用户补 change number。
-- 默认读操作可直接执行；写操作（评论、投票、add-reviewer、submit、abandon、restore 等）必须显式命中命令，并使用 `--confirm` 且未设置 `GERRIT_DISABLE_WRITE`，不做自然语言静默写入。
+- 默认读操作可直接执行；写操作（`comment`, `vote`, `add-reviewer`, `remove-reviewer`, `submit`, `abandon`, `restore`, `topic`, `set-ready`, `set-wip`, `push`, `rebase`, `tree`, `clean`, `retrigger`, `install-hook`, `install`, `update`, `upgrade`, `uninstall`, `remove`）必须显式命中命令，并使用 `--confirm` 且未设置 `GERRIT_DISABLE_WRITE`，不做自然语言静默写入。
 - 需要脚本消费时优先使用 `--json`；需要给 LLM 保留富文本上下文时再用 `--xml`。
 - 遇到 Gerrit / Jenkins 瞬时错误可重试一次；连续失败两次先报告网络或权限阻塞。
 
@@ -77,18 +77,20 @@ src/utils/         # 共享工具（ID 解析、格式化、shell 安全）
 tests/             # 测试（unit / integration / mocks / helpers）
 ```
 
-## 50 个命令分类
+## 57 个命令分类
 
-| 分类 | 命令 |
+按 `CommandMeta.group` 分组（顶层命令 57 个；`config` 另有 `show` / `test` 子命令）：
+
+| 分类 (group) | 命令 |
 |------|------|
-| **查看** | `show`, `diff`, `comments`, `search`, `list` |
-| **审查** | `comment`, `vote`, `review`, `add-reviewer`, `remove-reviewer` |
-| **管理** | `mine`, `incoming`, `team`, `abandon`, `restore` |
-| **工作区** | `checkout`, `push`, `rebase`, `submit`, `workspace`, `tree` |
-| **CI/分析** | `build-status`, `failures`, `analyze`, `extract-url` |
-| **组** | `groups`, `groups-show`, `groups-members` |
-| **配置** | `setup`, `config`, `status`, `init`, `install`, `update`, `uninstall`, `install-hook` |
-| **辅助** | `version`, `completion`, `clean`, `open`, `cherry` |
+| **配置 (config)** | `setup`, `init`, `status`, `config` (`show`/`test`), `whoami`, `doctor` |
+| **辅助 (utility)** | `version`, `completion`, `install`, `update`, `upgrade`, `uninstall`, `remove` |
+| **审查 (review)** | `show`, `diff`, `comments`, `comment`, `vote`, `reviewers`, `add-reviewer`, `remove-reviewer` |
+| **变更 (change)** | `list`, `mine`, `incoming`, `team`, `search`, `projects`, `files`, `open`, `topic`, `submit`, `abandon`, `restore`, `set-ready`, `set-wip` |
+| **分析 (analytics)** | `report`, `daily`, `weekly`, `monthly`, `quarterly`, `analyze` |
+| **工作区 (workspace)** | `checkout`, `push`, `rebase`, `workspace`, `tree` (`setup`/`cleanup`/`rebase`), `trees`, `cherry`, `clean` |
+| **CI (ci)** | `build-status`, `failures`, `extract-url`, `retrigger`, `install-hook` |
+| **组 (groups)** | `groups`, `groups-show`, `groups-members` |
 
 ## 场景链路模型
 

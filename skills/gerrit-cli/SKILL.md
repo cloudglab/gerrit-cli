@@ -12,151 +12,174 @@ argument-hint: "[command] [change-id]"
 
 # @cloudglab/gerrit-cli
 
-## 概览
+Gerrit REST API 命令行工具：变更查看 / 审查 / 投票 / CI / 生命周期 / 报告。默认带写保护。
 
-把 Gerrit 代码审查能力暴露给命令行 / 智能体使用，默认带写保护。
+## 命令选择规则
 
-核心能力：变更查看、审查评论、投票、CI 构建状态查询、变更生命周期管理。
+- 不确定命令 → `gerrit help <cmd>`（未装则 `npx -y @cloudglab/gerrit-cli@latest help <cmd>`）
+- URL → 提取 change number 或 Change-Id，再映射命令
+- HEAD commit 有 Change-Id → `show` / `diff` 等可不传参
 
-## 命令选择强制规则
+## 场景索引（按使用频度）
 
-- 不确定命令名或参数时，先运行 `gerrit help <command>` 确认；本机没有安装时用 `npx -y @cloudglab/gerrit-cli@latest help <command>`。
-- 如果用户给的是 Gerrit Web URL，先提取 change number 或 Change-ID，再映射到对应 CLI 命令。
-- 如果 CLI 返回参数错误，立即运行 `gerrit help <command>` 校对参数。
-- 查询当前仓库对应的变更时，优先尝试 HEAD commit message 里的 `Change-Id`，再要求用户补 change number。
+| 场景 | 命令 |
+|------|------|
+| 日常审查 | `mine` `show` `diff` `comments` `reviewers` `comment` `vote` `incoming` `team` |
+| CI 状态 | `build-status` `failures` `analyze` `extract-url` `retrigger` |
+| 变更生命周期 | `push` `checkout` `submit` `abandon` `restore` `rebase` `topic` `set-wip` `set-ready` `cherry` `workspace` (deprecated) |
+| 变更浏览 | `list` `search` `projects` `files` `open` |
+| 多 worktree | `tree setup` `tree cleanup` `tree rebase` `trees` `clean` |
+| 报告 | `report` `daily` `weekly` `monthly` `quarterly` |
+| 审查人管理 | `add-reviewer` `remove-reviewer` |
+| 组管理 (lead) | `groups` `groups-show` `groups-members` |
+| 自检 | `whoami` `doctor` `status` `config show` `config test` `install-hook` |
+| 配置 / 安装 | `setup` `init` `install` `update` `upgrade` `uninstall` `remove` |
+| 辅助 | `version` `completion` |
+
+## 命令参考
+
+### 日常审查
+
+- `mine` — 我的 open 变更（`list` 别名）
+- `show [id]` — 变更详情，缺省取 HEAD Change-Id
+- `diff <id> [--file <f>] [--files-only] [--format unified|json|files]` — 变更 diff
+- `comments <id>` — 全部评论（带 diff 上下文）
+- `reviewers [id]` — 审查人 / CC 列表，缺省取 HEAD
+- `comment <id> -m "..." [--file <f> --line <n>] [--reply-to <id>] [--unresolved] [--batch] --confirm` — 发评论
+- `vote <id> [--code-review -2..2] [--verified -1..1] [--label <k> <v>] [-m "..."] --confirm` — 投票
+- `incoming` — 待我审查 / CC 列表
+- `team` — 同 `incoming`（别名）
+
+### CI 状态
+
+- `build-status [id] [--watch] [--exit-status] [--interval <s>] [--timeout <s>]` — 构建状态，watch 阻塞到完成
+- `failures <id>` — 拿最近 Jenkins 失败链接
+- `analyze [--start-date YYYY-MM-DD] [--end-date YYYY-MM-DD] [--repo <p>] [--markdown|--csv|--json] [--output <f>]` — 个人贡献分析
+- `extract-url <pattern> [id]` — 从消息/评论中抽 URL（"jenkins"/"console"等）
+- `retrigger [id] --confirm` — 发 retrigger 评语触发 CI
+
+### 变更生命周期
+
+- `push [-b <branch>] [-t <topic>] [-r <email>...] [--cc <e>...] [--wip|--ready] [--hashtag ...] [--private] [--dry-run]` — 推送变更
+- `checkout <id> [--detach] [--remote <name>]` — 拉取并切到变更
+- `submit <id> --confirm` — 合入
+- `abandon [id] [-m "..."] --confirm` — 丢弃，无参走交互
+- `restore <id> [-m "..."] --confirm` — 恢复
+- `rebase [id] [--base <ref>] [--allow-conflicts] --confirm` — 重基，缺省取 HEAD
+- `topic [id] [<new-topic>] [--delete]` — 读 / 改 / 清 topic
+- `set-ready <id> [-m "..."] --confirm` — 标 ready
+- `set-wip <id> [-m "..."] --confirm` — 标 WIP
+- `cherry <id> [--no-commit] [--no-verify] [--remote <name>]` — 拉取并 cherry-pick
+- `workspace <id>` — deprecated，等价 `tree setup <id>`
+
+### 变更浏览
+
+- `list [--status open|merged|abandoned] [--limit <n>] [--detailed] [--reviewer]` — 通用列表
+- `search [<query>] [--limit <n>]` — Gerrit 查询语法，如 `search "status:open owner:me"`
+- `projects [--pattern <regex>]` — 项目列表
+- `files [id]` — 变更文件清单，缺省取 HEAD
+- `open <id>` — 浏览器打开变更
+
+### 多 worktree
+
+- `tree setup <id>` — 基于变更建 worktree
+- `tree cleanup [id] [--force]` — 清理（无参清全部）
+- `tree rebase [--onto <branch>] [--interactive]` — 拉取并 rebase 当前 worktree
+- `trees [--all]` — 列出 worktree
+- `clean [-n|--dry-run] [-f|--force]` — 删已合入 upstream 的本地分支
+
+### 报告
+
+- `report [period] [--period daily|weekly|monthly|quarterly] [--since YYYY-MM-DD] [--until YYYY-MM-DD] [--status merged|open|abandoned|all] [--reviewer] [--user <name>] [--limit <n>] [--md] [--json] [--xml]` — 周期报告
+- `daily` / `weekly` / `monthly` / `quarterly` — `report --period <p>` 的别名
+
+### 审查人管理
+
+- `add-reviewer <email...> -c <id> [--cc] [--group] [--notify none|owner|owner_reviewers|all] --confirm` — 加审查人 / CC / 组
+- `remove-reviewer <email...> -c <id> [--notify none|owner|owner_reviewers|all] --confirm` — 移除
+
+### 组管理 (lead)
+
+- `groups [--pattern <regex>] [--owned] [--project <p>] [--user <a>] [--limit <n>]` — 列出组
+- `groups-show <group-id>` — 组详情
+- `groups-members <group-id>` — 组成员
+
+### 自检
+
+- `whoami` — 当前账号 / 认证状态
+- `doctor` — 本地配置 / 连接 / git remote / commit-msg hook / HEAD Change-Id 体检
+- `status` — 连接状态简报
+- `config show` — 当前配置（密码脱敏）
+- `config test` — 用当前配置测一次连接
+- `install-hook [--force]` — 装 commit-msg hook（自动生成 Change-Id）
+
+### 配置 / 安装
+
+- `setup` — 交互式配置（写入 `~/.gerrit-cli/config.json`）
+- `init` — `setup` 别名
+- `install [--cli-only|--skill-only] [--skill-source local|git|npm] [--skill-local-path <p>] [--skip-config-check]` — 装 CLI + skill
+- `update` / `upgrade` — 同 `install`（upgrade 是别名）
+- `uninstall --confirm [--keep-config|--remove-config] [--cli-only|--skill-only]` — 卸载
+- `remove` — `uninstall` 别名
+
+### 辅助
+
+- `version` — 版本信息
+- `completion <bash|zsh|fish>` — 生成 shell 补全脚本
 
 ## 角色入口
 
-| 入口 | 适用场景 | 命令范围 |
-|------|---------|---------|
-| `gerrit` / `gerrit-cli` | 完整命令集 | 全部 50+ 命令 |
-| `gerrit-dev` | 提交、查看、checkout、rebase | 开发者日常工作 |
-| `gerrit-reviewer` | incoming、diff、comments、vote | 审查者工作流 |
-| `gerrit-lead` | reviewer 管理、组操作 | 团队管理 |
-| `gerrit-ci` | build-status、failures、extract-url | CI/构建分析 |
-
-角色过滤 CLI help 和可见命令面，不改变 Gerrit 服务端权限。
+| 入口 | 范围 |
+|------|------|
+| `gerrit` / `gerrit-cli` | 全部 57 个命令 |
+| `gerrit-dev` | 开发者向（提交 / 查看 / checkout / rebase） |
+| `gerrit-reviewer` | 审查向（incoming / diff / comments / vote） |
+| `gerrit-lead` | 团队管理（reviewer 管理 / 组） |
+| `gerrit-ci` | CI 向（build-status / failures / extract-url） |
 
 ## 入口优先级
 
-1. 本机已安装 `gerrit`：直接执行
-2. 未安装时：先 `npm i -g @cloudglab/gerrit-cli@latest`
-3. 如果当前环境不方便安装，再临时用 `npx -y @cloudglab/gerrit-cli@latest`
-4. 默认只 preview；写操作必须显式 `--confirm`
-
-## 安装 / 更新 / 卸载
-
-```bash
-# 安装
-npm i -g @cloudglab/gerrit-cli@latest
-gerrit setup                    # 交互式配置
-gerrit install                  # 安装 commit hook
-
-# 更新
-gerrit update
-
-# 卸载（默认预览，需 --confirm 才执行）
-gerrit uninstall
-gerrit uninstall --confirm
-gerrit uninstall --confirm --remove-config
-```
+1. 本机 `gerrit` → 直接用
+2. 未装 → `npm i -g @cloudglab/gerrit-cli@latest`
+3. 临时 → `npx -y @cloudglab/gerrit-cli@latest`
+4. 默认只 preview，写操作需 `--confirm`
 
 ## 环境变量
 
 ```bash
-export GERRIT_HOST="https://gerrit.example.com"
+export GERRIT_HOST="https://gerrit.example.com"   # 完整 URL，含 https://
 export GERRIT_USERNAME="your-username"
 export GERRIT_PASSWORD="your-http-password"
+export GERRIT_DISABLE_WRITE=true                  # 完全禁用写操作
+export GERRIT_RETRIGGER_COMMENT="retrigger"        # retrigger 评语模板
 ```
 
-`GERRIT_HOST` 传完整 URL（`https://` 前缀），不要只传域名。
-
-`setup` 命令默认把配置写入 `~/.gerrit-cli/config.json`，不在环境变量里存密码。
-
-可设置 `GERRIT_DISABLE_WRITE=true` 临时禁用受保护写操作；缺少 `--confirm` 时写命令只输出预览，不执行 Gerrit 写入。
-
-## 场景链路
-
-处理用户请求时，按以下结构路由：
-
-`用户表达 → 命中命令 → 缺参追问 → 执行 → 输出`
-
-### 我的变更
-
-- "我有哪些变更" / "我的 open list" → `mine`
-- "查看 12345" → `show 12345`
-- "show 当前分支的 change" → 不传参数，自动检测 HEAD Change-Id
-
-### 审查流程
-
-- "待审查列表" / "有哪些 incoming" → `incoming`
-- "看 12345 的 diff" → `diff 12345`
-- "给 12345 评论" → `comment 12345 -m "..."` 或管道输入
-- "给 12345 打分 +2" → `vote 12345 --code-review 2`
-- "12345 有多少条评论" → `comments 12345`
-
-### CI 构建
-
-- "12345 构建成功了吗" → `build-status 12345`
-- "watch 到构建完成" → `build-status 12345 --watch --exit-status`
-- "找 Jenkins URL" → `extract-url "jenkins"`
-
-### 变更生命周期
-
-- "推送变更" → `push`
-- "丢弃变更" → `abandon 12345`
-- "恢复变更" → `restore 12345`
-- "合入变更" → `submit 12345`
-- "重基变更" → `rebase 12345`
-- "检出变更" → `checkout 12345`
+`setup` 写入 `~/.gerrit-cli/config.json`，不在环境变量存密码。
 
 ## 写保护
 
-所有写操作（comment、vote、submit、abandon、restore、add-reviewer、remove-reviewer）统一受 write guard 保护：
+所有写操作统一受 write guard 保护：
 
-- 缺少 `--confirm` 时输出 preview，不执行真实写入
-- `GERRIT_DISABLE_WRITE=true` 完全禁用写操作
-- 错误信息统一格式
+- **业务写操作**（变更 / 审查 / 工作区）：`comment` `vote` `add-reviewer` `remove-reviewer` `submit` `abandon` `restore` `topic` `set-ready` `set-wip` `push` `rebase` `tree` `clean` `retrigger` `install-hook`
+- **包管理写操作**：`install` `update` `upgrade` `uninstall` `remove`
+
+规则：
+
+- 缺 `--confirm` → 输出 preview，不执行
+- `GERRIT_DISABLE_WRITE=true` → 完全禁用
+- 错误统一格式：`code` / `recoverable` / `statusCode` / `hint`
 
 ## 输出格式
 
-- `--json`：结构化 JSON，适合脚本消费
-- `--xml`：CDATA 包裹的 XML，适合 LLM 上下文
-- 默认：纯文本，人类可读
+- `--json`：结构化 JSON，脚本消费
+- `--xml`：CDATA 包裹 XML，LLM 上下文
+- 默认：纯文本，人可读
 
-大多数命令支持 `--json` 和 `--xml`。
+## 运行时
 
-## 自检 / 诊断
-
-- `gerrit whoami`：查看当前账号、配置来源、认证状态
-- `gerrit doctor`：检查本地配置、Gerrit 连接、git remote、`commit-msg` hook、HEAD `Change-Id`
-- `gerrit install-hook`：安装 Gerrit `commit-msg` hook
-
-## 典型工作流
-
-```bash
-# 审查一个变更
-gerrit show 12345
-gerrit diff 12345
-gerrit comments 12345
-gerrit comment 12345 -m "LGTM" --confirm
-gerrit vote 12345 --code-review 2 --confirm
-
-# 检查 CI
-gerrit build-status 12345
-gerrit failures 12345
-
-# 管理变更
-gerrit checkout 12345
-gerrit push
-gerrit submit 12345 --confirm
-```
-
-## 运行时要求
-
-- Node.js >= 18（开发 / 构建 / 发布产物）
-- pnpm >= 10（仓库开发脚本）
-- Gerrit >= 3.0
+- Node.js ≥ 18
+- pnpm ≥ 10（仓库开发）
+- Gerrit ≥ 3.0
 
 ## 适用场景
 

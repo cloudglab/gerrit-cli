@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.0.18 - 2026-06-24
+
+### Added
+
+- `src/core/change-input.ts`: 统一 change 输入解析入口，集中 `parseChangeInput` / `resolveChangeId` / `buildChangeUrl` / `extractPushOutputChangeUrl` / `parseRemoteHost`，为后续把 `checkout` / `cherry` / `tree-setup` / `workspace` / `open` / `push` 的重复实现收敛到单一来源做准备。
+- `tests/unit/core/change-input.test.ts`: 覆盖 URL / change number / Change-ID / `:` 规格 / HEAD 回退 / 远程 host 解析等关键路径。
+
+### Changed
+
+- `skills/gerrit-cli/SKILL.md`: 全文重写为 2 级索引结构（场景索引表 + 命令参考章节），57 个命令 100% 覆盖，每个命令列出关键选项；按使用频度排序，从 226 行精简到 188 行。
+- `AGENTS.md`: 命令分类从 50 个扩展到 57 个（按 `CommandMeta.group`），写操作清单从 6 个扩到 21 个，`review` 错名修正为 `reviewers`。
+
 ## 0.0.17 - 2026-06-22
 
 ### Added
