@@ -1,3 +1,5 @@
+import '@test/undici-mock'
+
 import { afterAll, afterEach, beforeAll, describe, expect, mock, spyOn, test } from '@test/compat'
 import { Effect, Layer } from 'effect'
 import { HttpResponse, http } from 'msw'

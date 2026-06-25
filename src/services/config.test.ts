@@ -98,7 +98,7 @@ describe('ConfigService', () => {
           const configService = yield* ConfigService
           return yield* configService.getFullConfig
         }).pipe(Effect.provide(ConfigServiceLive), Effect.runPromise),
-      ).rejects.toThrow('Invalid configuration format')
+      ).rejects.toThrow('配置文件损坏')
     })
 
     test('validates environment variable configuration format', async () => {
@@ -112,7 +112,7 @@ describe('ConfigService', () => {
           const configService = yield* ConfigService
           return yield* configService.getFullConfig
         }).pipe(Effect.provide(ConfigServiceLive), Effect.runPromise),
-      ).rejects.toThrow('Invalid configuration format')
+      ).rejects.toThrow('配置文件损坏')
     })
 
     test('rejects empty environment variables', async () => {
@@ -126,7 +126,7 @@ describe('ConfigService', () => {
           const configService = yield* ConfigService
           return yield* configService.getFullConfig
         }).pipe(Effect.provide(ConfigServiceLive), Effect.runPromise),
-      ).rejects.toThrow('Invalid configuration format')
+      ).rejects.toThrow('配置文件损坏')
     })
 
     test('provides helpful error message when no configuration is found', async () => {
@@ -140,9 +140,7 @@ describe('ConfigService', () => {
           const configService = yield* ConfigService
           return yield* configService.getFullConfig
         }).pipe(Effect.provide(ConfigServiceLive), Effect.runPromise),
-      ).rejects.toThrow(
-        'Configuration not found. Run "gerrit-cli setup" to set up your credentials or set GERRIT_HOST, GERRIT_USERNAME, and GERRIT_PASSWORD environment variables.',
-      )
+      ).rejects.toThrow('未找到 Gerrit 配置')
     })
   })
 })

@@ -1,3 +1,5 @@
+import '@test/undici-mock'
+
 import type { SpawnSyncReturns } from 'node:child_process'
 import { afterAll, afterEach, beforeAll, describe, expect, spyOn, test } from '@test/compat'
 import { Effect, Layer } from 'effect'

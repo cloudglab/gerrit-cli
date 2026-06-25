@@ -1,3 +1,5 @@
+import '@test/undici-mock'
+
 import {
   afterAll,
   afterEach,

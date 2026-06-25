@@ -1,3 +1,5 @@
+import '@test/undici-mock'
+
 import { EventEmitter } from 'node:events'
 import { afterAll, afterEach, beforeAll, describe, expect, test } from '@test/compat'
 import { Effect, Layer } from 'effect'

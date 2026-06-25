@@ -1,3 +1,5 @@
+import '@test/undici-mock'
+
 import { spawn } from 'node:child_process'
 import {
   afterAll,

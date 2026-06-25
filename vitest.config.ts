@@ -8,6 +8,7 @@ export default defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
       '@test/compat': fileURLToPath(new URL('./tests/helpers/test-compat.ts', import.meta.url)),
+      '@test/undici-mock': fileURLToPath(new URL('./tests/helpers/undici-mock.ts', import.meta.url)),
     },
   },
   test: {

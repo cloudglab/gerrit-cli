@@ -1,3 +1,5 @@
+import '@test/undici-mock'
+
 import {
   afterAll,
   afterEach,
@@ -681,7 +683,7 @@ describe('comment command', () => {
     }, 10)
 
     await expect(Effect.runPromise(program)).rejects.toThrow(
-      /Failed to post comment: file app\/models\/auto_grade_result\.rb not found in revision 386823,6\nTried to post: app\/models\/auto_grade_result\.rb:23 "This needs improvement", src\/utils\.js:45 "This is a very long comment message that should be\.\.\."/,
+      /Failed to post comment: HTTP 请求失败: 400 - file app\/models\/auto_grade_result\.rb not found in revision 386823,6\nTried to post: app\/models\/auto_grade_result\.rb:23 "This needs improvement", src\/utils\.js:45 "This is a very long comment message that should be\.\.\."/,
     )
 
     // Restore process.stdin
@@ -719,7 +721,7 @@ describe('comment command', () => {
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
     await expect(Effect.runPromise(program)).rejects.toThrow(
-      'Failed to post comment: file not found\nTried to post to missing-file.rb:42: "Test comment on missing file"',
+      'Failed to post comment: HTTP 请求失败: 400 - file not found\nTried to post to missing-file.rb:42: "Test comment on missing file"',
     )
   })
 })

@@ -81,6 +81,6 @@ describe('Config environment merge', () => {
       return yield* service.getFullConfig
     }).pipe(Effect.provide(ConfigServiceLive))
 
-    await expect(Effect.runPromise(program)).rejects.toThrow('Configuration not found')
+    await expect(Effect.runPromise(program)).rejects.toThrow('未找到 Gerrit 配置')
   })
 })
