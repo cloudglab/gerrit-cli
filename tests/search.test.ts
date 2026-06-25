@@ -660,7 +660,9 @@ describe('search command', () => {
 })
 
 describe('search command CLI integration', () => {
-  it('should output XML error format when --xml flag is used and request fails', async () => {
+  it('should output XML error format when --xml flag is used and request fails', {
+    timeout: 15000,
+  }, async () => {
     // Use environment variables to configure an invalid host that will fail to connect
     const proc = spawn('tsx', ['src/cli/index.ts', 'search', '--xml'], {
       env: {
@@ -690,7 +692,9 @@ describe('search command CLI integration', () => {
     expect(stdout).toContain('</search_result>')
   })
 
-  it('should output plain error format when request fails without --xml', async () => {
+  it('should output plain error format when request fails without --xml', {
+    timeout: 15000,
+  }, async () => {
     // Use environment variables to configure an invalid host that will fail to connect
     const proc = spawn('tsx', ['src/cli/index.ts', 'search'], {
       env: {

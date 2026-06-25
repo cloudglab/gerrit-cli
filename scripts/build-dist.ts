@@ -73,11 +73,16 @@ for (const entry of entries) {
     renameSync(builtFile, targetFile)
   }
 
-  if (!entry.dts && existsSync(targetFile)) {
-    const content = readFileSync(targetFile, 'utf8')
-    if (!content.startsWith('#!/usr/bin/env node')) {
-      writeFileSync(targetFile, `#!/usr/bin/env node\n${content}`)
+  if (existsSync(targetFile)) {
+    let content = readFileSync(targetFile, 'utf8')
+    // tsup 不会把构建期 env 内联进 bundle，运行时 process.env.GERRIT_CLI_VERSION 在全局安装场景为 undefined，
+    // 导致 version 回退到不可靠的 package.json 查找。这里直接把版本字面量注入所有产物，根治 0.0.0 问题。
+    content = content.replaceAll('process.env.GERRIT_CLI_VERSION', JSON.stringify(version))
+    // shebang 仅 bin 入口需要
+    if (!entry.dts && !content.startsWith('#!/usr/bin/env node')) {
+      content = `#!/usr/bin/env node\n${content}`
     }
+    writeFileSync(targetFile, content)
   }
 }
 

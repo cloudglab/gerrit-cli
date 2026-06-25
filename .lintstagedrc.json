@@ -1,6 +1,11 @@
 {
   "*.ts": [
-    "oxlint",
+    "oxlint"
+  ],
+  "src/**/*.ts": [
+    "biome format --write"
+  ],
+  "tests/**/*.ts": [
     "biome format --write"
   ]
 }
