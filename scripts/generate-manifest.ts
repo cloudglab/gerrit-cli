@@ -21,6 +21,7 @@ interface ManifestCommand {
 }
 
 interface Manifest {
+  readonly _generatedBy: string
   readonly schemaVersion: number
   readonly version: string
   readonly generatedAt: string
@@ -46,6 +47,7 @@ for (const command of COMMAND_META) {
 }
 
 const manifest: Manifest = {
+  _generatedBy: '由 scripts/generate-manifest.ts 在 build 时自动生成，请勿手动编辑。',
   schemaVersion: 1,
   version: packageJson.version,
   generatedAt: new Date().toISOString(),

@@ -31,6 +31,7 @@ import { submitCommand } from './commands/submit'
 import { TOPIC_HELP_TEXT, topicCommand } from './commands/topic'
 import { uninstallCommand } from './commands/uninstall'
 import { versionCommand } from './commands/version'
+import { changelogCommand } from './commands/changelog'
 import { voteCommand } from './commands/vote'
 import { whoamiCommand } from './commands/whoami'
 import { workspaceCommand } from './commands/workspace'
@@ -595,6 +596,16 @@ Examples:
     .option('--xml', 'XML output')
     .action((options) => {
       versionCommand(options)
+    })
+
+  program
+    .command('changelog')
+    .description('Show recent changes from CHANGELOG.md')
+    .option('--version <version>', 'Show a specific version section (e.g. 0.0.18)')
+    .option('--json', 'JSON output')
+    .option('--xml', 'XML output')
+    .action((options) => {
+      changelogCommand(options)
     })
 
   program

@@ -1,5 +1,6 @@
 import type { CommentInfo, MessageInfo } from '@/schemas/gerrit'
 import { formatCommentsPretty } from '@/utils/comment-formatters'
+import type { DiffContext } from '@/utils/diff-context'
 import { formatDiffPretty } from '@/utils/diff-formatters'
 import { formatDate, formatRelativeTime } from '@/utils/formatters'
 import { escapeXML, sanitizeCDATA } from '@/utils/shell-safety'
@@ -47,16 +48,16 @@ export const formatReviewerLabel = (reviewer: ReviewerIdentity): string => {
 }
 
 // Helper to remove undefined values from objects
-export const removeUndefined = <T extends Record<string, any>>(obj: T): Partial<T> => {
+export const removeUndefined = <T extends Record<string, unknown>>(obj: T): Partial<T> => {
   return Object.fromEntries(
-    Object.entries(obj).filter(([_, value]) => value !== undefined),
-  ) as unknown as Partial<T>
+    Object.entries(obj).filter(([, value]) => value !== undefined),
+  ) as Partial<T>
 }
 
 export const formatShowPretty = (
   changeDetails: ChangeDetails,
   diff: string,
-  commentsWithContext: Array<{ comment: CommentInfo; context?: any }>,
+  commentsWithContext: Array<{ comment: CommentInfo; context?: DiffContext }>,
   messages: MessageInfo[],
 ): void => {
   // Change details header
@@ -140,7 +141,7 @@ export const formatShowPretty = (
 export const formatShowJson = async (
   changeDetails: ChangeDetails,
   diff: string,
-  commentsWithContext: Array<{ comment: CommentInfo; context?: any }>,
+  commentsWithContext: Array<{ comment: CommentInfo; context?: DiffContext }>,
   messages: MessageInfo[],
 ): Promise<void> => {
   const output = {
@@ -235,7 +236,7 @@ export const formatShowJson = async (
 export const formatShowXml = async (
   changeDetails: ChangeDetails,
   diff: string,
-  commentsWithContext: Array<{ comment: CommentInfo; context?: any }>,
+  commentsWithContext: Array<{ comment: CommentInfo; context?: DiffContext }>,
   messages: MessageInfo[],
 ): Promise<void> => {
   // Build complete XML output as a single string to avoid multiple writes

@@ -58,6 +58,7 @@ export const COMMAND_META: readonly CommandMeta[] = [
   { name: 'whoami', group: 'config', isWrite: false, roles: allRoles },
   { name: 'doctor', group: 'config', isWrite: false, roles: allRoles },
   { name: 'version', group: 'utility', isWrite: false, roles: allRoles },
+  { name: 'changelog', group: 'utility', isWrite: false, roles: allRoles },
   { name: 'completion', group: 'utility', isWrite: false, roles: allRoles },
 
   { name: 'show', group: 'review', isWrite: false, roles: ['full', 'dev', 'reviewer', 'lead'] },

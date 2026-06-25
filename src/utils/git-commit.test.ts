@@ -131,7 +131,7 @@ Signed-off-by: User`
       mockChildProcess.stderr = new EventEmitter()
 
       spawnSpy = spyOn(childProcess, 'spawn')
-      spawnSpy.mockReturnValue(mockChildProcess as any)
+      spawnSpy.mockReturnValue(mockChildProcess as unknown as ReturnType<typeof childProcess.spawn>)
     })
 
     afterEach(() => {
@@ -172,8 +172,9 @@ Change-Id: If5a3ae8cb5a107e187447802358417f311d0c4b1`
       try {
         await resultPromise
         expect(true).toBe(false) // Should not reach here
-      } catch (error: any) {
-        expect(error.message).toContain('fatal: not a git repository')
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error)
+        expect(message).toContain('fatal: not a git repository')
       }
     })
 
@@ -189,8 +190,9 @@ Change-Id: If5a3ae8cb5a107e187447802358417f311d0c4b1`
       try {
         await resultPromise
         expect(true).toBe(false) // Should not reach here
-      } catch (error: any) {
-        expect(error.message).toContain('Failed to execute git command')
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error)
+        expect(message).toContain('Failed to execute git command')
       }
     })
   })
@@ -206,7 +208,7 @@ Change-Id: If5a3ae8cb5a107e187447802358417f311d0c4b1`
       mockChildProcess.stderr = new EventEmitter()
 
       spawnSpy = spyOn(childProcess, 'spawn')
-      spawnSpy.mockReturnValue(mockChildProcess as any)
+      spawnSpy.mockReturnValue(mockChildProcess as unknown as ReturnType<typeof childProcess.spawn>)
     })
 
     afterEach(() => {
@@ -250,8 +252,9 @@ This commit has no Change-ID.`
       try {
         await resultPromise
         expect(true).toBe(false) // Should not reach here
-      } catch (error: any) {
-        expect(error.message).toContain('No Change-ID found in HEAD commit')
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error)
+        expect(message).toContain('No Change-ID found in HEAD commit')
       }
     })
 
@@ -269,8 +272,9 @@ This commit has no Change-ID.`
       try {
         await resultPromise
         expect(true).toBe(false) // Should not reach here
-      } catch (error: any) {
-        expect(error.message).toContain('fatal: not a git repository')
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error)
+        expect(message).toContain('fatal: not a git repository')
       }
     })
   })

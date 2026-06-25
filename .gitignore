@@ -2,5 +2,10 @@ node_modules
 coverage/
 bin/gerrit-cli-binary
 .codegraph
+.codex
+.cursor
+.DS_Store
+*.log
+.env
 dist
 .slim/deepwork/

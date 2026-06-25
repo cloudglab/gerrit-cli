@@ -36,6 +36,7 @@
 - **数据库**：SQLite 本地缓存
 - **Lint**：oxlint
 - **格式化**：Biome
+- **TS 解析**：`module: "ESNext"` + `moduleResolution: "Bundler"`。**刻意使用 Bundler 解析**配合 tsup 打包；如未来要切到 NodeNext + `.js` 后缀，先评估收益再改。
 
 ## 工程约束
 
@@ -46,12 +47,17 @@
 - 只用 `.ts` 文件，不加 `.tsx` / `.jsx`
 - 文件不超过 700 行（500 行警告）
 - 不允许 `--no-verify`
+- 错误消息使用中文，hint 给 Agent 明确下一步建议
 
 ### 测试要求
 
 - 最低 80% 行/函数/分支/语句覆盖率
 - 所有 HTTP mock 必须用 MSW
 - 每个命令至少覆盖：正常路径、API 错误、网络错误、参数校验错误
+- vitest 串行运行（`pool: 'forks'`、`fileParallelism: false`、`maxConcurrency: 1`、`maxWorkers: 1`）
+- 测试必须显式 `import { describe, it, expect, vi } from 'vitest'`，禁止依赖全局
+- 写保护测试必须断言 preview 时真实 handler 没有被调用
+- 修改 `process.env` 的测试必须在 `afterEach` 恢复原值
 
 ### 发布前核查清单
 

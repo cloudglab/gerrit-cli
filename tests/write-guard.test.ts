@@ -14,7 +14,7 @@ describe('write guard', () => {
 
     expect(Exit.isFailure(exit)).toBe(true)
     if (Exit.isFailure(exit)) {
-      expect(String(exit.cause)).toContain('Preview: post comment on 12345')
+      expect(String(exit.cause)).toContain('post comment on 12345')
       expect(String(exit.cause)).toContain('--confirm')
     }
   })
@@ -27,8 +27,8 @@ describe('write guard', () => {
     expect(Exit.isSuccess(exit)).toBe(true)
   })
 
-  it('blocks writes when GERRIT_DISABLE_WRITE is set', async () => {
-    process.env.GERRIT_DISABLE_WRITE = '1'
+  it('blocks writes when GERRIT_DISABLE_WRITE=true (strict match)', async () => {
+    process.env.GERRIT_DISABLE_WRITE = 'true'
 
     const exit = await Effect.runPromiseExit(
       assertWriteAllowed({ confirm: true, operation: 'submit change', target: '12345' }),
@@ -36,8 +36,18 @@ describe('write guard', () => {
 
     expect(Exit.isFailure(exit)).toBe(true)
     if (Exit.isFailure(exit)) {
-      expect(String(exit.cause)).toContain('GERRIT_DISABLE_WRITE')
-      expect(String(exit.cause)).toContain('was not executed')
+      expect(String(exit.cause)).toContain('GERRIT_DISABLE_WRITE=true')
+      expect(String(exit.cause)).toContain('未执行')
     }
+  })
+
+  it('treats non-"true" GERRIT_DISABLE_WRITE values as enabled', async () => {
+    process.env.GERRIT_DISABLE_WRITE = '1'
+
+    const exit = await Effect.runPromiseExit(
+      assertWriteAllowed({ confirm: true, operation: 'submit change', target: '12345' }),
+    )
+
+    expect(Exit.isSuccess(exit)).toBe(true)
   })
 })

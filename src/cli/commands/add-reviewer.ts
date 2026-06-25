@@ -96,7 +96,8 @@ export const addReviewerCommand = (
     let notify: NotifyLevel | undefined
     if (options.notify) {
       const upperNotify = options.notify.toUpperCase()
-      if (!(VALID_NOTIFY_LEVELS as unknown as readonly string[]).includes(upperNotify)) {
+      const isValid = VALID_NOTIFY_LEVELS.includes(upperNotify as NotifyLevel)
+      if (!isValid) {
         const message = `Invalid notify level: ${options.notify}. Valid values: none, owner, owner_reviewers, all`
         if (options.json) {
           outputJsonError(message)
@@ -107,7 +108,7 @@ export const addReviewerCommand = (
         }
         return yield* Effect.fail(new ValidationError(message))
       }
-      notify = upperNotify as unknown as NotifyLevel
+      notify = upperNotify as NotifyLevel
     }
 
     yield* assertWriteAllowed({

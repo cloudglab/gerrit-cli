@@ -14,3 +14,7 @@ echo "Checking for banned patterns..."
 # Check test coverage
 echo "Checking test coverage..."
 pnpm exec tsx scripts/check-coverage.ts
+
+# 强制跑一次 typecheck 防止漏网
+echo "Running typecheck..."
+pnpm run typecheck

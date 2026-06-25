@@ -91,12 +91,7 @@ export const classifyError = (error: unknown): ErrorClassification => {
   const message =
     error instanceof Error ? error.message : typeof error === 'string' ? error : String(error)
 
-  const status =
-    typeof error === 'object' && error !== null && 'status' in error
-      ? typeof (error as { status: unknown }).status === 'number'
-        ? (error as { status: number }).status
-        : undefined
-      : undefined
+  const status = readStatus(error)
 
   for (const marker of WRITE_CONFIRM_MARKERS) {
     if (message.toLowerCase().includes(marker.toLowerCase())) {
@@ -129,6 +124,14 @@ export const classifyError = (error: unknown): ErrorClassification => {
   return classifyMessage(message)
 }
 
+const readStatus = (error: unknown): number | undefined => {
+  if (error === null || typeof error !== 'object') return undefined
+  const candidate = error as { status?: unknown; statusCode?: unknown }
+  if (typeof candidate.statusCode === 'number') return candidate.statusCode
+  if (typeof candidate.status === 'number') return candidate.status
+  return undefined
+}
+
 export interface StructuredError {
   readonly code: ErrorCode
   readonly statusCode?: number
@@ -141,12 +144,7 @@ export const toStructuredError = (error: unknown): StructuredError => {
   const classification = classifyError(error)
   const message =
     error instanceof Error ? error.message : typeof error === 'string' ? error : String(error)
-  const statusCode =
-    typeof error === 'object' && error !== null && 'status' in error
-      ? typeof (error as { status: unknown }).status === 'number'
-        ? (error as { status: number }).status
-        : undefined
-      : undefined
+  const statusCode = readStatus(error)
   const out: StructuredError = {
     code: classification.code,
     recoverable: classification.recoverable,

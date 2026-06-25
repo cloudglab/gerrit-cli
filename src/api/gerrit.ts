@@ -28,6 +28,7 @@ export type { ApiErrorFields, GerritApiServiceImpl } from './gerrit-types'
 export { ApiError } from './gerrit-types'
 
 import { ApiError, type GerritApiServiceImpl } from './gerrit-types'
+import { HttpClientError, send } from './http-client'
 
 export const GerritApiService: Context.Tag<GerritApiServiceImpl, GerritApiServiceImpl> =
   Context.GenericTag<GerritApiServiceImpl>('GerritApiService')
@@ -36,6 +37,21 @@ export type GerritApiService = Context.Tag.Identifier<typeof GerritApiService>
 const createAuthHeader = (credentials: GerritCredentials): string => {
   const auth = btoa(`${credentials.username}:${credentials.password}`)
   return `Basic ${auth}`
+}
+
+const wrapHttpError = (error: unknown, fallbackMessage: string): ApiError => {
+  if (error instanceof ApiError) return error
+  if (error instanceof HttpClientError) {
+    return new ApiError({
+      message: error.message || fallbackMessage,
+      ...(error.statusCode !== undefined
+        ? { status: error.statusCode, statusCode: error.statusCode }
+        : {}),
+      ...(error.responseBody !== undefined ? { responseBody: error.responseBody } : {}),
+    })
+  }
+  const message = error instanceof Error ? error.message : String(error)
+  return new ApiError({ message: `${fallbackMessage}: ${message}` })
 }
 
 const makeRequest = <T = unknown>(
@@ -54,43 +70,40 @@ const makeRequest = <T = unknown>(
       headers['Content-Type'] = 'application/json'
     }
 
-    const response = yield* Effect.tryPromise({
+    const result = yield* Effect.tryPromise({
       try: () =>
-        fetch(url, {
+        send(url, {
           method,
           headers,
           ...(method !== 'GET' && body ? { body: JSON.stringify(body) } : {}),
         }),
-      catch: () => new ApiError({ message: 'Request failed - network or authentication error' }),
+      catch: (error) => wrapHttpError(error, 'Gerrit 请求失败'),
     })
 
-    if (!response.ok) {
-      const errorText = yield* Effect.tryPromise({
-        try: () => response.text(),
-        catch: () => 'Unknown error',
-      }).pipe(Effect.orElseSucceed(() => 'Unknown error'))
-      yield* Effect.fail(new ApiError({ message: errorText, status: response.status }))
+    if (result.status < 200 || result.status >= 300) {
+      yield* Effect.fail(
+        new ApiError({
+          message: `Gerrit 返回错误: ${result.status}`,
+          status: result.status,
+          statusCode: result.status,
+          ...(result.body !== undefined ? { responseBody: result.body } : {}),
+        }),
+      )
     }
 
-    const text = yield* Effect.tryPromise({
-      try: () => response.text(),
-      catch: () => new ApiError({ message: 'Failed to read response data' }),
-    })
+    if (method !== 'GET' && result.raw === '') {
+      return undefined as unknown as T
+    }
 
-    const cleanJson = text.replace(/^\)\]\}'\n?/, '')
-    if (!cleanJson.trim()) return {} as unknown as T
-
-    const parsed = yield* Effect.try({
-      try: () => JSON.parse(cleanJson),
-      catch: () => new ApiError({ message: 'Failed to parse response - invalid JSON format' }),
-    })
+    const parsed = result.body
+    if (parsed === undefined || parsed === null) return {} as unknown as T
 
     if (schema) {
       return yield* Schema.decodeUnknown(schema)(parsed).pipe(
-        Effect.mapError(() => new ApiError({ message: 'Invalid response format from server' })),
+        Effect.mapError(() => new ApiError({ message: 'Gerrit 响应格式不符合预期 schema' })),
       )
     }
-    return parsed
+    return parsed as T
   })
 
 export const GerritApiServiceLive: Layer.Layer<GerritApiService, never, ConfigService> =
@@ -250,31 +263,29 @@ export const GerritApiServiceLive: Layer.Layer<GerritApiService, never, ConfigSe
           const normalized = yield* normalizeAndValidate(changeId)
           const url = `${credentials.host}/a/changes/${encodeURIComponent(normalized)}/revisions/${revisionId}/files/${encodeURIComponent(filePath)}/content`
 
-          const response = yield* Effect.tryPromise({
+          const result = yield* Effect.tryPromise({
             try: () =>
-              fetch(url, {
+              send(url, {
                 method: 'GET',
                 headers: { Authorization: authHeader },
               }),
-            catch: () =>
-              new ApiError({ message: 'Request failed - network or authentication error' }),
+            catch: (error) => wrapHttpError(error, 'Gerrit 文件内容请求失败'),
           })
 
-          if (!response.ok) {
-            const errorText = yield* Effect.tryPromise({
-              try: () => response.text(),
-              catch: () => 'Unknown error',
-            }).pipe(Effect.orElseSucceed(() => 'Unknown error'))
-            yield* Effect.fail(new ApiError({ message: errorText, status: response.status }))
+          if (result.status < 200 || result.status >= 300) {
+            yield* Effect.fail(
+              new ApiError({
+                message: `Gerrit 文件内容返回错误: ${result.status}`,
+                status: result.status,
+                statusCode: result.status,
+                ...(result.body !== undefined ? { responseBody: result.body } : {}),
+              }),
+            )
           }
-          const base64Content = yield* Effect.tryPromise({
-            try: () => response.text(),
-            catch: () => new ApiError({ message: 'Failed to read response data' }),
-          })
 
           return yield* Effect.try({
-            try: () => atob(base64Content),
-            catch: () => new ApiError({ message: 'Failed to decode file content' }),
+            try: () => atob(result.raw),
+            catch: () => new ApiError({ message: 'Gerrit 文件内容 base64 解码失败' }),
           })
         })
 
@@ -284,31 +295,29 @@ export const GerritApiServiceLive: Layer.Layer<GerritApiService, never, ConfigSe
           const normalized = yield* normalizeAndValidate(changeId)
           const url = `${credentials.host}/a/changes/${encodeURIComponent(normalized)}/revisions/${revisionId}/patch`
 
-          const response = yield* Effect.tryPromise({
+          const result = yield* Effect.tryPromise({
             try: () =>
-              fetch(url, {
+              send(url, {
                 method: 'GET',
                 headers: { Authorization: authHeader },
               }),
-            catch: () =>
-              new ApiError({ message: 'Request failed - network or authentication error' }),
+            catch: (error) => wrapHttpError(error, 'Gerrit patch 请求失败'),
           })
 
-          if (!response.ok) {
-            const errorText = yield* Effect.tryPromise({
-              try: () => response.text(),
-              catch: () => 'Unknown error',
-            }).pipe(Effect.orElseSucceed(() => 'Unknown error'))
-            yield* Effect.fail(new ApiError({ message: errorText, status: response.status }))
+          if (result.status < 200 || result.status >= 300) {
+            yield* Effect.fail(
+              new ApiError({
+                message: `Gerrit patch 返回错误: ${result.status}`,
+                status: result.status,
+                statusCode: result.status,
+                ...(result.body !== undefined ? { responseBody: result.body } : {}),
+              }),
+            )
           }
-          const base64Patch = yield* Effect.tryPromise({
-            try: () => response.text(),
-            catch: () => new ApiError({ message: 'Failed to read response data' }),
-          })
 
           return yield* Effect.try({
-            try: () => atob(base64Patch),
-            catch: () => new ApiError({ message: 'Failed to decode patch data' }),
+            try: () => atob(result.raw),
+            catch: () => new ApiError({ message: 'Gerrit patch base64 解码失败' }),
           })
         })
 

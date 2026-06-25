@@ -1,5 +1,6 @@
 import { Effect } from 'effect'
 import { toStructuredError } from '@/core/error-codes'
+import { WriteGuardError } from '@/utils/write-guard'
 
 /**
  * Output error in plain text, JSON, or XML format.
@@ -54,6 +55,67 @@ export function outputError(
   }
 }
 
+interface PreviewPayload {
+  readonly ok: false
+  readonly preview: true
+  readonly kind: 'preview' | 'disabled' | 'unsupported'
+  readonly reason: string
+  readonly action: string
+  readonly target: string
+  readonly hint: string
+}
+
+/**
+ * Render a write-guard preview/disabled response, mirroring zentao-cli's
+ * design.md §7.2 return shape: `{ ok: false, preview: true, reason, action, payload }`.
+ * Plain / JSON / XML outputs are kept consistent with the rest of the CLI.
+ */
+export function outputWriteGuardPreview(
+  error: WriteGuardError,
+  options: { xml?: boolean; json?: boolean },
+  resultTag: string,
+): void {
+  const hint =
+    error.kind === 'disabled'
+      ? '请取消 GERRIT_DISABLE_WRITE 或使用只读命令'
+      : '追加 --confirm 后重新执行以真正写入'
+
+  const payload: PreviewPayload = {
+    ok: false,
+    preview: true,
+    kind: error.kind,
+    reason: error.message,
+    action: error.operation,
+    target: error.target,
+    hint,
+  }
+
+  if (options.json) {
+    console.log(JSON.stringify(payload, null, 2))
+    return
+  }
+
+  if (options.xml) {
+    console.log(`<?xml version="1.0" encoding="UTF-8"?>`)
+    console.log(`<${resultTag}>`)
+    console.log(`  <status>preview</status>`)
+    console.log(`  <kind>${payload.kind}</kind>`)
+    console.log(`  <action>${payload.action}</action>`)
+    console.log(`  <target><![CDATA[${payload.target}]]></target>`)
+    console.log(`  <reason><![CDATA[${payload.reason}]]></reason>`)
+    console.log(`  <hint><![CDATA[${payload.hint}]]></hint>`)
+    console.log(`</${resultTag}>`)
+    return
+  }
+
+  const banner = error.kind === 'disabled' ? '✗ 写操作已禁用' : '⚠ 写操作预览（未执行）'
+  console.log(`${banner}`)
+  console.log(`  操作: ${payload.action}`)
+  console.log(`  目标: ${payload.target}`)
+  console.log(`  说明: ${payload.reason}`)
+  console.log(`  提示: ${payload.hint}`)
+}
+
 /**
  * Execute an Effect with standard error handling.
  */
@@ -69,6 +131,10 @@ export async function executeEffect<E>(
   try {
     await Effect.runPromise(effect)
   } catch (error) {
+    if (error instanceof WriteGuardError) {
+      outputWriteGuardPreview(error, options, resultTag)
+      return
+    }
     outputError(error, options, resultTag)
     process.exit(1)
   }

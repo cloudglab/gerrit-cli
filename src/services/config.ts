@@ -151,9 +151,12 @@ export const ConfigServiceLive: Layer.Layer<ConfigService, never, never> = Layer
   Effect.sync(() => {
     const decodeConfig = (input: unknown, sourceLabel: string) =>
       Schema.decodeUnknown(AppConfig)(input).pipe(
-        Effect.mapError(
-          () => new ConfigError({ message: `Invalid configuration format (${sourceLabel})` }),
-        ),
+        Effect.mapError((cause) => {
+          const detail = cause instanceof Error ? cause.message : String(cause)
+          return new ConfigError({
+            message: `配置文件损坏，请检查 ${CONFIG_FILE}：${detail} (${sourceLabel})`,
+          })
+        }),
       )
 
     const getFullConfig = Effect.gen(function* () {
@@ -166,7 +169,7 @@ export const ConfigServiceLive: Layer.Layer<ConfigService, never, never> = Layer
         return yield* Effect.fail(
           new ConfigError({
             message:
-              'Configuration not found. Run "gerrit-cli setup" to set up your credentials or set GERRIT_HOST, GERRIT_USERNAME, and GERRIT_PASSWORD environment variables.',
+              '未找到 Gerrit 配置。请运行 `gerrit-cli setup` 写入凭据，或设置 GERRIT_HOST、GERRIT_USERNAME、GERRIT_PASSWORD 环境变量。',
           }),
         )
       }
@@ -197,13 +200,15 @@ export const ConfigServiceLive: Layer.Layer<ConfigService, never, never> = Layer
       Effect.gen(function* () {
         // Validate config using schema
         const validatedConfig = yield* Schema.decodeUnknown(AppConfig)(config).pipe(
-          Effect.mapError(() => new ConfigError({ message: 'Invalid configuration format' })),
+          Effect.mapError(
+            (cause) => new ConfigError({ message: `配置格式无效：${String(cause)}` }),
+          ),
         )
 
         try {
           writeFileConfig(validatedConfig)
         } catch {
-          yield* Effect.fail(new ConfigError({ message: 'Failed to save configuration to file' }))
+          yield* Effect.fail(new ConfigError({ message: '保存配置到文件失败' }))
         }
       })
 
@@ -221,7 +226,11 @@ export const ConfigServiceLive: Layer.Layer<ConfigService, never, never> = Layer
         // Validate credentials using schema
         const validatedCredentials = yield* Schema.decodeUnknown(GerritCredentials)(
           credentials,
-        ).pipe(Effect.mapError(() => new ConfigError({ message: 'Invalid credentials format' })))
+        ).pipe(
+          Effect.mapError(
+            (cause) => new ConfigError({ message: `凭据格式无效：${String(cause)}` }),
+          ),
+        )
 
         // Get existing config or create new one
         const existingConfig = yield* getFullConfig.pipe(

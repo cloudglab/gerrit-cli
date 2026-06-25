@@ -134,7 +134,13 @@ const buildBatchReview = (batchInput: BatchCommentInput): ReviewInput => {
     }
     if (filePath) {
       // When range is present, don't include line (Gerrit API preference)
-      const commentObj: any = {
+      const commentObj: {
+        message: string
+        side?: 'PARENT' | 'REVISION'
+        unresolved?: boolean
+        range?: BatchCommentInput[number]['range']
+        line?: number
+      } = {
         message: comment.message,
         side: comment.side,
         unresolved: comment.unresolved,

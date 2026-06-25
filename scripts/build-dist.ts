@@ -37,6 +37,12 @@ execFileSync('pnpm', ['exec', 'tsx', 'scripts/generate-manifest.ts'], {
   env: { ...process.env, GERRIT_CLI_VERSION: version },
 })
 
+// 把 .agents/skills/gerrit-cli 复制到 skills/gerrit-cli，作为发布产物。
+execFileSync('node', ['scripts/copy-skills.mjs'], {
+  cwd: rootDir,
+  stdio: 'inherit',
+})
+
 for (const entry of entries) {
   if (!existsSync(entry.outputDir)) mkdirSync(entry.outputDir, { recursive: true })
 

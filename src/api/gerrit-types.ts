@@ -21,11 +21,17 @@ import type { ReviewerListItem } from '@/schemas/reviewer'
 export interface ApiErrorFields {
   readonly message: string
   readonly status?: number
+  readonly statusCode?: number
+  readonly responseBody?: unknown
+  readonly cacheHit?: boolean
 }
 
 const ApiErrorSchema = Schema.TaggedError<ApiErrorFields>()('ApiError', {
   message: Schema.String,
   status: Schema.optional(Schema.Number),
+  statusCode: Schema.optional(Schema.Number),
+  responseBody: Schema.optional(Schema.Unknown),
+  cacheHit: Schema.optional(Schema.Boolean),
 } as const) as unknown
 
 export class ApiError
