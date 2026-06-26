@@ -8,8 +8,8 @@ import {
   NotGitRepoError,
 } from '@/services/commit-hook'
 import { type ConfigError, ConfigService, type ConfigServiceImpl } from '@/services/config'
-import { assertWriteAllowed, type WriteGuardError } from '@/utils/write-guard'
 import * as childProcess from '@/utils/child-process'
+import { assertWriteAllowed, type WriteGuardError } from '@/utils/write-guard'
 
 /** Help text for push command - exported to keep index.ts under line limit */
 export const PUSH_HELP_TEXT = `

@@ -4,9 +4,9 @@ import { afterAll, afterEach, beforeAll, describe, expect, test } from '@test/co
 import { Effect } from 'effect'
 import { vi } from 'vitest'
 import { GerritApiServiceLive } from '@/api/gerrit'
+import * as httpClient from '@/api/http-client'
 import { buildStatusCommand } from '@/cli/commands/build-status'
 import type { MessageInfo } from '@/schemas/gerrit'
-import * as httpClient from '@/api/http-client'
 import {
   capturedErrors,
   capturedStdout,

@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.0.19 - 2026-06-26
+
+### Added
+
+- 新增内置 `changelog` 命令：`gerrit changelog` 输出内置 CHANGELOG，支持默认文本、`--json`、`--xml` 与 `--version <version>`（如 `0.0.18`）查看指定版本段；脚本与 Agent 可直接消费，无需读 npm tarball。
+- `design.md`：补齐架构、Skill 双目录、HTTP 客户端、写保护、内置 changelog 命令等设计与对齐说明，作为发版与对内交接的单一来源。
+- `.agents/skills/gerrit-cli/` 作为 Skill 编辑源（场景拆分 `reference/*.md`），`scripts/copy-skills.mjs` 在 `pnpm build` 时把它复制到 `skills/gerrit-cli/` 作为 npm 发布产物，与 zentao-cli 保持一致。
+- `AGENTS.md`：补齐 v0.0.18 之后新增的 `changelog` 与 `install` 写保护、HTTP 客户端等说明。
+
+### Changed
+
+- `src/api/http-client.ts`：抽出独立 HTTP 客户端，提供共享 undici Agent keepAlive 连接池、GET 15 秒内存缓存、网络错误（`ECONNRESET` / `ETIMEDOUT` / `EAI_AGAIN` / timeout / socket hang up）重试一次；缓存 key 只含 url+method+body，剥离 `Authorization` / `Cookie` / `Set-Cookie` 等敏感头，避免 base64 密码泄露。
+- `src/api/gerrit.ts`：分页改为以 Gerrit 服务端 `_more_changes` 字段为准，不再依赖 `page.length < pageSize` 启发式；超出 `limit` 警告改用 `Effect.logWarning`。
+- `src/cli/command-helpers.ts`：写命令错误统一改用 `Effect.logError` + `Effect.fail`，不再静默吞错；写命令路径全部接入 `WriteGuardError` 与 `--confirm` / `GERRIT_DISABLE_WRITE` 写保护。
+- `src/cli-bootstrap.ts`：去掉手动 `extractRole` argv 扫描，统一交给 commander 解析 `--role`，作为角色过滤的唯一来源。
+- `src/cli/commands/{abandon,comment,rebase,restore,retrigger,set-ready,set-wip,submit,topic,vote,install-hook,push,setup}`：参数错误改为 `Effect.fail`，`abandon` / `rebase` / `set-ready` / `set-wip` 等用 `catchAll` 收敛错误输出，`rebase` 退出码与写保护前置修复。
+- `src/cli/register-{commands,state-commands,cicd-commands}.ts`：精简冗余，统一 `executeEffect` 入口。
+- `src/api/gerrit.ts`：`atob` 改为 `Buffer.from(..., 'base64').toString('utf8')`；`revisionId` 走 `encodeURIComponent`，避免含 `/` / `#` 的 revision 触发 404。
+- `vitest.config.ts`：默认 `pool: 'forks'`、`fileParallelism: false`、`maxConcurrency: 1`、`maxWorkers: 1`，强制串行跑测试，与发布前要求一致。
+- `scripts/build-dist.ts`：构建期把 `GERRIT_CLI_VERSION` 字面量直接注入 `dist/bin/*.js` 与 `dist/index.js`，根治全局安装取不到 `process.env` 时 `--version` 显示 `0.0.0` 的问题。
+- `.lintstagedrc.json`：`biome format` 限制到 `src/` / `tests/`，避免 `scripts/` 在 biome ignore 情况下报错。
+- `tests/search.test.ts`：spawn 集成测试加上 15s 超时，修复并发场景下 flaky 超时。
+- 错误消息统一改为中文并附 `hint`，便于 CLI 用户和 Agent 决定下一步动作。
+
+### Fixed
+
+- `src/api/http-client.ts`：移除 401 重试（相同凭据重试必然再次 401），401 直接抛业务错误，由 `error-codes.ts` 的 `NOT_AUTHENTICATED` hint 引导重新认证；网络错误仍重试一次。
+- `src/api/gerrit.ts`：分页 `_more_changes` 启发式修复，避免 `limit` 边界下重复抓取或漏抓。
+- `src/utils/write-guard.ts`：写保护预览输出结构化 JSON（包含 `preview`、`command`、`args`），`tests/write-guard.test.ts` 同步更新；写命令未带 `--confirm` 或 `GERRIT_DISABLE_WRITE=true` 时不再静默通过。
+- `src/cli/commands/comment.ts`：写保护前置到 `runComment`，避免已进入 Effect 后才拦截。
+- `src/cli/commands/rebase.ts`：退出码修正，命令执行成功但 `git rebase --abort` 触发时不再误报失败。
+- `src/cli/commands/abandon.ts`：改用 `catchAll` 收敛 `not found` / `conflict` / 网络异常，避免进程以 0 退出但实际未提交。
+- `src/api/gerrit.ts`：连接探测强制 https，不再回落到 http。
+
 ## 0.0.18 - 2026-06-24
 
 ### Added

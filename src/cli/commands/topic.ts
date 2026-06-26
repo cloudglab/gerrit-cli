@@ -1,8 +1,8 @@
 import { Effect } from 'effect'
 import { type ApiError, GerritApiService } from '@/api/gerrit'
 import { GitError, getChangeIdFromHead, NoChangeIdError } from '@/utils/git-commit'
-import { assertWriteAllowed, type WriteGuardError } from '@/utils/write-guard'
 import { sanitizeCDATA } from '@/utils/shell-safety'
+import { assertWriteAllowed, type WriteGuardError } from '@/utils/write-guard'
 
 export const TOPIC_HELP_TEXT = `
 Examples:

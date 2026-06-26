@@ -1,7 +1,7 @@
 import { Effect, pipe } from 'effect'
 import { type ApiError, GerritApiService } from '@/api/gerrit'
-import { assertWriteAllowed, type WriteGuardError } from '@/utils/write-guard'
 import { sanitizeCDATA } from '@/utils/shell-safety'
+import { assertWriteAllowed, type WriteGuardError } from '@/utils/write-guard'
 
 interface SetReadyOptions {
   message?: string
