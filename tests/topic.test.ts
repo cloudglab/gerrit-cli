@@ -152,7 +152,7 @@ describe('topic command', () => {
       )
 
       const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
-      const program = topicCommand('12345', 'my-feature', {}).pipe(
+      const program = topicCommand('12345', 'my-feature', { confirm: true }).pipe(
         Effect.provide(GerritApiServiceLive),
         Effect.provide(mockConfigLayer),
       )
@@ -171,7 +171,7 @@ describe('topic command', () => {
       )
 
       const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
-      const program = topicCommand('12345', 'release-v2', { xml: true }).pipe(
+      const program = topicCommand('12345', 'release-v2', { confirm: true, xml: true }).pipe(
         Effect.provide(GerritApiServiceLive),
         Effect.provide(mockConfigLayer),
       )
@@ -199,7 +199,7 @@ describe('topic command', () => {
       )
 
       const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
-      const program = topicCommand('12345', specialTopic, { xml: true }).pipe(
+      const program = topicCommand('12345', specialTopic, { confirm: true, xml: true }).pipe(
         Effect.provide(GerritApiServiceLive),
         Effect.provide(mockConfigLayer),
       )
@@ -223,7 +223,7 @@ describe('topic command', () => {
       )
 
       const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
-      const program = topicCommand('12345', cdataEndTopic, { xml: true }).pipe(
+      const program = topicCommand('12345', cdataEndTopic, { confirm: true, xml: true }).pipe(
         Effect.provide(GerritApiServiceLive),
         Effect.provide(mockConfigLayer),
       )
@@ -249,7 +249,7 @@ describe('topic command', () => {
       )
 
       const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
-      const program = topicCommand('12345', undefined, { delete: true }).pipe(
+      const program = topicCommand('12345', undefined, { delete: true, confirm: true }).pipe(
         Effect.provide(GerritApiServiceLive),
         Effect.provide(mockConfigLayer),
       )
@@ -268,10 +268,11 @@ describe('topic command', () => {
       )
 
       const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
-      const program = topicCommand('12345', undefined, { delete: true, xml: true }).pipe(
-        Effect.provide(GerritApiServiceLive),
-        Effect.provide(mockConfigLayer),
-      )
+      const program = topicCommand('12345', undefined, {
+        delete: true,
+        confirm: true,
+        xml: true,
+      }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
       await Effect.runPromise(program)
 
@@ -293,7 +294,7 @@ describe('topic command', () => {
       )
 
       const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
-      const program = topicCommand('12345', undefined, { delete: true }).pipe(
+      const program = topicCommand('12345', undefined, { delete: true, confirm: true }).pipe(
         Effect.provide(GerritApiServiceLive),
         Effect.provide(mockConfigLayer),
       )
@@ -313,7 +314,7 @@ describe('topic command', () => {
       )
 
       const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
-      const program = topicCommand('12345', 'ignored-topic', { delete: true }).pipe(
+      const program = topicCommand('12345', 'ignored-topic', { delete: true, confirm: true }).pipe(
         Effect.provide(GerritApiServiceLive),
         Effect.provide(mockConfigLayer),
       )
@@ -387,7 +388,7 @@ describe('topic command', () => {
       )
 
       const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
-      const program = topicCommand('12345', 'my-topic', {}).pipe(
+      const program = topicCommand('12345', 'my-topic', { confirm: true }).pipe(
         Effect.provide(GerritApiServiceLive),
         Effect.provide(mockConfigLayer),
       )
@@ -404,7 +405,7 @@ describe('topic command', () => {
       )
 
       const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
-      const program = topicCommand('12345', undefined, { delete: true }).pipe(
+      const program = topicCommand('12345', undefined, { delete: true, confirm: true }).pipe(
         Effect.provide(GerritApiServiceLive),
         Effect.provide(mockConfigLayer),
       )

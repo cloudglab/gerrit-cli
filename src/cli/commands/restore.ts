@@ -21,24 +21,25 @@ interface RestoreOptions {
 export const restoreCommand = (
   changeId?: string,
   options: RestoreOptions = {},
-): Effect.Effect<void, ApiError | WriteGuardError, GerritApiService> =>
+): Effect.Effect<void, ApiError | WriteGuardError | Error, GerritApiService> =>
   Effect.gen(function* () {
     const gerritApi = yield* GerritApiService
 
-    if (!changeId || changeId.trim() === '') {
-      console.error('✗ Change ID is required')
-      console.error('  Usage: gerrit-cli restore <change-id>')
-      return
+    const id = changeId?.trim()
+    if (!id) {
+      return yield* Effect.fail(
+        new Error('Change ID is required. Usage: gerrit-cli restore <change-id>'),
+      )
     }
 
     yield* assertWriteAllowed({
       confirm: options.confirm ?? false,
       operation: 'restore change',
-      target: changeId,
+      target: id,
     })
 
     // Perform the restore - this returns the restored change info
-    const change = yield* gerritApi.restoreChange(changeId, options.message)
+    const change = yield* gerritApi.restoreChange(id, options.message)
 
     if (options.json) {
       console.log(

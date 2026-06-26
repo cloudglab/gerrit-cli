@@ -1,14 +1,15 @@
 import { Agent, fetch as undiciFetch } from 'undici'
 
 /**
- * 共用 HTTP 客户端：参考 zentao-cli's `src/core/http.ts` 模式。
+ * - 共用 HTTP 客户端：参考 zentao-cli's `src/core/http.ts` 模式。
  *
  * 提供：
  * - 共享 undici Agent 的 keepAlive 连接池。
  * - GET 请求 15 秒内存缓存，命中注入 `cacheHit: true`。
- * - 401：清空缓存后重试一次（让上层重新拼装 Authorization 头）。
+ * - 401：不重试（相同凭据重试必然再次 401），直接按业务错误抛出，由上层 error-codes 的 NOT_AUTHENTICATED hint 处理。
  * - 网络错误（`ECONNRESET` / `ETIMEDOUT` / `EAI_AGAIN` / timeout / socket hang up）重试一次。
  * - 错误统一包装成带 `statusCode` / `responseBody` 的 `HttpClientError`。
+ * - 缓存 key 只含 url+method+body，不含 Authorization 等敏感头。
  */
 
 const GET_CACHE_TTL_MS = 15_000
@@ -58,9 +59,23 @@ const globalDispatcher = new Agent({
 
 const cache = new Map<string, CachedEntry>()
 
+const SENSITIVE_HEADERS = new Set(['authorization', 'cookie', 'set-cookie'])
+
+/**
+ * 缓存 key 只含 url + method + body，剥离 Authorization / Cookie 等敏感头，
+ * 避免把 base64 密码写进缓存 key。
+ */
 const buildCacheKey = (url: string, options: RequestOptions): string => {
   const method = options.method ?? 'GET'
-  return JSON.stringify({ url, method, headers: options.headers ?? {}, body: options.body ?? null })
+  const safeHeaders: Record<string, string> = {}
+  if (options.headers) {
+    for (const [key, value] of Object.entries(options.headers)) {
+      if (!SENSITIVE_HEADERS.has(key.toLowerCase())) {
+        safeHeaders[key] = value
+      }
+    }
+  }
+  return JSON.stringify({ url, method, headers: safeHeaders, body: options.body ?? null })
 }
 
 const readCache = (key: string): unknown | undefined => {
@@ -208,11 +223,8 @@ const sendWithRetry = async (
   try {
     const result = await performRequest(url, options)
 
-    if (result.status === 401 && !retried) {
-      clearCache()
-      return sendWithRetry(url, options, true)
-    }
-
+    // 401 不重试：相同凭据重试必然再次 401，直接按业务错误抛出，
+    // 由上层 error-codes.ts 的 NOT_AUTHENTICATED hint 引导重新认证。
     if (!isOkStatus(result.status)) {
       const errorResponse = await errorFromResponse(
         { status: result.status, text: () => Promise.resolve(result.raw) },
@@ -224,7 +236,7 @@ const sendWithRetry = async (
     return result
   } catch (error) {
     if (error instanceof HttpClientError) {
-      // 业务错误（4xx/5xx）不重试，直接抛
+      // 业务错误（4xx/5xx，含 401）不重试，直接抛
       throw error
     }
     if (!retried && isNetworkError(error)) {

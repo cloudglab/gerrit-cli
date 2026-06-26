@@ -717,8 +717,9 @@ describe('search command CLI integration', () => {
     // Should exit with error code
     expect(exitCode).toBe(1)
 
-    // Should output plain error (not XML)
-    expect(stderr).toContain('✗ Error:')
+    // Should output plain error (not XML)。错误走 executeEffect 结构化通道，
+    // 格式为 `✗ [NETWORK_ERROR] HTTP 请求失败: fetch failed`。
+    expect(stderr).toContain('HTTP 请求失败')
     expect(stderr).not.toContain('<?xml')
   })
 })

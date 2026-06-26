@@ -8,6 +8,7 @@ import {
   NotGitRepoError,
 } from '@/services/commit-hook'
 import { type ConfigError, ConfigService, type ConfigServiceImpl } from '@/services/config'
+import { assertWriteAllowed, type WriteGuardError } from '@/utils/write-guard'
 import * as childProcess from '@/utils/child-process'
 
 /** Help text for push command - exported to keep index.ts under line limit */
@@ -60,6 +61,7 @@ export interface PushOptions {
   private?: boolean
   draft?: boolean
   dryRun?: boolean
+  confirm?: boolean
 }
 
 // Custom error for push-specific failures
@@ -77,6 +79,7 @@ export type PushErrors =
   | MissingChangeIdError
   | NotGitRepoError
   | PushError
+  | WriteGuardError
 
 /** Basic email validation pattern */
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -288,6 +291,16 @@ export const pushCommand = (
   options: PushOptions,
 ): Effect.Effect<void, PushErrors, ConfigServiceImpl | CommitHookServiceImpl> =>
   Effect.gen(function* () {
+    // 写保护：push 是写操作，必须命中命令并带 --confirm。
+    // dry-run 只读，不触发写保护（仍可单独预览）。
+    if (!options.dryRun) {
+      yield* assertWriteAllowed({
+        confirm: options.confirm ?? false,
+        operation: 'push commits',
+        target: options.branch ? `refs/for/${options.branch}` : 'refs/for/<auto-detected>',
+      })
+    }
+
     // Validate email addresses early
     yield* Effect.try({
       try: () => {

@@ -38,7 +38,9 @@ afterEach(() => {
  * 导致 watch 永远停留在 pending 状态直到 timeout。直接 spy send 函数可以
  * 完全绕过 MSW 与 GET 缓存,让每个轮询拿到独立的响应。
  */
-const setupMessagesSpy = (responses: ReadonlyArray<readonly MessageInfo[]>): ReturnType<typeof vi.spyOn> => {
+const setupMessagesSpy = (
+  responses: ReadonlyArray<readonly MessageInfo[]>,
+): ReturnType<typeof vi.spyOn> => {
   let idx = 0
   return vi.spyOn(httpClient, 'send').mockImplementation(async (_url, _options = {}) => {
     const messages = responses[Math.min(idx, responses.length - 1)] ?? []
@@ -74,67 +76,59 @@ const verifiedMinus1: MessageInfo = {
 describe('build-status command - watch mode', () => {
   // build-status 命令把 interval Math.max 强制最小为 1 秒,
   // 多个轮询测试需要超过默认 5 秒的 vitest timeout,这里统一放宽到 15 秒。
-  test(
-    'polls until success state is reached',
-    async () => {
-      const spy = setupMessagesSpy([
-        [], // 1st poll: pending
-        [buildStarted], // 2nd poll: running
-        [buildStarted, verifiedPlus1], // 3rd poll: success
-      ])
+  test('polls until success state is reached', async () => {
+    const spy = setupMessagesSpy([
+      [], // 1st poll: pending
+      [buildStarted], // 2nd poll: running
+      [buildStarted, verifiedPlus1], // 3rd poll: success
+    ])
 
-      try {
-        const effect = buildStatusCommand('12345', {
-          watch: true,
-          interval: 0.1, // Fast polling for tests
-          timeout: 10,
-        }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(createMockConfigLayer()))
+    try {
+      const effect = buildStatusCommand('12345', {
+        watch: true,
+        interval: 0.1, // Fast polling for tests
+        timeout: 10,
+      }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(createMockConfigLayer()))
 
-        await Effect.runPromise(effect)
+      await Effect.runPromise(effect)
 
-        // Should have multiple outputs (one per poll)
-        expect(capturedStdout.length).toBeGreaterThanOrEqual(3)
-        expect(JSON.parse(capturedStdout[0])).toEqual({ state: 'pending' })
-        expect(JSON.parse(capturedStdout[1])).toEqual({ state: 'running' })
-        expect(JSON.parse(capturedStdout[2])).toEqual({ state: 'success' })
+      // Should have multiple outputs (one per poll)
+      expect(capturedStdout.length).toBeGreaterThanOrEqual(3)
+      expect(JSON.parse(capturedStdout[0])).toEqual({ state: 'pending' })
+      expect(JSON.parse(capturedStdout[1])).toEqual({ state: 'running' })
+      expect(JSON.parse(capturedStdout[2])).toEqual({ state: 'success' })
 
-        // Minimalistic output: no stderr messages except on timeout/error
-        expect(capturedErrors.length).toBe(0)
-      } finally {
-        spy.mockRestore()
-      }
-    },
-    15000,
-  )
+      // Minimalistic output: no stderr messages except on timeout/error
+      expect(capturedErrors.length).toBe(0)
+    } finally {
+      spy.mockRestore()
+    }
+  }, 15000)
 
-  test(
-    'polls until failure state is reached',
-    async () => {
-      const spy = setupMessagesSpy([
-        [buildStarted], // 1st poll: running
-        [buildStarted, verifiedMinus1], // 2nd poll: failure
-      ])
+  test('polls until failure state is reached', async () => {
+    const spy = setupMessagesSpy([
+      [buildStarted], // 1st poll: running
+      [buildStarted, verifiedMinus1], // 2nd poll: failure
+    ])
 
-      try {
-        const effect = buildStatusCommand('12345', {
-          watch: true,
-          interval: 0.1,
-          timeout: 10,
-        }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(createMockConfigLayer()))
+    try {
+      const effect = buildStatusCommand('12345', {
+        watch: true,
+        interval: 0.1,
+        timeout: 10,
+      }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(createMockConfigLayer()))
 
-        await Effect.runPromise(effect)
+      await Effect.runPromise(effect)
 
-        expect(capturedStdout.length).toBeGreaterThanOrEqual(2)
-        expect(JSON.parse(capturedStdout[capturedStdout.length - 1])).toEqual({ state: 'failure' })
+      expect(capturedStdout.length).toBeGreaterThanOrEqual(2)
+      expect(JSON.parse(capturedStdout[capturedStdout.length - 1])).toEqual({ state: 'failure' })
 
-        // Minimalistic output: no stderr messages except on timeout/error
-        expect(capturedErrors.length).toBe(0)
-      } finally {
-        spy.mockRestore()
-      }
-    },
-    15000,
-  )
+      // Minimalistic output: no stderr messages except on timeout/error
+      expect(capturedErrors.length).toBe(0)
+    } finally {
+      spy.mockRestore()
+    }
+  }, 15000)
 
   test('times out after specified duration', async () => {
     // Always return running state
@@ -159,31 +153,27 @@ describe('build-status command - watch mode', () => {
     }
   })
 
-  test(
-    'exit-status flag causes exit 1 on failure',
-    async () => {
-      const spy = setupMessagesSpy([[buildStarted, verifiedMinus1]])
+  test('exit-status flag causes exit 1 on failure', async () => {
+    const spy = setupMessagesSpy([[buildStarted, verifiedMinus1]])
+
+    try {
+      const effect = buildStatusCommand('12345', {
+        watch: true,
+        interval: 0.1,
+        timeout: 10,
+        exitStatus: true,
+      }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(createMockConfigLayer()))
 
       try {
-        const effect = buildStatusCommand('12345', {
-          watch: true,
-          interval: 0.1,
-          timeout: 10,
-          exitStatus: true,
-        }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(createMockConfigLayer()))
-
-        try {
-          await Effect.runPromise(effect)
-        } catch {
-          // Should exit with code 1 for failure when --exit-status is used
-          expect(mockProcessExit).toHaveBeenCalledWith(1)
-        }
-      } finally {
-        spy.mockRestore()
+        await Effect.runPromise(effect)
+      } catch {
+        // Should exit with code 1 for failure when --exit-status is used
+        expect(mockProcessExit).toHaveBeenCalledWith(1)
       }
-    },
-    15000,
-  )
+    } finally {
+      spy.mockRestore()
+    }
+  }, 15000)
 
   test('exit-status flag does not affect success state', async () => {
     const spy = setupMessagesSpy([[buildStarted, verifiedPlus1]])
@@ -208,16 +198,14 @@ describe('build-status command - watch mode', () => {
 
   test('watch mode handles not_found state', async () => {
     // 404: change not found
-    const spy = vi
-      .spyOn(httpClient, 'send')
-      .mockImplementation(async (_url, _options = {}) => {
-        return {
-          status: 404,
-          raw: 'Not Found',
-          body: 'Not Found',
-          cacheHit: false,
-        }
-      })
+    const spy = vi.spyOn(httpClient, 'send').mockImplementation(async (_url, _options = {}) => {
+      return {
+        status: 404,
+        raw: 'Not Found',
+        body: 'Not Found',
+        cacheHit: false,
+      }
+    })
 
     try {
       const effect = buildStatusCommand('99999', {

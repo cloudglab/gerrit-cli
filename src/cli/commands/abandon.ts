@@ -12,29 +12,33 @@ interface AbandonOptions {
 export const abandonCommand = (
   changeId?: string,
   options: AbandonOptions = {},
-): Effect.Effect<void, ApiError | WriteGuardError, GerritApiService> =>
+): Effect.Effect<void, ApiError | WriteGuardError | Error, GerritApiService> =>
   Effect.gen(function* () {
-    const gerritApi = yield* GerritApiService
-
-    if (!changeId) {
-      console.error('✗ Change ID is required')
-      console.error('  Usage: gerrit-cli abandon <change-id>')
-      return
+    const id = changeId?.trim()
+    if (!id) {
+      return yield* Effect.fail(
+        new Error('Change ID is required. Usage: gerrit-cli abandon <change-id>'),
+      )
     }
 
     yield* assertWriteAllowed({
       confirm: options.confirm ?? false,
       operation: 'abandon change',
-      target: changeId,
+      target: id,
     })
 
-    try {
-      // First get the change details to show what we're abandoning
-      const change = yield* gerritApi.getChange(changeId)
+    const gerritApi = yield* GerritApiService
 
-      // Perform the abandon
-      yield* gerritApi.abandonChange(changeId, options.message)
+    // First try to fetch the change details to show what we're abandoning.
+    // Effect.either keeps this typed — a try/catch around `yield*` is dead code because
+    // a failing Effect short-circuits the generator instead of throwing a JS exception.
+    const changeAttempt = yield* gerritApi.getChange(id).pipe(Effect.either)
 
+    // Perform the abandon regardless of whether getChange succeeded
+    yield* gerritApi.abandonChange(id, options.message)
+
+    if (changeAttempt._tag === 'Right') {
+      const change = changeAttempt.right
       if (options.json) {
         console.log(
           JSON.stringify(
@@ -64,16 +68,14 @@ export const abandonCommand = (
           console.log(`  Message: ${options.message}`)
         }
       }
-    } catch {
-      // If we can't get change details, still try to abandon with just the ID
-      yield* gerritApi.abandonChange(changeId, options.message)
-
+    } else {
+      // Could not get change details, but abandon still succeeded with just the ID
       if (options.json) {
         console.log(
           JSON.stringify(
             {
               status: 'success',
-              change_id: changeId,
+              change_id: id,
               ...(options.message ? { message: options.message } : {}),
             },
             null,
@@ -84,13 +86,13 @@ export const abandonCommand = (
         console.log(`<?xml version="1.0" encoding="UTF-8"?>`)
         console.log(`<abandon_result>`)
         console.log(`  <status>success</status>`)
-        console.log(`  <change_id>${changeId}</change_id>`)
+        console.log(`  <change_id>${id}</change_id>`)
         if (options.message) {
           console.log(`  <message><![CDATA[${options.message}]]></message>`)
         }
         console.log(`</abandon_result>`)
       } else {
-        console.log(`✓ Abandoned change ${changeId}`)
+        console.log(`✓ Abandoned change ${id}`)
         if (options.message) {
           console.log(`  Message: ${options.message}`)
         }

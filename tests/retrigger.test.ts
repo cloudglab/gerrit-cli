@@ -59,7 +59,7 @@ describe('retrigger command', () => {
     const mockConfig = createMockConfigService(undefined, '__TRIGGER__')
 
     await Effect.runPromise(
-      retriggerCommand('12345', {}).pipe(
+      retriggerCommand('12345', { confirm: true }).pipe(
         Effect.provide(GerritApiServiceLive),
         Effect.provide(Layer.succeed(ConfigService, mockConfig)),
       ),
@@ -81,7 +81,7 @@ describe('retrigger command', () => {
     )
 
     await Effect.runPromise(
-      retriggerCommand('67890', {}).pipe(
+      retriggerCommand('67890', { confirm: true }).pipe(
         Effect.provide(GerritApiServiceLive),
         Effect.provide(Layer.succeed(ConfigService, mockConfig)),
       ),
@@ -104,7 +104,7 @@ describe('retrigger command', () => {
     mockInput.mockResolvedValue('my-trigger-comment')
 
     await Effect.runPromise(
-      retriggerCommand('12345', {}).pipe(
+      retriggerCommand('12345', { confirm: true }).pipe(
         Effect.provide(GerritApiServiceLive),
         Effect.provide(Layer.succeed(ConfigService, mockConfig)),
       ),
@@ -126,7 +126,7 @@ describe('retrigger command', () => {
     let threw = false
     try {
       await Effect.runPromise(
-        retriggerCommand('12345', {}).pipe(
+        retriggerCommand('12345', { confirm: true }).pipe(
           Effect.provide(GerritApiServiceLive),
           Effect.provide(Layer.succeed(ConfigService, mockConfig)),
         ),
@@ -145,7 +145,7 @@ describe('retrigger command', () => {
     console.log = (msg: string) => logs.push(msg)
 
     await Effect.runPromise(
-      retriggerCommand('12345', { json: true }).pipe(
+      retriggerCommand('12345', { confirm: true, json: true }).pipe(
         Effect.provide(GerritApiServiceLive),
         Effect.provide(Layer.succeed(ConfigService, mockConfig)),
       ),
@@ -163,7 +163,7 @@ describe('retrigger command', () => {
     console.log = (msg: string) => logs.push(msg)
 
     await Effect.runPromise(
-      retriggerCommand('12345', { xml: true }).pipe(
+      retriggerCommand('12345', { confirm: true, xml: true }).pipe(
         Effect.provide(GerritApiServiceLive),
         Effect.provide(Layer.succeed(ConfigService, mockConfig)),
       ),

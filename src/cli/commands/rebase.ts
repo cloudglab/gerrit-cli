@@ -1,6 +1,7 @@
 import { Effect } from 'effect'
 import { type ApiError, GerritApiService } from '@/api/gerrit'
 import { GitError, getChangeIdFromHead, NoChangeIdError } from '@/utils/git-commit'
+import { assertWriteAllowed, type WriteGuardError } from '@/utils/write-guard'
 import { escapeXML, sanitizeCDATA } from '@/utils/shell-safety'
 
 interface RebaseOptions {
@@ -8,10 +9,14 @@ interface RebaseOptions {
   allowConflicts?: boolean
   xml?: boolean
   json?: boolean
+  confirm?: boolean
 }
 
 /**
  * Rebases a Gerrit change onto the target branch or specified base.
+ *
+ * Errors propagate through the Effect channel (handled by executeEffect's
+ * outputError + exit 1), rather than being swallowed into exit code 0.
  *
  * @param changeId - Change number or Change-ID to rebase (optional, auto-detects from HEAD if not provided)
  * @param options - Configuration options
@@ -22,12 +27,19 @@ interface RebaseOptions {
 export const rebaseCommand = (
   changeId?: string,
   options: RebaseOptions = {},
-): Effect.Effect<void, never, GerritApiService> =>
+): Effect.Effect<void, ApiError | GitError | NoChangeIdError | WriteGuardError, GerritApiService> =>
   Effect.gen(function* () {
-    const gerritApi = yield* GerritApiService
-
     // Auto-detect Change-ID from HEAD commit if not provided
     const resolvedChangeId = changeId || (yield* getChangeIdFromHead())
+
+    // 写保护：rebase 是写操作，必须命中命令并带 --confirm
+    yield* assertWriteAllowed({
+      confirm: options.confirm ?? false,
+      operation: 'rebase change',
+      target: resolvedChangeId,
+    })
+
+    const gerritApi = yield* GerritApiService
 
     // Perform the rebase - this returns the rebased change info
     const change = yield* gerritApi.rebaseChange(resolvedChangeId, {
@@ -67,26 +79,4 @@ export const rebaseCommand = (
         console.log(`  Base: ${options.base}`)
       }
     }
-  }).pipe(
-    // Regional error boundary for the entire command
-    Effect.catchAll((error: ApiError | GitError | NoChangeIdError) =>
-      Effect.sync(() => {
-        const errorMessage =
-          error instanceof GitError || error instanceof NoChangeIdError || error instanceof Error
-            ? error.message
-            : String(error)
-
-        if (options.json) {
-          console.log(JSON.stringify({ status: 'error', error: errorMessage }, null, 2))
-        } else if (options.xml) {
-          console.log(`<?xml version="1.0" encoding="UTF-8"?>`)
-          console.log(`<rebase_result>`)
-          console.log(`  <status>error</status>`)
-          console.log(`  <error><![CDATA[${sanitizeCDATA(errorMessage)}]]></error>`)
-          console.log(`</rebase_result>`)
-        } else {
-          console.error(`✗ Error: ${errorMessage}`)
-        }
-      }),
-    ),
-  )
+  })

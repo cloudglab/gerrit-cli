@@ -27,12 +27,12 @@ Examples:
 
 Notes:
   - Fetches the change then runs git cherry-pick FETCH_HEAD
-  - Use --no-commit to stage without committing (git cherry-pick -n)`
+  - Use --no-commit to stage without committing (git cherry-pick -n)
+  - Git hooks always run (no --no-verify); this aligns with project policy`
 
 export interface CherryOptions {
   noCommit?: boolean
   remote?: string
-  noVerify?: boolean
 }
 
 class CherryError extends Error {
@@ -239,12 +239,7 @@ export const cherryCommand = (
         new CherryError(`Failed to fetch: ${e instanceof Error ? e.message : String(e)}`),
     })
 
-    const cherryPickCmd = [
-      'cherry-pick',
-      ...(options.noCommit ? ['-n'] : []),
-      ...(options.noVerify ? ['--no-verify'] : []),
-      'FETCH_HEAD',
-    ]
+    const cherryPickCmd = ['cherry-pick', ...(options.noCommit ? ['-n'] : []), 'FETCH_HEAD']
     yield* Console.log(
       chalk.dim(`Running git cherry-pick ${options.noCommit ? '-n ' : ''}FETCH_HEAD...`),
     )

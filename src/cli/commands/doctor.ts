@@ -100,6 +100,21 @@ export const collectDoctorReport = (deps: DoctorDependencies): Effect.Effect<Doc
       checks.push(createCheck('config', 'Config', 'fail', message))
     }
 
+    // P1#8: 默认要求 https://；http:// 配置会让 Basic 凭据明文传输，给显著警告。
+    if (hasConfig && host) {
+      const isInsecure = /^http:\/\//i.test(host)
+      checks.push(
+        createCheck(
+          'transport',
+          'Host transport',
+          isInsecure ? 'warn' : 'pass',
+          isInsecure
+            ? `Host ${host} 使用明文 http://，Basic 凭据可能被中间人窃听。建议改用 https://；若为可信内网可忽略。`
+            : 'Host uses https:// (encrypted transport)',
+        ),
+      )
+    }
+
     if (hasConfig) {
       const connected = yield* deps.testConnection.pipe(Effect.orElseSucceed(() => false))
       checks.push(

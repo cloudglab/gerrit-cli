@@ -132,7 +132,7 @@ export function applyRoleFilter(program: Command, role: CliRole): void {
     const meta = getCommandMeta(command.name())
     return meta ? commandVisibleForRole(meta, role) : true
   })
-  Reflect.set(program, 'commands', visibleCommands)
+  Object.assign(program, { commands: visibleCommands })
 }
 
 /**

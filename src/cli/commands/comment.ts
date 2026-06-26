@@ -369,14 +369,16 @@ export const commentCommand = (
   Effect.gen(function* () {
     const apiService = yield* GerritApiService
 
-    // Build the review input
-    const review = yield* createReviewInput(options)
-
+    // 写保护必须先于 createReviewInput：缺 --confirm 时直接返回 preview，
+    // 不读取 stdin（避免预览模式下吞掉管道输入）。
     yield* assertWriteAllowed({
       confirm: options.confirm ?? false,
       operation: 'post comment',
       target: changeId,
     })
+
+    // Build the review input
+    const review = yield* createReviewInput(options)
 
     // Execute the API calls in sequence
     const change = yield* pipe(

@@ -289,11 +289,7 @@ describe('submit command', () => {
       Effect.provide(mockConfigLayer),
     )
 
-    await Effect.runPromise(program)
-
-    const errorOutput = mockConsoleError.mock.calls.map((call) => call[0]).join('\n')
-    expect(errorOutput).toContain('Change ID is required')
-    expect(errorOutput).toContain('Usage: gerrit-cli submit <change-id>')
+    await expect(Effect.runPromise(program)).rejects.toThrow(/Change ID is required/)
   })
 
   it('should handle submit API failure', async () => {

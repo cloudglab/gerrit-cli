@@ -150,6 +150,7 @@ export const ChangeInfo: Schema.Schema<{
   readonly attention_set?: Record<string, unknown>
   readonly submit_type?: string
   readonly messages?: ReadonlyArray<ChangeMessage>
+  readonly _more_changes?: boolean
 }> = Schema.Struct({
   id: Schema.String,
   project: Schema.String,
@@ -217,6 +218,7 @@ export const ChangeInfo: Schema.Schema<{
   total_comment_count: Schema.optional(Schema.Number),
   attention_set: Schema.optional(Schema.Record({ key: Schema.String, value: Schema.Any })),
   submit_type: Schema.optional(Schema.String),
+  _more_changes: Schema.optional(Schema.Boolean),
   messages: Schema.optional(
     Schema.Array(
       Schema.Struct({

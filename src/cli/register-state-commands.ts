@@ -2,36 +2,11 @@ import type { Command } from 'commander'
 import { Effect } from 'effect'
 import { GerritApiServiceLive } from '@/api/gerrit'
 import { ConfigServiceLive } from '@/services/config'
+import { executeEffect } from './command-helpers'
 import { abandonCommand } from './commands/abandon'
 import { restoreCommand } from './commands/restore'
 import { setReadyCommand } from './commands/set-ready'
 import { setWipCommand } from './commands/set-wip'
-
-type StateOptions = { message?: string; xml?: boolean; json?: boolean }
-
-async function executeStateEffect(
-  effect: Effect.Effect<void, unknown, never>,
-  options: StateOptions,
-  resultTag: string,
-): Promise<void> {
-  try {
-    await Effect.runPromise(effect)
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error)
-    if (options.xml) {
-      console.log(`<?xml version="1.0" encoding="UTF-8"?>`)
-      console.log(`<${resultTag}>`)
-      console.log(`  <status>error</status>`)
-      console.log(`  <error><![CDATA[${errorMessage}]]></error>`)
-      console.log(`</${resultTag}>`)
-    } else if (options.json) {
-      console.log(JSON.stringify({ status: 'error', error: errorMessage }, null, 2))
-    } else {
-      console.error('✗ Error:', errorMessage)
-    }
-    process.exit(1)
-  }
-}
 
 export function registerStateCommands(program: Command): void {
   program
@@ -44,7 +19,7 @@ export function registerStateCommands(program: Command): void {
     .option('--xml', 'XML output for LLM consumption')
     .option('--json', 'JSON output for programmatic consumption')
     .action(async (changeId, options) => {
-      await executeStateEffect(
+      await executeEffect(
         abandonCommand(changeId, options).pipe(
           Effect.provide(GerritApiServiceLive),
           Effect.provide(ConfigServiceLive),
@@ -62,7 +37,7 @@ export function registerStateCommands(program: Command): void {
     .option('--xml', 'XML output for LLM consumption')
     .option('--json', 'JSON output for programmatic consumption')
     .action(async (changeId, options) => {
-      await executeStateEffect(
+      await executeEffect(
         restoreCommand(changeId, options).pipe(
           Effect.provide(GerritApiServiceLive),
           Effect.provide(ConfigServiceLive),
@@ -76,10 +51,11 @@ export function registerStateCommands(program: Command): void {
     .command('set-ready <change-id>')
     .description('Mark a WIP change as ready for review (accepts change number or Change-ID)')
     .option('-m, --message <message>', 'Message to include with the status change')
+    .option('--confirm', 'Confirm and execute this write operation')
     .option('--xml', 'XML output for LLM consumption')
     .option('--json', 'JSON output for programmatic consumption')
     .action(async (changeId, options) => {
-      await executeStateEffect(
+      await executeEffect(
         setReadyCommand(changeId, options).pipe(
           Effect.provide(GerritApiServiceLive),
           Effect.provide(ConfigServiceLive),
@@ -93,10 +69,11 @@ export function registerStateCommands(program: Command): void {
     .command('set-wip <change-id>')
     .description('Mark a change as work-in-progress (accepts change number or Change-ID)')
     .option('-m, --message <message>', 'Message to include with the status change')
+    .option('--confirm', 'Confirm and execute this write operation')
     .option('--xml', 'XML output for LLM consumption')
     .option('--json', 'JSON output for programmatic consumption')
     .action(async (changeId, options) => {
-      await executeStateEffect(
+      await executeEffect(
         setWipCommand(changeId, options).pipe(
           Effect.provide(GerritApiServiceLive),
           Effect.provide(ConfigServiceLive),

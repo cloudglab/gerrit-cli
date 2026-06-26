@@ -51,7 +51,7 @@ describe('install-hook Command', () => {
       const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
       const mockHookLayer = Layer.succeed(CommitHookService, mockService)
 
-      const effect = installHookCommand({}).pipe(
+      const effect = installHookCommand({ confirm: true }).pipe(
         Effect.provide(mockHookLayer),
         Effect.provide(mockConfigLayer),
       )
@@ -67,7 +67,7 @@ describe('install-hook Command', () => {
       const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
       const mockHookLayer = Layer.succeed(CommitHookService, mockService)
 
-      const effect = installHookCommand({ xml: true }).pipe(
+      const effect = installHookCommand({ confirm: true, xml: true }).pipe(
         Effect.provide(mockHookLayer),
         Effect.provide(mockConfigLayer),
       )
@@ -95,7 +95,7 @@ describe('install-hook Command', () => {
       const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
       const mockHookLayer = Layer.succeed(CommitHookService, mockService)
 
-      const effect = installHookCommand({}).pipe(
+      const effect = installHookCommand({ confirm: true }).pipe(
         Effect.provide(mockHookLayer),
         Effect.provide(mockConfigLayer),
       )
@@ -111,7 +111,7 @@ describe('install-hook Command', () => {
       const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
       const mockHookLayer = Layer.succeed(CommitHookService, mockService)
 
-      const effect = installHookCommand({ xml: true }).pipe(
+      const effect = installHookCommand({ confirm: true, xml: true }).pipe(
         Effect.provide(mockHookLayer),
         Effect.provide(mockConfigLayer),
       )
@@ -137,7 +137,7 @@ describe('install-hook Command', () => {
       const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
       const mockHookLayer = Layer.succeed(CommitHookService, mockService)
 
-      const effect = installHookCommand({ force: true }).pipe(
+      const effect = installHookCommand({ confirm: true, force: true }).pipe(
         Effect.provide(mockHookLayer),
         Effect.provide(mockConfigLayer),
       )
@@ -159,7 +159,7 @@ describe('install-hook Command', () => {
 
       const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
 
-      const effect = installHookCommand({ force: true }).pipe(
+      const effect = installHookCommand({ confirm: true, force: true }).pipe(
         Effect.provide(CommitHookServiceLive),
         Effect.provide(mockConfigLayer),
       )
@@ -179,7 +179,7 @@ describe('install-hook Command', () => {
 
       const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
 
-      const effect = installHookCommand({ force: true }).pipe(
+      const effect = installHookCommand({ confirm: true, force: true }).pipe(
         Effect.provide(CommitHookServiceLive),
         Effect.provide(mockConfigLayer),
       )
@@ -199,7 +199,7 @@ describe('install-hook Command', () => {
 
       const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
 
-      const effect = installHookCommand({ force: true }).pipe(
+      const effect = installHookCommand({ confirm: true, force: true }).pipe(
         Effect.provide(CommitHookServiceLive),
         Effect.provide(mockConfigLayer),
       )
@@ -219,7 +219,7 @@ describe('install-hook Command', () => {
 
       const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
 
-      const effect = installHookCommand({ force: true }).pipe(
+      const effect = installHookCommand({ confirm: true, force: true }).pipe(
         Effect.provide(CommitHookServiceLive),
         Effect.provide(mockConfigLayer),
       )
@@ -247,7 +247,7 @@ describe('install-hook Command', () => {
       const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
       const mockHookLayer = Layer.succeed(CommitHookService, mockService)
 
-      const effect = installHookCommand({}).pipe(
+      const effect = installHookCommand({ confirm: true }).pipe(
         Effect.provide(mockHookLayer),
         Effect.provide(mockConfigLayer),
       )

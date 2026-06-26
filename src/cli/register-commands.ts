@@ -3,7 +3,6 @@ import { Effect } from 'effect'
 import { GerritApiServiceLive } from '@/api/gerrit'
 import { CommitHookServiceLive } from '@/services/commit-hook'
 import { ConfigServiceLive } from '@/services/config'
-import { sanitizeCDATA } from '@/utils/shell-safety'
 import { executeEffect } from './command-helpers'
 import { CHECKOUT_HELP_TEXT, checkoutCommand } from './commands/checkout'
 import { CHERRY_HELP_TEXT, cherryCommand } from './commands/cherry'
@@ -187,25 +186,14 @@ export function registerCommands(program: Command): void {
     .option('-n, --limit <number>', 'Limit results (default: 25)')
     .addHelpText('after', SEARCH_HELP_TEXT)
     .action(async (query, options) => {
-      const effect = searchCommand(query, options).pipe(
-        Effect.provide(GerritApiServiceLive),
-        Effect.provide(ConfigServiceLive),
+      await executeEffect(
+        searchCommand(query, options).pipe(
+          Effect.provide(GerritApiServiceLive),
+          Effect.provide(ConfigServiceLive),
+        ),
+        options,
+        'search_result',
       )
-      await Effect.runPromise(effect).catch((error: unknown) => {
-        const errorMessage = error instanceof Error ? error.message : String(error)
-        if (options.json) {
-          console.log(JSON.stringify({ status: 'error', error: errorMessage }, null, 2))
-        } else if (options.xml) {
-          console.log(`<?xml version="1.0" encoding="UTF-8"?>`)
-          console.log(`<search_result>`)
-          console.log(`  <status>error</status>`)
-          console.log(`  <error><![CDATA[${errorMessage}]]></error>`)
-          console.log(`</search_result>`)
-        } else {
-          console.error('✗ Error:', errorMessage)
-        }
-        process.exit(1)
-      })
     })
 
   // workspace command (deprecated — use 'gerrit-cli tree setup' instead)
@@ -243,14 +231,18 @@ export function registerCommands(program: Command): void {
     .description('Rebase a change onto target branch (auto-detects from HEAD if not provided)')
     .option('--base <ref>', 'Base revision to rebase onto (default: target branch HEAD)')
     .option('--allow-conflicts', 'Allow rebasing even if conflicts exist')
+    .option('--confirm', 'Confirm and execute this write operation')
     .option('--xml', 'XML output for LLM consumption')
     .option('--json', 'JSON output for programmatic consumption')
     .action(async (changeId, options) => {
       await executeEffect(
-        rebaseCommand(changeId, { ...options, allowConflicts: options.allowConflicts }).pipe(
-          Effect.provide(GerritApiServiceLive),
-          Effect.provide(ConfigServiceLive),
-        ),
+        rebaseCommand(changeId, {
+          base: options.base,
+          allowConflicts: options.allowConflicts,
+          confirm: options.confirm,
+          xml: options.xml,
+          json: options.json,
+        }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(ConfigServiceLive)),
         options,
         'rebase_result',
       )
@@ -279,6 +271,7 @@ export function registerCommands(program: Command): void {
     .command('topic [change-id] [topic]')
     .description('Get, set, or remove topic for a change (auto-detects from HEAD if not specified)')
     .option('--delete', 'Remove the topic from the change')
+    .option('--confirm', 'Confirm and execute this write operation (required to set/delete topic)')
     .option('--xml', 'XML output for LLM consumption')
     .option('--json', 'JSON output for programmatic consumption')
     .addHelpText('after', TOPIC_HELP_TEXT)
@@ -365,16 +358,14 @@ export function registerCommands(program: Command): void {
     .command('open <change-id>')
     .description('Open a change in the browser (accepts change number or Change-ID)')
     .action(async (changeId, options) => {
-      try {
-        const effect = openCommand(changeId, options).pipe(
+      await executeEffect(
+        openCommand(changeId, options).pipe(
           Effect.provide(GerritApiServiceLive),
           Effect.provide(ConfigServiceLive),
-        )
-        await Effect.runPromise(effect)
-      } catch (error) {
-        console.error('✗ Error:', error instanceof Error ? error.message : String(error))
-        process.exit(1)
-      }
+        ),
+        options,
+        'open_result',
+      )
     })
 
   // show command
@@ -387,27 +378,14 @@ export function registerCommands(program: Command): void {
     .option('--json', 'JSON output for programmatic consumption')
     .addHelpText('after', SHOW_HELP_TEXT)
     .action(async (changeId, options) => {
-      try {
-        const effect = showCommand(changeId, options).pipe(
+      await executeEffect(
+        showCommand(changeId, options).pipe(
           Effect.provide(GerritApiServiceLive),
           Effect.provide(ConfigServiceLive),
-        )
-        await Effect.runPromise(effect)
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error)
-        if (options.json) {
-          console.log(JSON.stringify({ status: 'error', error: errorMessage }, null, 2))
-        } else if (options.xml) {
-          console.log(`<?xml version="1.0" encoding="UTF-8"?>`)
-          console.log(`<show_result>`)
-          console.log(`  <status>error</status>`)
-          console.log(`  <error><![CDATA[${sanitizeCDATA(errorMessage)}]]></error>`)
-          console.log(`</show_result>`)
-        } else {
-          console.error('✗ Error:', errorMessage)
-        }
-        process.exit(1)
-      }
+        ),
+        options,
+        'show_result',
+      )
     })
 
   // push command
@@ -424,10 +402,11 @@ export function registerCommands(program: Command): void {
     .option('--private', 'Mark change as private')
     .option('--draft', 'Alias for --wip')
     .option('--dry-run', 'Show what would be pushed without pushing')
+    .option('--confirm', 'Confirm and execute this write operation')
     .addHelpText('after', PUSH_HELP_TEXT)
     .action(async (options) => {
-      try {
-        const effect = pushCommand({
+      await executeEffect(
+        pushCommand({
           branch: options.branch,
           topic: options.topic,
           reviewer: options.reviewer,
@@ -438,12 +417,11 @@ export function registerCommands(program: Command): void {
           private: options.private,
           draft: options.draft,
           dryRun: options.dryRun,
-        }).pipe(Effect.provide(CommitHookServiceLive), Effect.provide(ConfigServiceLive))
-        await Effect.runPromise(effect)
-      } catch (error) {
-        console.error('Error:', error instanceof Error ? error.message : String(error))
-        process.exit(1)
-      }
+          confirm: options.confirm,
+        }).pipe(Effect.provide(CommitHookServiceLive), Effect.provide(ConfigServiceLive)),
+        options,
+        'push_result',
+      )
     })
 
   // files command
@@ -492,16 +470,14 @@ export function registerCommands(program: Command): void {
     .option('--remote <name>', 'Use specific git remote (default: auto-detect)')
     .addHelpText('after', CHECKOUT_HELP_TEXT)
     .action(async (changeId, options) => {
-      try {
-        const effect = checkoutCommand(changeId, {
+      await executeEffect(
+        checkoutCommand(changeId, {
           detach: options.detach,
           remote: options.remote,
-        }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(ConfigServiceLive))
-        await Effect.runPromise(effect)
-      } catch (error) {
-        console.error('Error:', error instanceof Error ? error.message : String(error))
-        process.exit(1)
-      }
+        }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(ConfigServiceLive)),
+        options,
+        'checkout_result',
+      )
     })
 
   registerAnalyticsCommands(program)
@@ -511,14 +487,12 @@ export function registerCommands(program: Command): void {
     .command('cherry <change-id>')
     .description('Fetch and cherry-pick a Gerrit change onto the current branch')
     .option('-n, --no-commit', 'Stage changes without committing')
-    .option('--no-verify', 'Bypass git commit hooks during cherry-pick')
     .option('--remote <name>', 'Use specific git remote (default: auto-detect)')
     .addHelpText('after', CHERRY_HELP_TEXT)
     .action(async (changeId, options) => {
       await executeEffect(
         cherryCommand(changeId, {
           noCommit: options.noCommit,
-          noVerify: options.noVerify,
           remote: options.remote,
         }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(ConfigServiceLive)),
         options,

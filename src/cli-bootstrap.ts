@@ -9,7 +9,7 @@ export interface RunCliOptions {
   readonly role?: CliRole
 }
 
-function createProgram(role: CliRole): Command {
+function createProgram(): Command {
   const program = new Command()
 
   program
@@ -58,24 +58,10 @@ SUBCOMMAND HELP
 
   registerCommands(program)
   applyMetaHelp(program)
-  applyRoleFilter(program, role)
+  // Role-based command filtering is applied in runCli after --role is parsed by
+  // commander, so --role is the single source of truth (no manual argv scan).
 
   return program
-}
-
-function extractRole(argv: readonly string[], defaultRole: CliRole): CliRole {
-  for (let index = 0; index < argv.length; index += 1) {
-    const arg = argv[index]
-    if (arg === '--role' || arg === '-r') {
-      const role = argv[index + 1]
-      if (!role) throw new Error(`${arg} requires a role (${CLI_ROLES.join(', ')})`)
-      return parseCliRole(role)
-    }
-    if (arg.startsWith('--role=')) {
-      return parseCliRole(arg.slice('--role='.length))
-    }
-  }
-  return defaultRole
 }
 
 /**
@@ -94,7 +80,15 @@ export async function runCli(argv: string[], options: RunCliOptions = {}): Promi
   // Non-blocking daily update probe — spawns detached background subprocess
   runDailyUpdateProbe(extractCommandName(argv))
 
-  const role = extractRole(argv, options.role ?? 'full')
-  const program = createProgram(role)
+  const program = createProgram()
+
+  // Peek at global options (notably --role) without running command actions,
+  // so role-based command filtering applies before help/execution. This makes
+  // commander the single parser of --role (replacing a manual argv scan).
+  program.parseOptions(argv)
+  const roleFromOpts = program.opts().role as string | undefined
+  const role = roleFromOpts ? parseCliRole(roleFromOpts) : (options.role ?? 'full')
+  applyRoleFilter(program, role)
+
   await program.parseAsync(argv, { from: 'user' })
 }

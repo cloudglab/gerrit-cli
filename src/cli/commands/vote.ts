@@ -31,16 +31,17 @@ interface VoteOptions {
 export const voteCommand = (
   changeId?: string,
   options: VoteOptions = {},
-): Effect.Effect<void, ApiError | WriteGuardError, GerritApiService> =>
+): Effect.Effect<void, ApiError | WriteGuardError | Error, GerritApiService> =>
   Effect.gen(function* () {
     const gerritApi = yield* GerritApiService
 
-    if (!changeId || changeId.trim() === '') {
-      console.error('✗ Change ID is required')
-      console.error(
-        '  Usage: gerrit-cli vote <change-id> --code-review <value> [--verified <value>]',
+    const id = changeId?.trim()
+    if (!id) {
+      return yield* Effect.fail(
+        new Error(
+          'Change ID is required. Usage: gerrit-cli vote <change-id> --code-review <value> [--verified <value>]',
+        ),
       )
-      return
     }
 
     // Build labels object from options
@@ -58,9 +59,11 @@ export const voteCommand = (
     if (options.label && options.label.length > 0) {
       // Labels come in pairs: [name1, value1, name2, value2, ...]
       if (options.label.length % 2 !== 0) {
-        console.error('✗ Invalid label format: labels must be provided as name-value pairs')
-        console.error('  Usage: --label <name> <value> [--label <name> <value> ...]')
-        return
+        return yield* Effect.fail(
+          new Error(
+            'Invalid label format: labels must be provided as name-value pairs. Usage: --label <name> <value> [--label <name> <value> ...]',
+          ),
+        )
       }
 
       for (let i = 0; i < options.label.length; i += 2) {
@@ -69,9 +72,11 @@ export const voteCommand = (
         if (labelName && labelValue) {
           const numValue = Number.parseInt(labelValue, 10)
           if (Number.isNaN(numValue)) {
-            console.error(`✗ Invalid label value for ${labelName}: ${labelValue}`)
-            console.error('  Label values must be integers')
-            return
+            return yield* Effect.fail(
+              new Error(
+                `Invalid label value for ${labelName}: ${labelValue}. Label values must be integers`,
+              ),
+            )
           }
           labels[labelName] = numValue
         }
@@ -80,17 +85,17 @@ export const voteCommand = (
 
     // Check if at least one label is provided
     if (Object.keys(labels).length === 0) {
-      console.error('✗ At least one label is required')
-      console.error(
-        '  Usage: gerrit-cli vote <change-id> --code-review <value> [--verified <value>] [--label <name> <value>]',
+      return yield* Effect.fail(
+        new Error(
+          'At least one label is required. Usage: gerrit-cli vote <change-id> --code-review <value> [--verified <value>] [--label <name> <value>]',
+        ),
       )
-      return
     }
 
     yield* assertWriteAllowed({
       confirm: options.confirm ?? false,
       operation: 'cast vote',
-      target: changeId,
+      target: id,
     })
 
     // Build ReviewInput
@@ -100,7 +105,7 @@ export const voteCommand = (
     }
 
     // Post the review
-    yield* gerritApi.postReview(changeId, reviewInput)
+    yield* gerritApi.postReview(id, reviewInput)
 
     // Output success
     if (options.json) {
@@ -108,7 +113,7 @@ export const voteCommand = (
         JSON.stringify(
           {
             status: 'success',
-            change_id: changeId,
+            change_id: id,
             labels,
             ...(options.message ? { message: options.message } : {}),
           },
@@ -120,7 +125,7 @@ export const voteCommand = (
       console.log(`<?xml version="1.0" encoding="UTF-8"?>`)
       console.log(`<vote_result>`)
       console.log(`  <status>success</status>`)
-      console.log(`  <change_id>${changeId}</change_id>`)
+      console.log(`  <change_id>${id}</change_id>`)
       console.log(`  <labels>`)
       for (const [name, value] of Object.entries(labels)) {
         console.log(`    <label name="${name}">${value}</label>`)
@@ -131,7 +136,7 @@ export const voteCommand = (
       }
       console.log(`</vote_result>`)
     } else {
-      console.log(`✓ Voted on change ${changeId}`)
+      console.log(`✓ Voted on change ${id}`)
       for (const [name, value] of Object.entries(labels)) {
         const sign = value >= 0 ? '+' : ''
         console.log(`  ${name}: ${sign}${value}`)

@@ -1,6 +1,7 @@
 import { Effect } from 'effect'
 import { type ApiError, GerritApiService } from '@/api/gerrit'
 import { GitError, getChangeIdFromHead, NoChangeIdError } from '@/utils/git-commit'
+import { assertWriteAllowed, type WriteGuardError } from '@/utils/write-guard'
 import { sanitizeCDATA } from '@/utils/shell-safety'
 
 export const TOPIC_HELP_TEXT = `
@@ -11,27 +12,30 @@ Examples:
   # View topic for specific change
   $ gerrit-cli topic 12345
 
-  # Set topic on a change
-  $ gerrit-cli topic 12345 my-feature
+  # Set topic on a change (write operation, requires --confirm)
+  $ gerrit-cli topic 12345 my-feature --confirm
 
-  # Remove topic from a change
-  $ gerrit-cli topic 12345 --delete
-  $ gerrit-cli topic --delete  # auto-detect from HEAD
+  # Remove topic from a change (write operation, requires --confirm)
+  $ gerrit-cli topic 12345 --delete --confirm
+  $ gerrit-cli topic --delete --confirm  # auto-detect from HEAD
 
-Note: When no change-id is provided, it will be auto-detected from the HEAD commit.`
+Note: When no change-id is provided, it will be auto-detected from the HEAD commit.
+Reading the topic is a read-only operation; setting or deleting the topic is a
+write operation and requires --confirm to execute.`
 
 interface TopicOptions {
   xml?: boolean
   json?: boolean
   delete?: boolean
+  confirm?: boolean
 }
 
 /**
  * Manages topic for a Gerrit change.
  *
- * - No topic argument: get current topic
- * - With topic argument: set topic
- * - With --delete flag: remove topic
+ * - No topic argument: get current topic (read-only)
+ * - With topic argument: set topic (write, requires --confirm)
+ * - With --delete flag: remove topic (write, requires --confirm)
  *
  * @param changeId - Change number or Change-ID (auto-detects from HEAD if not provided)
  * @param topic - Optional topic to set
@@ -42,7 +46,7 @@ export const topicCommand = (
   changeId: string | undefined,
   topic: string | undefined,
   options: TopicOptions = {},
-): Effect.Effect<void, ApiError | GitError | NoChangeIdError, GerritApiService> =>
+): Effect.Effect<void, ApiError | GitError | NoChangeIdError | WriteGuardError, GerritApiService> =>
   Effect.gen(function* () {
     const gerritApi = yield* GerritApiService
 
@@ -51,6 +55,12 @@ export const topicCommand = (
 
     // Handle delete operation
     if (options.delete) {
+      yield* assertWriteAllowed({
+        confirm: options.confirm ?? false,
+        operation: 'delete topic',
+        target: resolvedChangeId,
+      })
+
       yield* gerritApi.deleteTopic(resolvedChangeId)
 
       if (options.json) {
@@ -76,6 +86,12 @@ export const topicCommand = (
 
     // Handle set operation
     if (topic !== undefined && topic.trim() !== '') {
+      yield* assertWriteAllowed({
+        confirm: options.confirm ?? false,
+        operation: 'set topic',
+        target: resolvedChangeId,
+      })
+
       const newTopic = yield* gerritApi.setTopic(resolvedChangeId, topic)
 
       if (options.json) {
@@ -100,7 +116,7 @@ export const topicCommand = (
       return
     }
 
-    // Handle get operation (default)
+    // Handle get operation (default, read-only)
     const currentTopic = yield* gerritApi.getTopic(resolvedChangeId)
 
     if (options.json) {

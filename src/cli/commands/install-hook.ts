@@ -7,19 +7,28 @@ import {
   type NotGitRepoError,
 } from '@/services/commit-hook'
 import { type ConfigError, type ConfigServiceImpl } from '@/services/config'
+import { assertWriteAllowed, type WriteGuardError } from '@/utils/write-guard'
 
 export interface InstallHookOptions {
   force?: boolean
   xml?: boolean
   json?: boolean
+  confirm?: boolean
 }
 
-export type InstallHookErrors = ConfigError | HookInstallError | NotGitRepoError
+export type InstallHookErrors = ConfigError | HookInstallError | NotGitRepoError | WriteGuardError
 
 export const installHookCommand = (
   options: InstallHookOptions,
 ): Effect.Effect<void, InstallHookErrors, CommitHookServiceImpl | ConfigServiceImpl> =>
   Effect.gen(function* () {
+    // 写保护：install-hook 会写入 .git/hooks/commit-msg，必须命中命令并带 --confirm。
+    yield* assertWriteAllowed({
+      confirm: options.confirm ?? false,
+      operation: 'install commit-msg hook',
+      target: '.git/hooks/commit-msg',
+    })
+
     const commitHookService = yield* CommitHookService
 
     // Check if hook already exists using service method

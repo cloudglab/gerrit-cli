@@ -134,6 +134,17 @@ const setupEffect = (configService: ConfigServiceImpl) =>
                   default: existingConfig?.host,
                 })
 
+                // P1#8: 默认要求 https://；若用户填入 http://，给显著安全警告
+                // （Basic 凭据会明文传输）。可信内网可忽略继续。
+                if (/^http:\/\//i.test(host.trim())) {
+                  console.log(
+                    chalk.yellow(
+                      `⚠ 警告: ${host.trim()} 使用明文 http://，HTTP Password 会以明文传输，` +
+                        '可能被窃听。建议改用 https://。若为可信内网可忽略此警告。',
+                    ),
+                  )
+                }
+
                 // Username
                 const username = await input({
                   message: 'Username (your Gerrit username)',

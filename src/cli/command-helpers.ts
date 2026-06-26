@@ -1,4 +1,4 @@
-import { Effect } from 'effect'
+import { Cause, Effect, Exit } from 'effect'
 import { toStructuredError } from '@/core/error-codes'
 import { WriteGuardError } from '@/utils/write-guard'
 
@@ -118,6 +118,12 @@ export function outputWriteGuardPreview(
 
 /**
  * Execute an Effect with standard error handling.
+ *
+ * Uses `Effect.runPromiseExit` instead of `Effect.runPromise` because the latter
+ * rejects with a `FiberFailure` wrapper — an `instanceof WriteGuardError` check on
+ * the rejection would never match. Inspecting the `Cause` lets us route write-guard
+ * previews to `outputWriteGuardPreview` (exit 0) and everything else to
+ * `outputError` (exit 1).
  */
 export async function executeEffect<E>(
   effect: Effect.Effect<void, E, never>,
@@ -128,14 +134,20 @@ export async function executeEffect<E>(
     outputError(new Error('--xml and --json are mutually exclusive'), options, resultTag)
     process.exit(1)
   }
-  try {
-    await Effect.runPromise(effect)
-  } catch (error) {
-    if (error instanceof WriteGuardError) {
-      outputWriteGuardPreview(error, options, resultTag)
-      return
-    }
-    outputError(error, options, resultTag)
-    process.exit(1)
+  const exit = await Effect.runPromiseExit(effect)
+  if (Exit.isSuccess(exit)) return
+
+  // `Effect.runPromise` rejects with a `FiberFailure` wrapper, so an `instanceof`
+  // check on the rejection never matches. `Cause.failureOption` unwraps the typed
+  // failure (from `Effect.fail`) so we can route write-guard previews correctly.
+  const failureOpt = Cause.failureOption(exit.cause)
+  const failure = failureOpt._tag === 'Some' ? failureOpt.value : exit.cause
+
+  if (failure instanceof WriteGuardError) {
+    outputWriteGuardPreview(failure, options, resultTag)
+    return
   }
+
+  outputError(failure, options, resultTag)
+  process.exit(1)
 }

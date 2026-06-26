@@ -4,22 +4,25 @@ import { type ApiError, GerritApiService, type GerritApiServiceImpl } from '@/ap
 import { type ConfigError, ConfigService, type ConfigServiceImpl } from '@/services/config'
 import { type GitError, getChangeIdFromHead, type NoChangeIdError } from '@/utils/git-commit'
 import { input } from '@/utils/prompts'
+import { assertWriteAllowed, type WriteGuardError } from '@/utils/write-guard'
 
 export const RETRIGGER_HELP_TEXT = `
 Examples:
   # Retrigger CI for the change in HEAD commit (auto-detected)
-  $ gerrit-cli retrigger
+  $ gerrit-cli retrigger --confirm
 
   # Retrigger CI for a specific change
-  $ gerrit-cli retrigger 12345
+  $ gerrit-cli retrigger 12345 --confirm
 
 Notes:
   - The retrigger comment is saved in config (set during "gerrit-cli setup" or prompted on first use)
-  - Auto-detection reads the Change-Id footer from HEAD commit`
+  - Auto-detection reads the Change-Id footer from HEAD commit
+  - Retriggering posts a review comment, which is a write operation requiring --confirm`
 
 export interface RetriggerOptions {
   xml?: boolean
   json?: boolean
+  confirm?: boolean
 }
 
 export const retriggerCommand = (
@@ -27,12 +30,20 @@ export const retriggerCommand = (
   options: RetriggerOptions,
 ): Effect.Effect<
   void,
-  ApiError | ConfigError | GitError | NoChangeIdError | Error,
+  ApiError | ConfigError | GitError | NoChangeIdError | Error | WriteGuardError,
   GerritApiServiceImpl | ConfigServiceImpl
 > =>
   Effect.gen(function* () {
     // Resolve change ID — explicit arg or auto-detect from HEAD
     const resolvedChangeId = changeId !== undefined ? changeId : yield* getChangeIdFromHead()
+
+    // 写保护必须放在提示/保存之前：缺 --confirm 时直接返回 preview，
+    // 不交互、不保存配置、不发请求。
+    yield* assertWriteAllowed({
+      confirm: options.confirm ?? false,
+      operation: 'retrigger CI',
+      target: resolvedChangeId,
+    })
 
     // Get retrigger comment from config
     const configService = yield* ConfigService

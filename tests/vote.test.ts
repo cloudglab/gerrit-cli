@@ -256,11 +256,7 @@ describe('vote command', () => {
       Effect.provide(mockConfigLayer),
     )
 
-    await Effect.runPromise(program)
-
-    const errorOutput = mockConsoleError.mock.calls.map((call) => call[0]).join('\n')
-    expect(errorOutput).toContain('Change ID is required')
-    expect(errorOutput).toContain('Usage: gerrit-cli vote <change-id>')
+    await expect(Effect.runPromise(program)).rejects.toThrow(/Change ID is required/)
   })
 
   it('should show error when no labels are provided', async () => {
@@ -270,10 +266,7 @@ describe('vote command', () => {
       Effect.provide(mockConfigLayer),
     )
 
-    await Effect.runPromise(program)
-
-    const errorOutput = mockConsoleError.mock.calls.map((call) => call[0]).join('\n')
-    expect(errorOutput).toContain('At least one label is required')
+    await expect(Effect.runPromise(program)).rejects.toThrow(/At least one label is required/)
   })
 
   it('should handle vote API failure', async () => {
@@ -317,11 +310,7 @@ describe('vote command', () => {
       label: ['Custom-Label', 'not-a-number'],
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
-    await Effect.runPromise(program)
-
-    const errorOutput = mockConsoleError.mock.calls.map((call) => call[0]).join('\n')
-    expect(errorOutput).toContain('Invalid label value')
-    expect(errorOutput).toContain('Label values must be integers')
+    await expect(Effect.runPromise(program)).rejects.toThrow(/Invalid label value/)
   })
 
   it('should reject odd number of label arguments', async () => {
@@ -331,10 +320,6 @@ describe('vote command', () => {
       label: ['Custom-Label', '1', 'Another-Label'],
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
-    await Effect.runPromise(program)
-
-    const errorOutput = mockConsoleError.mock.calls.map((call) => call[0]).join('\n')
-    expect(errorOutput).toContain('Invalid label format')
-    expect(errorOutput).toContain('name-value pairs')
+    await expect(Effect.runPromise(program)).rejects.toThrow(/Invalid label format/)
   })
 })

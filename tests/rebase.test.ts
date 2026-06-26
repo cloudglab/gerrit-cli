@@ -95,7 +95,7 @@ describe('rebase command', () => {
     )
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
-    const program = rebaseCommand('12345', {}).pipe(
+    const program = rebaseCommand('12345', { confirm: true }).pipe(
       Effect.provide(GerritApiServiceLive),
       Effect.provide(mockConfigLayer),
     )
@@ -120,6 +120,7 @@ describe('rebase command', () => {
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = rebaseCommand('12345', {
+      confirm: true,
       base: 'refs/heads/main',
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
 
@@ -140,7 +141,7 @@ describe('rebase command', () => {
     )
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
-    const program = rebaseCommand('12345', { xml: true }).pipe(
+    const program = rebaseCommand('12345', { confirm: true, xml: true }).pipe(
       Effect.provide(GerritApiServiceLive),
       Effect.provide(mockConfigLayer),
     )
@@ -168,6 +169,7 @@ describe('rebase command', () => {
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = rebaseCommand('12345', {
+      confirm: true,
       xml: true,
       base: 'refs/heads/develop',
     }).pipe(Effect.provide(GerritApiServiceLive), Effect.provide(mockConfigLayer))
@@ -189,16 +191,14 @@ describe('rebase command', () => {
     )
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
-    const program = rebaseCommand('99999', {}).pipe(
+    const program = rebaseCommand('99999', { confirm: true }).pipe(
       Effect.provide(GerritApiServiceLive),
       Effect.provide(mockConfigLayer),
     )
 
-    // Error boundary catches and outputs to console.error
-    await Effect.runPromise(program)
-
-    const errorOutput = mockConsoleError.mock.calls.map((call) => call[0]).join('\n')
-    expect(errorOutput).toContain('Error:')
+    // Errors propagate through the Effect channel (handled by executeEffect's
+    // outputError + exit 1 at the CLI boundary); the command no longer swallows them.
+    await expect(Effect.runPromise(program)).rejects.toThrow()
   })
 
   it('should handle not found errors with XML output when --xml flag is used', async () => {
@@ -209,53 +209,33 @@ describe('rebase command', () => {
     )
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
-    const program = rebaseCommand('99999', { xml: true }).pipe(
+    const program = rebaseCommand('99999', { confirm: true, xml: true }).pipe(
       Effect.provide(GerritApiServiceLive),
       Effect.provide(mockConfigLayer),
     )
 
-    // Error boundary catches and outputs XML error
-    await Effect.runPromise(program)
-
-    const output = mockConsoleLog.mock.calls.map((call) => call[0]).join('\n')
-    expect(output).toContain('<?xml version="1.0" encoding="UTF-8"?>')
-    expect(output).toContain('<rebase_result>')
-    expect(output).toContain('<status>error</status>')
-    expect(output).toContain('<error><![CDATA[')
-    expect(output).toContain('</rebase_result>')
+    await expect(Effect.runPromise(program)).rejects.toThrow()
   })
 
-  it('should output error to console.error when no change ID and HEAD has no Change-Id', async () => {
+  it('should fail when no change ID and HEAD has no Change-Id', async () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = rebaseCommand(undefined, {}).pipe(
       Effect.provide(GerritApiServiceLive),
       Effect.provide(mockConfigLayer),
     )
 
-    // Error boundary catches NoChangeIdError and outputs to console.error
-    await Effect.runPromise(program)
-
-    const errorOutput = mockConsoleError.mock.calls.map((call) => call[0]).join('\n')
-    expect(errorOutput).toContain('Error:')
-    expect(errorOutput).toContain('No Change-ID found in HEAD commit')
+    // NoChangeIdError propagates (auto-detection fails outside a git repo)
+    await expect(Effect.runPromise(program)).rejects.toThrow(/No Change-ID/i)
   })
 
-  it('should output XML error when no change ID and HEAD has no Change-Id with --xml flag', async () => {
+  it('should fail when no change ID and HEAD has no Change-Id with --xml flag', async () => {
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
     const program = rebaseCommand(undefined, { xml: true }).pipe(
       Effect.provide(GerritApiServiceLive),
       Effect.provide(mockConfigLayer),
     )
 
-    // Error boundary catches NoChangeIdError and outputs XML error
-    await Effect.runPromise(program)
-
-    const output = mockConsoleLog.mock.calls.map((call) => call[0]).join('\n')
-    expect(output).toContain('<?xml version="1.0" encoding="UTF-8"?>')
-    expect(output).toContain('<rebase_result>')
-    expect(output).toContain('<status>error</status>')
-    expect(output).toContain('No Change-ID found in HEAD commit')
-    expect(output).toContain('</rebase_result>')
+    await expect(Effect.runPromise(program)).rejects.toThrow(/No Change-ID/i)
   })
 
   it('should treat empty string as missing change ID and auto-detect', async () => {
@@ -266,11 +246,7 @@ describe('rebase command', () => {
     )
 
     // Empty string triggers auto-detection, which fails with NoChangeIdError
-    await Effect.runPromise(program)
-
-    const errorOutput = mockConsoleError.mock.calls.map((call) => call[0]).join('\n')
-    expect(errorOutput).toContain('Error:')
-    expect(errorOutput).toContain('No Change-ID found in HEAD commit')
+    await expect(Effect.runPromise(program)).rejects.toThrow(/No Change-ID/i)
   })
 
   it('should handle rebase conflicts gracefully', async () => {
@@ -281,16 +257,12 @@ describe('rebase command', () => {
     )
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
-    const program = rebaseCommand('12345', {}).pipe(
+    const program = rebaseCommand('12345', { confirm: true }).pipe(
       Effect.provide(GerritApiServiceLive),
       Effect.provide(mockConfigLayer),
     )
 
-    // Error boundary catches and outputs to console.error
-    await Effect.runPromise(program)
-
-    const errorOutput = mockConsoleError.mock.calls.map((call) => call[0]).join('\n')
-    expect(errorOutput).toContain('Error:')
+    await expect(Effect.runPromise(program)).rejects.toThrow()
   })
 
   it('should handle API errors gracefully', async () => {
@@ -301,16 +273,12 @@ describe('rebase command', () => {
     )
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
-    const program = rebaseCommand('12345', {}).pipe(
+    const program = rebaseCommand('12345', { confirm: true }).pipe(
       Effect.provide(GerritApiServiceLive),
       Effect.provide(mockConfigLayer),
     )
 
-    // Error boundary catches and outputs to console.error
-    await Effect.runPromise(program)
-
-    const errorOutput = mockConsoleError.mock.calls.map((call) => call[0]).join('\n')
-    expect(errorOutput).toContain('Error:')
+    await expect(Effect.runPromise(program)).rejects.toThrow()
   })
 
   it('should handle changes that are already up to date', async () => {
@@ -321,16 +289,12 @@ describe('rebase command', () => {
     )
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
-    const program = rebaseCommand('12345', {}).pipe(
+    const program = rebaseCommand('12345', { confirm: true }).pipe(
       Effect.provide(GerritApiServiceLive),
       Effect.provide(mockConfigLayer),
     )
 
-    // Error boundary catches and outputs to console.error
-    await Effect.runPromise(program)
-
-    const errorOutput = mockConsoleError.mock.calls.map((call) => call[0]).join('\n')
-    expect(errorOutput).toContain('Error:')
+    await expect(Effect.runPromise(program)).rejects.toThrow()
   })
 
   it('should handle network errors gracefully', async () => {
@@ -341,16 +305,12 @@ describe('rebase command', () => {
     )
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
-    const program = rebaseCommand('12345', {}).pipe(
+    const program = rebaseCommand('12345', { confirm: true }).pipe(
       Effect.provide(GerritApiServiceLive),
       Effect.provide(mockConfigLayer),
     )
 
-    // Error boundary catches and outputs to console.error
-    await Effect.runPromise(program)
-
-    const errorOutput = mockConsoleError.mock.calls.map((call) => call[0]).join('\n')
-    expect(errorOutput).toContain('Error:')
+    await expect(Effect.runPromise(program)).rejects.toThrow()
   })
 
   it('should handle network errors with XML output', async () => {
@@ -361,19 +321,11 @@ describe('rebase command', () => {
     )
 
     const mockConfigLayer = Layer.succeed(ConfigService, createMockConfigService())
-    const program = rebaseCommand('12345', { xml: true }).pipe(
+    const program = rebaseCommand('12345', { confirm: true, xml: true }).pipe(
       Effect.provide(GerritApiServiceLive),
       Effect.provide(mockConfigLayer),
     )
 
-    // Error boundary catches and outputs XML error
-    await Effect.runPromise(program)
-
-    const output = mockConsoleLog.mock.calls.map((call) => call[0]).join('\n')
-    expect(output).toContain('<?xml version="1.0" encoding="UTF-8"?>')
-    expect(output).toContain('<rebase_result>')
-    expect(output).toContain('<status>error</status>')
-    expect(output).toContain('<error><![CDATA[')
-    expect(output).toContain('</rebase_result>')
+    await expect(Effect.runPromise(program)).rejects.toThrow()
   })
 })

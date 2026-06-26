@@ -216,11 +216,7 @@ describe('abandon command', () => {
       Effect.provide(mockConfigLayer),
     )
 
-    await Effect.runPromise(program)
-
-    const errorOutput = mockConsoleError.mock.calls.map((call) => call[0]).join('\n')
-    expect(errorOutput).toContain('Change ID is required')
-    expect(errorOutput).toContain('Usage: gerrit-cli abandon <change-id>')
+    await expect(Effect.runPromise(program)).rejects.toThrow(/Change ID is required/)
   })
 
   it('should handle abandon API failure', async () => {

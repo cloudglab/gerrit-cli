@@ -1,47 +1,59 @@
-import { Effect } from 'effect'
+import { Effect, pipe } from 'effect'
 import { type ApiError, GerritApiService } from '@/api/gerrit'
+import { assertWriteAllowed, type WriteGuardError } from '@/utils/write-guard'
 import { sanitizeCDATA } from '@/utils/shell-safety'
 
 interface SetReadyOptions {
   message?: string
   xml?: boolean
   json?: boolean
+  confirm?: boolean
 }
 
 export const setReadyCommand = (
   changeId?: string,
   options: SetReadyOptions = {},
-): Effect.Effect<void, ApiError, GerritApiService> =>
+): Effect.Effect<void, ApiError | WriteGuardError | Error, GerritApiService> =>
   Effect.gen(function* () {
+    const id = changeId?.trim()
+    if (!id) {
+      return yield* Effect.fail(
+        new Error('Change ID is required. Usage: gerrit-cli set-ready <change-id>'),
+      )
+    }
+
+    // 写保护：set-ready 是写操作，必须命中命令并带 --confirm
+    yield* assertWriteAllowed({
+      confirm: options.confirm ?? false,
+      operation: 'mark change ready',
+      target: id,
+    })
+
     const gerritApi = yield* GerritApiService
 
-    if (!changeId) {
-      console.error('✗ Change ID is required')
-      console.error('  Usage: gerrit-cli set-ready <change-id>')
-      return
-    }
-
-    // Try to fetch change details for richer output, but don't let it block the mutation
+    // Try to fetch change details for richer output; if that fails, proceed without details
+    // rather than crashing. Effect.either keeps the failure channel typed (no dead try/catch
+    // around yield*, which can never throw a JS exception).
     let changeNumber: number | undefined
     let subject: string | undefined
-    try {
-      const change = yield* gerritApi.getChange(changeId)
-      changeNumber = change._number
-      subject = change.subject
-    } catch {
-      // Proceed without change details
+    const changeAttempt = yield* pipe(
+      gerritApi.getChange(id),
+      Effect.map((change) => ({ changeNumber: change._number, subject: change.subject }) as const),
+      Effect.either,
+    )
+    if (changeAttempt._tag === 'Right') {
+      changeNumber = changeAttempt.right.changeNumber
+      subject = changeAttempt.right.subject
     }
 
-    yield* gerritApi.setReady(changeId, options.message)
+    yield* gerritApi.setReady(id, options.message)
 
     if (options.json) {
       console.log(
         JSON.stringify(
           {
             status: 'success',
-            ...(changeNumber !== undefined
-              ? { change_number: changeNumber }
-              : { change_id: changeId }),
+            ...(changeNumber !== undefined ? { change_number: changeNumber } : { change_id: id }),
             ...(subject !== undefined ? { subject } : {}),
             ...(options.message ? { message: options.message } : {}),
           },
@@ -56,7 +68,7 @@ export const setReadyCommand = (
       if (changeNumber !== undefined) {
         console.log(`  <change_number>${changeNumber}</change_number>`)
       } else {
-        console.log(`  <change_id>${changeId}</change_id>`)
+        console.log(`  <change_id>${id}</change_id>`)
       }
       if (subject !== undefined) {
         console.log(`  <subject><![CDATA[${sanitizeCDATA(subject)}]]></subject>`)
@@ -66,7 +78,7 @@ export const setReadyCommand = (
       }
       console.log(`</set_ready_result>`)
     } else {
-      const label = changeNumber !== undefined ? `${changeNumber}` : changeId
+      const label = changeNumber !== undefined ? `${changeNumber}` : id
       const suffix = subject !== undefined ? `: ${subject}` : ''
       console.log(`✓ Marked change ${label} as ready for review${suffix}`)
       if (options.message) {

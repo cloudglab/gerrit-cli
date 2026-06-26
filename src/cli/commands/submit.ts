@@ -22,24 +22,25 @@ interface SubmitOptions {
 export const submitCommand = (
   changeId?: string,
   options: SubmitOptions = {},
-): Effect.Effect<void, ApiError | WriteGuardError, GerritApiService> =>
+): Effect.Effect<void, ApiError | WriteGuardError | Error, GerritApiService> =>
   Effect.gen(function* () {
     const gerritApi = yield* GerritApiService
 
-    if (!changeId || changeId.trim() === '') {
-      console.error('✗ Change ID is required')
-      console.error('  Usage: gerrit-cli submit <change-id>')
-      return
+    const id = changeId?.trim()
+    if (!id) {
+      return yield* Effect.fail(
+        new Error('Change ID is required. Usage: gerrit-cli submit <change-id>'),
+      )
     }
 
     yield* assertWriteAllowed({
       confirm: options.confirm ?? false,
       operation: 'submit change',
-      target: changeId,
+      target: id,
     })
 
     // Pre-check: Fetch change to verify it's submittable
-    const change = yield* gerritApi.getChange(changeId)
+    const change = yield* gerritApi.getChange(id)
 
     // Check if the change is submittable
     if (change.submittable === false) {
@@ -114,7 +115,7 @@ export const submitCommand = (
     }
 
     // Change is submittable, proceed with submission
-    const result = yield* gerritApi.submitChange(changeId)
+    const result = yield* gerritApi.submitChange(id)
 
     if (options.json) {
       console.log(

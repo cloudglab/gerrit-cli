@@ -211,19 +211,23 @@ export const GerritApiServiceLive: Layer.Layer<GerritApiService, never, ConfigSe
         yield* makeRequest(url, authHeader)
         return true
       }).pipe(
-        Effect.catchAll((error) => {
-          if (process.env.DEBUG) {
-            console.error('Connection error:', error)
-          }
-          return Effect.succeed(false)
-        }),
+        Effect.catchAll((error) =>
+          Effect.gen(function* () {
+            if (process.env.DEBUG) {
+              yield* Effect.logError(
+                `Connection error: ${error instanceof Error ? error.message : String(error)}`,
+              )
+            }
+            return false
+          }),
+        ),
       )
 
       const getRevision = (changeId: string, revisionId = 'current') =>
         Effect.gen(function* () {
           const { credentials, authHeader } = yield* getCredentialsAndAuth
           const normalized = yield* normalizeAndValidate(changeId)
-          const url = `${credentials.host}/a/changes/${encodeURIComponent(normalized)}/revisions/${revisionId}`
+          const url = `${credentials.host}/a/changes/${encodeURIComponent(normalized)}/revisions/${encodeURIComponent(revisionId)}`
           return yield* makeRequest(url, authHeader, 'GET', undefined, RevisionInfo)
         })
 
@@ -231,7 +235,7 @@ export const GerritApiServiceLive: Layer.Layer<GerritApiService, never, ConfigSe
         Effect.gen(function* () {
           const { credentials, authHeader } = yield* getCredentialsAndAuth
           const normalized = yield* normalizeAndValidate(changeId)
-          const url = `${credentials.host}/a/changes/${encodeURIComponent(normalized)}/revisions/${revisionId}/files`
+          const url = `${credentials.host}/a/changes/${encodeURIComponent(normalized)}/revisions/${encodeURIComponent(revisionId)}/files`
           return yield* makeRequest(
             url,
             authHeader,
@@ -250,7 +254,8 @@ export const GerritApiServiceLive: Layer.Layer<GerritApiService, never, ConfigSe
         Effect.gen(function* () {
           const { credentials, authHeader } = yield* getCredentialsAndAuth
           const normalized = yield* normalizeAndValidate(changeId)
-          let url = `${credentials.host}/a/changes/${encodeURIComponent(normalized)}/revisions/${revisionId}/files/${encodeURIComponent(filePath)}/diff`
+          const encodedRevision = encodeURIComponent(revisionId)
+          let url = `${credentials.host}/a/changes/${encodeURIComponent(normalized)}/revisions/${encodedRevision}/files/${encodeURIComponent(filePath)}/diff`
           if (base) {
             url += `?base=${encodeURIComponent(base)}`
           }
@@ -261,7 +266,7 @@ export const GerritApiServiceLive: Layer.Layer<GerritApiService, never, ConfigSe
         Effect.gen(function* () {
           const { credentials, authHeader } = yield* getCredentialsAndAuth
           const normalized = yield* normalizeAndValidate(changeId)
-          const url = `${credentials.host}/a/changes/${encodeURIComponent(normalized)}/revisions/${revisionId}/files/${encodeURIComponent(filePath)}/content`
+          const url = `${credentials.host}/a/changes/${encodeURIComponent(normalized)}/revisions/${encodeURIComponent(revisionId)}/files/${encodeURIComponent(filePath)}/content`
 
           const result = yield* Effect.tryPromise({
             try: () =>
@@ -284,7 +289,7 @@ export const GerritApiServiceLive: Layer.Layer<GerritApiService, never, ConfigSe
           }
 
           return yield* Effect.try({
-            try: () => atob(result.raw),
+            try: () => Buffer.from(result.raw, 'base64').toString('utf8'),
             catch: () => new ApiError({ message: 'Gerrit 文件内容 base64 解码失败' }),
           })
         })
@@ -293,7 +298,7 @@ export const GerritApiServiceLive: Layer.Layer<GerritApiService, never, ConfigSe
         Effect.gen(function* () {
           const { credentials, authHeader } = yield* getCredentialsAndAuth
           const normalized = yield* normalizeAndValidate(changeId)
-          const url = `${credentials.host}/a/changes/${encodeURIComponent(normalized)}/revisions/${revisionId}/patch`
+          const url = `${credentials.host}/a/changes/${encodeURIComponent(normalized)}/revisions/${encodeURIComponent(revisionId)}/patch`
 
           const result = yield* Effect.tryPromise({
             try: () =>
@@ -316,7 +321,7 @@ export const GerritApiServiceLive: Layer.Layer<GerritApiService, never, ConfigSe
           }
 
           return yield* Effect.try({
-            try: () => atob(result.raw),
+            try: () => Buffer.from(result.raw, 'base64').toString('utf8'),
             catch: () => new ApiError({ message: 'Gerrit patch base64 解码失败' }),
           })
         })
@@ -383,7 +388,7 @@ export const GerritApiServiceLive: Layer.Layer<GerritApiService, never, ConfigSe
         Effect.gen(function* () {
           const { credentials, authHeader } = yield* getCredentialsAndAuth
           const normalized = yield* normalizeAndValidate(changeId)
-          const url = `${credentials.host}/a/changes/${encodeURIComponent(normalized)}/revisions/${revisionId}/comments`
+          const url = `${credentials.host}/a/changes/${encodeURIComponent(normalized)}/revisions/${encodeURIComponent(revisionId)}/comments`
           return yield* makeRequest(
             url,
             authHeader,
@@ -398,18 +403,16 @@ export const GerritApiServiceLive: Layer.Layer<GerritApiService, never, ConfigSe
           const { credentials, authHeader } = yield* getCredentialsAndAuth
           const normalized = yield* normalizeAndValidate(changeId)
           const url = `${credentials.host}/a/changes/${encodeURIComponent(normalized)}?o=MESSAGES`
-          const response = yield* makeRequest(url, authHeader, 'GET')
-
-          const changeResponse = yield* Schema.decodeUnknown(
-            Schema.Struct({
-              messages: Schema.optional(Schema.Array(MessageInfo)),
-            }),
-          )(response).pipe(
-            Effect.mapError(
-              () => new ApiError({ message: 'Invalid messages response format from server' }),
-            ),
+          const MessagesResponse = Schema.Struct({
+            messages: Schema.optional(Schema.Array(MessageInfo)),
+          })
+          const changeResponse = yield* makeRequest(
+            url,
+            authHeader,
+            'GET',
+            undefined,
+            MessagesResponse,
           )
-
           return changeResponse.messages || []
         }).pipe(Effect.map(filterMeaningfulMessages))
 
@@ -613,7 +616,10 @@ export const GerritApiServiceLive: Layer.Layer<GerritApiService, never, ConfigSe
             )
             allChanges.push(...page)
             const remaining = limit - allChanges.length
-            if (page.length < pageSize || remaining <= 0) {
+            // Gerrit sets `_more_changes: true` on the LAST item of a page when more results exist.
+            const lastItem = page[page.length - 1]
+            const serverSaysMore = lastItem?._more_changes === true
+            if (!serverSaysMore || remaining <= 0) {
               hasMore = false
             } else {
               start += pageSize
@@ -621,8 +627,8 @@ export const GerritApiServiceLive: Layer.Layer<GerritApiService, never, ConfigSe
           }
 
           if (allChanges.length >= limit) {
-            console.warn(
-              `Warning: results capped at ${limit}. Use --start-date to narrow the date range.`,
+            yield* Effect.logWarning(
+              `results capped at ${limit}. Use --start-date to narrow the date range.`,
             )
           }
 
