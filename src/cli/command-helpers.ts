@@ -63,6 +63,7 @@ interface PreviewPayload {
   readonly action: string
   readonly target: string
   readonly hint: string
+  readonly plan?: ReadonlyArray<string>
 }
 
 /**
@@ -80,6 +81,7 @@ export function outputWriteGuardPreview(
       ? '请取消 GERRIT_DISABLE_WRITE 或使用只读命令'
       : '追加 --confirm 后重新执行以真正写入'
 
+  const plan = error.plan && error.plan.length > 0 ? error.plan : undefined
   const payload: PreviewPayload = {
     ok: false,
     preview: true,
@@ -88,6 +90,7 @@ export function outputWriteGuardPreview(
     action: error.operation,
     target: error.target,
     hint,
+    ...(plan ? { plan } : {}),
   }
 
   if (options.json) {
@@ -103,6 +106,13 @@ export function outputWriteGuardPreview(
     console.log(`  <action>${payload.action}</action>`)
     console.log(`  <target><![CDATA[${payload.target}]]></target>`)
     console.log(`  <reason><![CDATA[${payload.reason}]]></reason>`)
+    if (plan) {
+      console.log(`  <plan>`)
+      for (const step of plan) {
+        console.log(`    <step><![CDATA[${step}]]></step>`)
+      }
+      console.log(`  </plan>`)
+    }
     console.log(`  <hint><![CDATA[${payload.hint}]]></hint>`)
     console.log(`</${resultTag}>`)
     return
@@ -113,6 +123,12 @@ export function outputWriteGuardPreview(
   console.log(`  操作: ${payload.action}`)
   console.log(`  目标: ${payload.target}`)
   console.log(`  说明: ${payload.reason}`)
+  if (plan) {
+    console.log(`  计划:`)
+    for (const step of plan) {
+      console.log(`    - ${step}`)
+    }
+  }
   console.log(`  提示: ${payload.hint}`)
 }
 

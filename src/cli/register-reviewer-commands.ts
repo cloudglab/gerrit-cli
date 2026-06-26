@@ -2,46 +2,13 @@ import type { Command } from 'commander'
 import { Effect } from 'effect'
 import { GerritApiServiceLive } from '@/api/gerrit'
 import { ConfigServiceLive } from '@/services/config'
+import { executeEffect } from './command-helpers'
 import { addReviewerCommand } from './commands/add-reviewer'
 import { removeReviewerCommand } from './commands/remove-reviewer'
-
-// Helper function to execute Effect with standard error handling
-async function executeEffect<E>(
-  effect: Effect.Effect<void, E, never>,
-  options: { xml?: boolean; json?: boolean },
-  resultTag: string,
-): Promise<void> {
-  if (options.xml && options.json) {
-    console.log(
-      JSON.stringify(
-        { status: 'error', error: '--xml and --json are mutually exclusive' },
-        null,
-        2,
-      ),
-    )
-    process.exit(1)
-  }
-  try {
-    await Effect.runPromise(effect)
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error)
-    if (options.json) {
-      console.log(JSON.stringify({ status: 'error', error: errorMessage }, null, 2))
-    } else if (options.xml) {
-      console.log(`<?xml version="1.0" encoding="UTF-8"?>`)
-      console.log(`<${resultTag}>`)
-      console.log(`  <status>error</status>`)
-      console.log(`  <error><![CDATA[${errorMessage}]]></error>`)
-      console.log(`</${resultTag}>`)
-    } else {
-      console.error('✗ Error:', errorMessage)
-    }
-    process.exit(1)
-  }
-}
+import { reviewCommand } from './commands/review'
 
 /**
- * Register all reviewer-related commands (add-reviewer, remove-reviewer)
+ * Register all reviewer-related commands (add-reviewer, remove-reviewer, review)
  */
 export function registerReviewerCommands(program: Command): void {
   // add-reviewer command
@@ -108,6 +75,57 @@ Examples:
         ),
         options,
         'remove_reviewer_result',
+      )
+    })
+
+  // review command: end-to-end "无问题 / 严重问题" 双路径入口
+  program
+    .command('review <change-id>')
+    .description(
+      'End-to-end review: vote + comment + submit (default), or post a line-level reject comment (--reject)',
+    )
+    .option('--reject', '走"严重问题"路径：仅在 <file>:<line> 留行级 comment，不 vote / 不 submit')
+    .option(
+      '-m, --message <msg>',
+      '整体 review 描述（无问题路径用作整体 comment；--reject 路径用作行级 comment 内容）',
+    )
+    .option('--file <path>', '（仅 --reject）目标文件路径')
+    .option('--line <n>', '（仅 --reject）目标行号（指 new 版本行号）', parseInt)
+    .option('--no-submit', '无问题路径：投票 + 评论但跳过 submit')
+    .option('--no-verified', '无问题路径：跳过 Verified +1（即便项目定义了该 label）')
+    .option('--confirm', '真正执行写操作')
+    .option('--xml', 'XML output for LLM consumption')
+    .option('--json', 'JSON output for programmatic consumption')
+    .addHelpText(
+      'after',
+      `
+Examples:
+  # 无问题路径：Code-Review+2、Verified+1、整体 comment、submit
+  $ gerrit-cli review 12345 -m "LGTM" --confirm
+
+  # 整体评论 + submit
+  $ gerrit-cli review 12345 -m "Looks good, ship it" --confirm
+
+  # 仅投票 + 评论，不 submit
+  $ gerrit-cli review 12345 -m "OK after one more iteration" --no-submit --confirm
+
+  # 跳过 Verified 投票
+  $ gerrit-cli review 12345 --no-verified -m "LGTM" --confirm
+
+  # 严重问题：留行级 comment，不 vote 不 submit
+  $ gerrit-cli review 12345 --reject --file src/main.ts --line 42 -m "Fix this race" --confirm
+
+  # 不加 --confirm 时仅打印 preview + 完整计划
+  $ gerrit-cli review 12345 -m "LGTM"`,
+    )
+    .action(async (changeId, options) => {
+      await executeEffect(
+        reviewCommand(changeId, options).pipe(
+          Effect.provide(GerritApiServiceLive),
+          Effect.provide(ConfigServiceLive),
+        ),
+        options,
+        'review_result',
       )
     })
 }
