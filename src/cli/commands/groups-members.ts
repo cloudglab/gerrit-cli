@@ -1,5 +1,6 @@
 import { Effect } from 'effect'
 import { type ApiError, GerritApiService } from '@/api/gerrit'
+import { printJsonWithRecommendations } from '@/cli/recommendations'
 import { sanitizeCDATA } from '@/utils/shell-safety'
 
 interface GroupsMembersOptions {
@@ -51,9 +52,12 @@ export const groupsMembersCommand = (
     // Handle empty results
     if (members.length === 0) {
       if (options.json) {
-        console.log(
-          JSON.stringify({ status: 'success', group_id: groupId, count: 0, members: [] }, null, 2),
-        )
+        const jsonOutput = { status: 'success', group_id: groupId, count: 0, members: [] }
+        printJsonWithRecommendations(jsonOutput, {
+          command: 'groups-members',
+          input: { groupId },
+          payload: jsonOutput,
+        })
       } else if (options.xml) {
         console.log(`<?xml version="1.0" encoding="UTF-8"?>`)
         console.log(`<group_members_result>`)
@@ -70,23 +74,22 @@ export const groupsMembersCommand = (
 
     // Output results
     if (options.json) {
-      console.log(
-        JSON.stringify(
-          {
-            status: 'success',
-            group_id: groupId,
-            count: members.length,
-            members: members.map((member) => ({
-              account_id: member._account_id,
-              ...(member.name ? { name: member.name } : {}),
-              ...(member.email ? { email: member.email } : {}),
-              ...(member.username ? { username: member.username } : {}),
-            })),
-          },
-          null,
-          2,
-        ),
-      )
+      const jsonOutput = {
+        status: 'success',
+        group_id: groupId,
+        count: members.length,
+        members: members.map((member) => ({
+          account_id: member._account_id,
+          ...(member.name ? { name: member.name } : {}),
+          ...(member.email ? { email: member.email } : {}),
+          ...(member.username ? { username: member.username } : {}),
+        })),
+      }
+      printJsonWithRecommendations(jsonOutput, {
+        command: 'groups-members',
+        input: { groupId },
+        payload: jsonOutput,
+      })
     } else if (options.xml) {
       console.log(`<?xml version="1.0" encoding="UTF-8"?>`)
       console.log(`<group_members_result>`)

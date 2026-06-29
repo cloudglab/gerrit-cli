@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.0 - 2026-06-29
+
+### Release
+
+- 正式版本起点切换到 `1.0.0`。
+- README 保持长期稳定说明，具体版本变更继续记录在 CHANGELOG 和 Release notes。
+
 ## 0.0.19 - 2026-06-26
 
 ### Added

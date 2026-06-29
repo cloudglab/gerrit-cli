@@ -131,6 +131,26 @@ gerrit --role dev push
 用户表达 → 命中命令 → 缺参追问 → 执行 → 输出
 ```
 
+- 如果命令使用 `--json --recommend`，优先读取返回里的 `meta.next`，直接沿用 CLI 已声明的下一步。
+- `meta.next` 里的 `tool` 表示目标命令，`args` 是已预填参数，`example` 是可直接执行的命令示例。
+- 只有当 `meta.next` 缺失、为空，或与当前用户意图明显不符时，再退回 Agent 自己判断下一步。
+
+最小示例：
+
+```json
+{
+  "meta": {
+    "next": [
+      {
+        "tool": "diff",
+        "args": { "changeId": "12345" },
+        "example": "gerrit-cli diff 12345"
+      }
+    ]
+  }
+}
+```
+
 - "我有哪些变更" → `mine`
 - "查看 12345" → `show 12345`
 - "12345 的 diff" → `diff 12345`

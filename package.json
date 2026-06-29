@@ -1,6 +1,6 @@
 {
   "name": "@cloudglab/gerrit-cli",
-  "version": "0.0.19",
+  "version": "1.0.0",
   "description": "Gerrit CLI and SDK - A modern CLI tool and TypeScript SDK for Gerrit Code Review, built with Effect-TS",
   "keywords": [
     "gerrit",

@@ -1,5 +1,6 @@
 import { Effect } from 'effect'
 import { type ApiError, GerritApiService } from '@/api/gerrit'
+import { printJsonWithRecommendations } from '@/cli/recommendations'
 
 interface ProjectsOptions {
   pattern?: string
@@ -29,7 +30,10 @@ export const projectsCommand = (
     // Handle empty results
     if (projects.length === 0) {
       if (options.json) {
-        console.log(JSON.stringify({ status: 'success', projects: [] }, null, 2))
+        printJsonWithRecommendations(
+          { status: 'success', projects: [] },
+          { command: 'projects', payload: { status: 'success', projects: [] } },
+        )
       } else if (options.xml) {
         console.log(`<?xml version="1.0" encoding="UTF-8"?>`)
         console.log(`<projects_result>`)
@@ -44,22 +48,17 @@ export const projectsCommand = (
 
     // Output results
     if (options.json) {
-      console.log(
-        JSON.stringify(
-          {
-            status: 'success',
-            count: projects.length,
-            projects: projects.map((project) => ({
-              id: project.id,
-              name: project.name,
-              ...(project.parent ? { parent: project.parent } : {}),
-              ...(project.state ? { state: project.state } : {}),
-            })),
-          },
-          null,
-          2,
-        ),
-      )
+      const jsonOutput = {
+        status: 'success',
+        count: projects.length,
+        projects: projects.map((project) => ({
+          id: project.id,
+          name: project.name,
+          ...(project.parent ? { parent: project.parent } : {}),
+          ...(project.state ? { state: project.state } : {}),
+        })),
+      }
+      printJsonWithRecommendations(jsonOutput, { command: 'projects', payload: jsonOutput })
     } else if (options.xml) {
       console.log(`<?xml version="1.0" encoding="UTF-8"?>`)
       console.log(`<projects_result>`)

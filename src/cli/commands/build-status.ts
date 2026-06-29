@@ -1,5 +1,6 @@
 import { Effect, Schema } from 'effect'
 import { type ApiError, GerritApiService } from '@/api/gerrit'
+import { attachRecommendations } from '@/cli/recommendations'
 import type { MessageInfo } from '@/schemas/gerrit'
 import { GitError, getChangeIdFromHead, NoChangeIdError } from '@/utils/git-commit'
 
@@ -233,6 +234,15 @@ export const buildStatusCommand = (
     const formatOutput = (s: BuildStatus, mode: { xml?: boolean; json?: boolean }): string => {
       if (mode.xml) {
         return `<?xml version="1.0" encoding="UTF-8"?>\n<build_status>\n  <state>${s.state}</state>\n</build_status>`
+      }
+      if (mode.json && !watchOpts.watch) {
+        return JSON.stringify(
+          attachRecommendations(s as unknown as Record<string, unknown>, {
+            command: 'build-status',
+            input: { changeId: resolvedChangeId },
+            payload: s as unknown as Record<string, unknown>,
+          }),
+        )
       }
       return JSON.stringify(s)
     }

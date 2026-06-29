@@ -1,4 +1,5 @@
 import type { CommentInfo, MessageInfo } from '@/schemas/gerrit'
+import { printJsonWithRecommendations } from '@/cli/recommendations'
 import { formatCommentsPretty } from '@/utils/comment-formatters'
 import type { DiffContext } from '@/utils/diff-context'
 import { formatDiffPretty } from '@/utils/diff-formatters'
@@ -143,6 +144,7 @@ export const formatShowJson = async (
   diff: string,
   commentsWithContext: Array<{ comment: CommentInfo; context?: DiffContext }>,
   messages: MessageInfo[],
+  input: { readonly changeId: string },
 ): Promise<void> => {
   const output = {
     status: 'success',
@@ -213,23 +215,10 @@ export const formatShowJson = async (
     ),
   }
 
-  const jsonOutput = JSON.stringify(output, null, 2) + '\n'
-  // Write to stdout and ensure all data is flushed before process exits
-  // Using process.stdout.write with drain handling for large payloads
-  return new Promise<void>((resolve, reject) => {
-    const written = process.stdout.write(jsonOutput, (err) => {
-      if (err) {
-        reject(err)
-      } else {
-        resolve()
-      }
-    })
-
-    if (!written) {
-      // If write returned false, buffer is full, wait for drain
-      process.stdout.once('drain', resolve)
-      process.stdout.once('error', reject)
-    }
+  printJsonWithRecommendations(output, {
+    command: 'show',
+    input,
+    payload: output,
   })
 }
 

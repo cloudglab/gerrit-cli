@@ -1,6 +1,7 @@
 import chalk from 'chalk'
 import { Effect } from 'effect'
 import { type ApiError, GerritApiService } from '@/api/gerrit'
+import { printJsonWithRecommendations } from '@/cli/recommendations'
 import type { ChangeInfo } from '@/schemas/gerrit'
 import { type ConfigError, ConfigService, type ConfigServiceImpl } from '@/services/config'
 import { formatTimeAgo } from '@/utils/formatters'
@@ -162,27 +163,22 @@ export const listCommand = (
     const limited = changes.slice(0, limit)
 
     if (options.json) {
-      console.log(
-        JSON.stringify(
-          {
-            status: 'success',
-            count: limited.length,
-            changes: limited.map((c) => ({
-              number: c._number,
-              subject: c.subject,
-              project: c.project,
-              branch: c.branch,
-              status: c.status,
-              change_id: c.change_id,
-              ...(c.updated ? { updated: c.updated } : {}),
-              ...(c.owner?.name ? { owner: c.owner.name } : {}),
-              ...(c.labels ? { labels: c.labels } : {}),
-            })),
-          },
-          null,
-          2,
-        ),
-      )
+      const jsonOutput = {
+        status: 'success',
+        count: limited.length,
+        changes: limited.map((c) => ({
+          number: c._number,
+          subject: c.subject,
+          project: c.project,
+          branch: c.branch,
+          status: c.status,
+          change_id: c.change_id,
+          ...(c.updated ? { updated: c.updated } : {}),
+          ...(c.owner?.name ? { owner: c.owner.name } : {}),
+          ...(c.labels ? { labels: c.labels } : {}),
+        })),
+      }
+      printJsonWithRecommendations(jsonOutput, { command: 'list', payload: jsonOutput })
       return
     }
 

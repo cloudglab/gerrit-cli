@@ -1,5 +1,6 @@
 import { Effect } from 'effect'
 import { type ApiError, GerritApiService } from '@/api/gerrit'
+import { printJsonWithRecommendations } from '@/cli/recommendations'
 import { sanitizeCDATA } from '@/utils/shell-safety'
 
 interface GroupsOptions {
@@ -68,7 +69,10 @@ export const groupsCommand = (
     // Handle empty results
     if (groups.length === 0) {
       if (options.json) {
-        console.log(JSON.stringify({ status: 'success', count: 0, groups: [] }, null, 2))
+        printJsonWithRecommendations(
+          { status: 'success', count: 0, groups: [] },
+          { command: 'groups', payload: { status: 'success', count: 0, groups: [] } },
+        )
       } else if (options.xml) {
         console.log(`<?xml version="1.0" encoding="UTF-8"?>`)
         console.log(`<groups_result>`)
@@ -84,29 +88,24 @@ export const groupsCommand = (
 
     // Output results
     if (options.json) {
-      console.log(
-        JSON.stringify(
-          {
-            status: 'success',
-            count: groups.length,
-            groups: groups.map((group) => ({
-              id: group.id,
-              ...(group.name ? { name: group.name } : {}),
-              ...(group.description ? { description: group.description } : {}),
-              ...(group.owner ? { owner: group.owner } : {}),
-              ...(group.owner_id ? { owner_id: group.owner_id } : {}),
-              ...(group.group_id !== undefined ? { group_id: group.group_id } : {}),
-              ...(group.options?.visible_to_all !== undefined
-                ? { visible_to_all: group.options.visible_to_all }
-                : {}),
-              ...(group.created_on ? { created_on: group.created_on } : {}),
-              ...(group.url ? { url: group.url } : {}),
-            })),
-          },
-          null,
-          2,
-        ),
-      )
+      const jsonOutput = {
+        status: 'success',
+        count: groups.length,
+        groups: groups.map((group) => ({
+          id: group.id,
+          ...(group.name ? { name: group.name } : {}),
+          ...(group.description ? { description: group.description } : {}),
+          ...(group.owner ? { owner: group.owner } : {}),
+          ...(group.owner_id ? { owner_id: group.owner_id } : {}),
+          ...(group.group_id !== undefined ? { group_id: group.group_id } : {}),
+          ...(group.options?.visible_to_all !== undefined
+            ? { visible_to_all: group.options.visible_to_all }
+            : {}),
+          ...(group.created_on ? { created_on: group.created_on } : {}),
+          ...(group.url ? { url: group.url } : {}),
+        })),
+      }
+      printJsonWithRecommendations(jsonOutput, { command: 'groups', payload: jsonOutput })
     } else if (options.xml) {
       console.log(`<?xml version="1.0" encoding="UTF-8"?>`)
       console.log(`<groups_result>`)

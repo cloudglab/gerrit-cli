@@ -1,5 +1,6 @@
 import { Effect } from 'effect'
 import { type ApiError, GerritApiService } from '@/api/gerrit'
+import { printJsonWithRecommendations } from '@/cli/recommendations'
 import type { ChangeInfo } from '@/schemas/gerrit'
 import { colors, formatTimeAgo } from '@/utils/formatters'
 import { escapeXML, sanitizeCDATA } from '@/utils/shell-safety'
@@ -151,7 +152,11 @@ export const searchCommand = (
           })),
         ),
       }
-      console.log(JSON.stringify(jsonOutput, null, 2))
+      printJsonWithRecommendations(jsonOutput, {
+        command: 'search',
+        input: query ? { query } : {},
+        payload: jsonOutput,
+      })
     } else if (options.xml) {
       // XML output
       const xmlOutput = [

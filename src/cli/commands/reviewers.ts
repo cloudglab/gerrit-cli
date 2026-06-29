@@ -1,5 +1,6 @@
 import { Effect } from 'effect'
 import { type ApiError, GerritApiService } from '@/api/gerrit'
+import { printJsonWithRecommendations } from '@/cli/recommendations'
 import type { ReviewerListItem } from '@/schemas/reviewer'
 import { GitError, getChangeIdFromHead, NoChangeIdError } from '@/utils/git-commit'
 import { sanitizeCDATA } from '@/utils/shell-safety'
@@ -27,22 +28,21 @@ export const reviewersCommand = (
     const reviewers = yield* gerritApi.getReviewers(resolvedChangeId)
 
     if (options.json) {
-      console.log(
-        JSON.stringify(
-          {
-            status: 'success',
-            change_id: resolvedChangeId,
-            reviewers: reviewers.map((r) => ({
-              ...(r._account_id !== undefined ? { account_id: r._account_id } : {}),
-              name: r.name,
-              email: r.email,
-              username: r.username,
-            })),
-          },
-          null,
-          2,
-        ),
-      )
+      const jsonOutput = {
+        status: 'success',
+        change_id: resolvedChangeId,
+        reviewers: reviewers.map((r) => ({
+          ...(r._account_id !== undefined ? { account_id: r._account_id } : {}),
+          name: r.name,
+          email: r.email,
+          username: r.username,
+        })),
+      }
+      printJsonWithRecommendations(jsonOutput, {
+        command: 'reviewers',
+        input: { changeId: resolvedChangeId },
+        payload: jsonOutput,
+      })
     } else if (options.xml) {
       console.log(`<?xml version="1.0" encoding="UTF-8"?>`)
       console.log(`<reviewers_result>`)

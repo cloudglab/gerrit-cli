@@ -180,7 +180,9 @@ export const showCommand = (
     // Format output
     if (options.json) {
       yield* Effect.promise(() =>
-        formatShowJson(changeDetails, diff, commentsWithContext, messages),
+        formatShowJson(changeDetails, diff, commentsWithContext, messages, {
+          changeId: resolvedChangeId,
+        }),
       )
     } else if (options.xml) {
       yield* Effect.promise(() => formatShowXml(changeDetails, diff, commentsWithContext, messages))

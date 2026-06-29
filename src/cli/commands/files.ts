@@ -1,5 +1,6 @@
 import { Effect } from 'effect'
 import { type ApiError, GerritApiService } from '@/api/gerrit'
+import { printJsonWithRecommendations } from '@/cli/recommendations'
 import { GitError, getChangeIdFromHead, NoChangeIdError } from '@/utils/git-commit'
 import { escapeXML, sanitizeCDATA } from '@/utils/shell-safety'
 
@@ -29,17 +30,16 @@ export const filesCommand = (
       }))
 
     if (options.json) {
-      console.log(
-        JSON.stringify(
-          {
-            status: 'success',
-            change_id: resolvedChangeId,
-            files,
-          },
-          null,
-          2,
-        ),
-      )
+      const jsonOutput = {
+        status: 'success',
+        change_id: resolvedChangeId,
+        files,
+      }
+      printJsonWithRecommendations(jsonOutput, {
+        command: 'files',
+        input: { changeId: resolvedChangeId },
+        payload: jsonOutput,
+      })
     } else if (options.xml) {
       console.log(`<?xml version="1.0" encoding="UTF-8"?>`)
       console.log(`<files_result>`)

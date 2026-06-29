@@ -17,6 +17,7 @@ function createProgram(): Command {
     .description('Gerrit CLI tool')
     .version(getCliVersion())
     .option('-r, --role <role>', `Filter commands by role (${CLI_ROLES.join(', ')})`)
+    .option('--recommend [boolean]', 'Inject recommended next commands into JSON meta.next')
 
   program.addHelpText(
     'after',
@@ -29,6 +30,7 @@ CHANGE-ID FORMATS
 OUTPUT FORMATS
   --json    Structured JSON output for programmatic consumption
   --xml     XML with CDATA-wrapped content, optimized for LLM consumption
+  --recommend  Inject next-step recommendations into JSON meta.next
   (default) Plain text for human reading
   Most commands support both --json and --xml.
 

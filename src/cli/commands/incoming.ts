@@ -2,6 +2,7 @@ import { promisify } from 'node:util'
 import { select } from '@inquirer/prompts'
 import { Effect } from 'effect'
 import { type ApiError, GerritApiService } from '@/api/gerrit'
+import { printJsonWithRecommendations } from '@/cli/recommendations'
 import type { ChangeInfo } from '@/schemas/gerrit'
 import { type ConfigError, ConfigService } from '@/services/config'
 import * as childProcess from '@/utils/child-process'
@@ -180,7 +181,7 @@ export const incomingCommand = (
           })),
         ),
       }
-      console.log(JSON.stringify(jsonOutput, null, 2))
+      printJsonWithRecommendations(jsonOutput, { command: 'incoming', payload: jsonOutput })
     } else if (options.xml) {
       // XML output
       const xmlOutput = [

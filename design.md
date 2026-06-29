@@ -73,7 +73,76 @@ CLI 输出统一 JSON / XML / 文本三档。`toStructuredError` 优先从 `erro
 - `skills/gerrit-cli/` — `pnpm build` 复制产物，npm 发布内容
 - `scripts/copy-skills.mjs` — 复制脚本，构建时由 `scripts/build-dist.ts` 调用
 
-## 9. 与 zentao-cli 的差异
+## 9. 场景推荐输出
+
+`gerrit-cli` 已支持在 JSON 输出里注入结构化的下一步推荐，供 Agent / 脚本继续衔接命令链路。
+
+触发规则：
+
+- 仅在显式传 `--recommend` 时生效；不传或传 `--recommend=false` 都不注入。
+- 仅影响 JSON 输出；纯文本和 XML 保持现状。
+- 输出位置固定为 `meta.next`。
+
+返回形状：
+
+```json
+{
+  "status": "success",
+  "meta": {
+    "next": [
+      {
+        "tool": "diff",
+        "reason": "继续查看该变更的代码差异",
+        "priority": 2,
+        "args": { "changeId": "12345" },
+        "example": "gerrit-cli diff 12345"
+      }
+    ]
+  }
+}
+```
+
+声明位置：
+
+- 命令元数据在 `src/cli/command-meta.ts` 的 `CommandMeta.recommendations`。
+- JSON 注入辅助在 `src/cli/recommendations.ts`。
+
+参数映射规则：
+
+- `source: 'input' | 'payload'` 指定参数来源。
+- `path` 使用点号路径，例如 `changes.0.number`。
+- 可选 `template` 支持简单字符串模板，目前只支持 `{{value}}` 替换。
+- 路径解析失败时，保留推荐条目，但省略 `args` 和 `example`。
+
+排序与过滤：
+
+- 按 `priority` 倒序输出。
+- 当前 `--role` 看不到的目标命令会被过滤。
+
+示例声明：
+
+```ts
+{
+  tool: 'search',
+  reason: '继续搜索该项目下的变更',
+  priority: 1,
+  args: {
+    query: {
+      source: 'payload',
+      path: 'projects.0.name',
+      template: 'project:{{value}}',
+    },
+  },
+}
+```
+
+实现约束：
+
+- 推荐系统只做轻量路径映射和模板替换，不支持表达式求值。
+- `build-status --watch` 这类流式 JSON 输出不注入推荐，避免破坏逐行脚本消费。
+- 新增 JSON 命令时，如适合 Agent 串联，优先补 `recommendations`，并复用 `printJsonWithRecommendations()` 或 `attachRecommendations()`。
+
+## 10. 与 zentao-cli 的差异
 
 | 维度 | zentao-cli | gerrit-cli |
 | --- | --- | --- |
@@ -84,7 +153,7 @@ CLI 输出统一 JSON / XML / 文本三档。`toStructuredError` 优先从 `erro
 | 测试框架 | vitest + @vitest/coverage-v8 | vitest + MSW + @vitest/coverage-v8 |
 | 终端 UI | 无 | 计划接入 Ink（基础命令已用 chalk）|
 
-## 10. 可执行规则清单
+## 11. 可执行规则清单
 
 - [x] `package.json` 使用 ESM、pnpm、Node engines、bin 多入口、`files` 白名单。
 - [x] `tsconfig.json` 使用 `ESNext`、`Bundler`、`strict`、`declaration`、`sourceMap`。
@@ -102,7 +171,7 @@ CLI 输出统一 JSON / XML / 文本三档。`toStructuredError` 优先从 `erro
 - [x] 添加 `.opencode/opencode.json` 的 `/release` 模板。
 - [x] 发布前固定运行 `pnpm check:all` 和 `pnpm release:smoke-query`。
 
-## 11. 刻意使用 Bundler 解析
+## 12. 刻意使用 Bundler 解析
 
 `tsconfig.json` 用 `module: "ESNext"` + `moduleResolution: "Bundler"`，刻意不切到 NodeNext。
 

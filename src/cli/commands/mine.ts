@@ -1,5 +1,6 @@
 import { Effect } from 'effect'
 import { type ApiError, GerritApiService } from '@/api/gerrit'
+import { printJsonWithRecommendations } from '@/cli/recommendations'
 import type { ChangeInfo } from '@/schemas/gerrit'
 import { colors, formatTimeAgo } from '@/utils/formatters'
 
@@ -34,7 +35,7 @@ export const mineCommand = (
           ...(change.labels ? { labels: change.labels } : {}),
         })),
       }
-      console.log(JSON.stringify(jsonOutput, null, 2))
+      printJsonWithRecommendations(jsonOutput, { command: 'mine', payload: jsonOutput })
     } else if (options.xml) {
       console.log(`<?xml version="1.0" encoding="UTF-8"?>`)
       console.log(`<changes count="${changes.length}">`)

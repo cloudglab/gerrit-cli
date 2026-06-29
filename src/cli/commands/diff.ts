@@ -1,6 +1,7 @@
 import { Schema } from '@effect/schema'
 import { Effect, pipe } from 'effect'
 import { type ApiError, GerritApiService } from '@/api/gerrit'
+import { printJsonWithRecommendations } from '@/cli/recommendations'
 import type { DiffCommandOptions, DiffOptions } from '@/schemas/gerrit'
 import { DiffCommandOptions as DiffCommandOptionsSchema } from '@/schemas/gerrit'
 import { formatDiffPretty, formatFilesList } from '@/utils/diff-formatters'
@@ -46,7 +47,11 @@ export const diffCommand = (
       } else {
         jsonOutput.content = diff
       }
-      console.log(JSON.stringify(jsonOutput, null, 2))
+      printJsonWithRecommendations(jsonOutput, {
+        command: 'diff',
+        input: { changeId },
+        payload: jsonOutput,
+      })
     } else if (validatedOptions.xml) {
       // XML output for LLM consumption
       console.log(`<?xml version="1.0" encoding="UTF-8"?>`)

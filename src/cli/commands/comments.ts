@@ -1,5 +1,6 @@
 import { Effect } from 'effect'
 import { type ApiError, GerritApiService } from '@/api/gerrit'
+import { printJsonWithRecommendations } from '@/cli/recommendations'
 import type { CommentInfo } from '@/schemas/gerrit'
 import { formatCommentsPretty, formatCommentsXml } from '@/utils/comment-formatters'
 import { getDiffContext } from '@/utils/diff-context'
@@ -92,7 +93,11 @@ export const commentsCommand = (
           ...(context ? { diff_context: context } : {}),
         })),
       }
-      console.log(JSON.stringify(jsonOutput, null, 2))
+      printJsonWithRecommendations(jsonOutput, {
+        command: 'comments',
+        input: { changeId },
+        payload: jsonOutput,
+      })
     } else if (options.xml) {
       formatCommentsXml(changeId, commentsWithContext)
     } else {

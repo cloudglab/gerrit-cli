@@ -1,5 +1,6 @@
 import { Console, Effect } from 'effect'
 import { type ApiError, GerritApiService, type GerritApiServiceImpl } from '@/api/gerrit'
+import { attachRecommendations } from '@/cli/recommendations'
 import type { MessageInfo } from '@/schemas/gerrit'
 import { type ConfigError, ConfigService, type ConfigServiceImpl } from '@/services/config'
 
@@ -44,7 +45,20 @@ export const failuresCommand = (
 
     if (!link) {
       if (options.json) {
-        yield* Console.log(JSON.stringify({ status: 'not_found', change_id: changeId }, null, 2))
+        yield* Console.log(
+          JSON.stringify(
+            attachRecommendations(
+              { status: 'not_found', change_id: changeId },
+              {
+                command: 'failures',
+                input: { changeId },
+                payload: { status: 'not_found', change_id: changeId },
+              },
+            ),
+            null,
+            2,
+          ),
+        )
       } else if (options.xml) {
         yield* Console.log(`<?xml version="1.0" encoding="UTF-8"?>`)
         yield* Console.log(`<failures>`)
@@ -58,8 +72,17 @@ export const failuresCommand = (
     }
 
     if (options.json) {
+      const payload = { status: 'found', change_id: changeId, url: link }
       yield* Console.log(
-        JSON.stringify({ status: 'found', change_id: changeId, url: link }, null, 2),
+        JSON.stringify(
+          attachRecommendations(payload, {
+            command: 'failures',
+            input: { changeId },
+            payload,
+          }),
+          null,
+          2,
+        ),
       )
     } else if (options.xml) {
       yield* Console.log(`<?xml version="1.0" encoding="UTF-8"?>`)
