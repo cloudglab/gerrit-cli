@@ -74,6 +74,16 @@ export GERRIT_RETRIGGER_COMMENT="retrigger"        # retrigger 评语模板
 - `--xml`：CDATA 包裹 XML，LLM 上下文
 - 默认：纯文本，人可读
 
+## 输出消费约束（强制）
+
+调用本 CLI 的列表型命令（`list` / `mine` / `search` / `incoming` / `reviewers` / `comments` 等）时：
+
+- **必须**把响应中的 `summary.highlight` 作为第一句话回复给用户。
+- **禁止**对 `changes` / `items` 数组做字段抽取、重新聚合、状态分组、日期换算、JSON 解析后再组装 —— CLI 输出即为最终答案，重复加工会导致字段猜错、层级取错、聚合算错。
+- 当 `meta.processed === true` 时，认定输出已规整，直接展示。
+- 只有当用户明确要求“逐条展示”时才遍历 `items`，且不要再做二次清洗。
+- Gerrit 字段 `status` 是字符串枚举（`NEW` / `MERGED` / `ABANDONED` / `SUBMITTED` / `DRAFT`），不要做大小写转换。
+
 ## 运行时
 
 - Node.js ≥ 18

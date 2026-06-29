@@ -39,6 +39,8 @@ describe('files command', () => {
   let mockConsoleLog: ReturnType<typeof mock>
   let mockConsoleError: ReturnType<typeof mock>
   let mockProcessExit: ReturnType<typeof mock>
+  let mockStdoutWrite: ReturnType<typeof mock>
+  let originalStdoutWrite: typeof process.stdout.write
 
   beforeAll(() => {
     server.listen({ onUnhandledRequest: 'bypass' })
@@ -52,13 +54,18 @@ describe('files command', () => {
     mockConsoleLog = mock(() => {})
     mockConsoleError = mock(() => {})
     mockProcessExit = mock(() => {})
+    mockStdoutWrite = mock(() => true)
     console.log = mockConsoleLog
     console.error = mockConsoleError
     process.exit = mockProcessExit as unknown as typeof process.exit
+    originalStdoutWrite = process.stdout.write.bind(process.stdout)
+    ;(process.stdout as { write: typeof process.stdout.write }).write =
+      mockStdoutWrite as unknown as typeof process.stdout.write
   })
 
   afterEach(() => {
     server.resetHandlers()
+    ;(process.stdout as { write: typeof process.stdout.write }).write = originalStdoutWrite
   })
 
   it('should list changed files with plain output', async () => {
@@ -98,7 +105,7 @@ describe('files command', () => {
 
     await Effect.runPromise(program)
 
-    const output = mockConsoleLog.mock.calls.map((call) => call[0]).join('\n')
+    const output = mockStdoutWrite.mock.calls.map((call) => call[0] as string).join('')
     const parsed = JSON.parse(output) as { status: string; change_id: string; files: unknown[] }
     expect(parsed.status).toBe('success')
     expect(parsed.change_id).toBe('12345')

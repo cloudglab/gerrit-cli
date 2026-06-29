@@ -78,9 +78,14 @@ describe('list command', () => {
   })
 
   test('outputs JSON', async () => {
-    const logs: string[] = []
-    const origLog = console.log
-    console.log = (...args: unknown[]) => logs.push(String(args[0]))
+    const writes: string[] = []
+    const origWrite = process.stdout.write.bind(process.stdout)
+    ;(process.stdout as { write: typeof process.stdout.write }).write = ((
+      chunk: string | Uint8Array,
+    ) => {
+      writes.push(typeof chunk === 'string' ? chunk : chunk.toString())
+      return true
+    }) as typeof process.stdout.write
 
     try {
       await Effect.runPromise(
@@ -90,10 +95,10 @@ describe('list command', () => {
         ),
       )
     } finally {
-      console.log = origLog
+      ;(process.stdout as { write: typeof process.stdout.write }).write = origWrite
     }
 
-    const parsed = JSON.parse(logs.join('')) as { status: string; count: number }
+    const parsed = JSON.parse(writes.join('')) as { status: string; count: number }
     expect(parsed.status).toBe('success')
     expect(parsed.count).toBe(3)
   })
@@ -142,9 +147,14 @@ describe('list command', () => {
   })
 
   test('--limit caps results', async () => {
-    const logs: string[] = []
-    const origLog = console.log
-    console.log = (...args: unknown[]) => logs.push(String(args[0]))
+    const writes: string[] = []
+    const origWrite = process.stdout.write.bind(process.stdout)
+    ;(process.stdout as { write: typeof process.stdout.write }).write = ((
+      chunk: string | Uint8Array,
+    ) => {
+      writes.push(typeof chunk === 'string' ? chunk : chunk.toString())
+      return true
+    }) as typeof process.stdout.write
 
     try {
       await Effect.runPromise(
@@ -154,10 +164,10 @@ describe('list command', () => {
         ),
       )
     } finally {
-      console.log = origLog
+      ;(process.stdout as { write: typeof process.stdout.write }).write = origWrite
     }
 
-    const parsed = JSON.parse(logs.join('')) as { count: number }
+    const parsed = JSON.parse(writes.join('')) as { count: number }
     expect(parsed.count).toBe(1)
   })
 

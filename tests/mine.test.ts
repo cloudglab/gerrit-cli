@@ -38,6 +38,8 @@ const server = setupServer(
 
 describe('mine command', () => {
   let mockConsoleLog: ReturnType<typeof mock>
+  let mockStdoutWrite: ReturnType<typeof mock>
+  let originalStdoutWrite: typeof process.stdout.write
 
   beforeAll(() => {
     server.listen({ onUnhandledRequest: 'bypass' })
@@ -49,11 +51,16 @@ describe('mine command', () => {
 
   beforeEach(() => {
     mockConsoleLog = mock(() => {})
-    console.log = mockConsoleLog
+    console.log = mockConsoleLog as unknown as typeof console.log
+    mockStdoutWrite = mock(() => true)
+    originalStdoutWrite = process.stdout.write.bind(process.stdout)
+    ;(process.stdout as { write: typeof process.stdout.write }).write =
+      mockStdoutWrite as unknown as typeof process.stdout.write
   })
 
   afterEach(() => {
     server.resetHandlers()
+    ;(process.stdout as { write: typeof process.stdout.write }).write = originalStdoutWrite
   })
 
   test('should fetch and display my changes in pretty format', async () => {
@@ -162,7 +169,7 @@ describe('mine command', () => {
       ),
     )
 
-    const output = mockConsoleLog.mock.calls.map((call) => call[0]).join('\n')
+    const output = mockStdoutWrite.mock.calls.map((call) => call[0] as string).join('')
     const parsed = JSON.parse(output)
     const change = parsed.changes[0]
     expect(change.labels).toBeDefined()
@@ -187,7 +194,7 @@ describe('mine command', () => {
       ),
     )
 
-    const output = mockConsoleLog.mock.calls.map((call) => call[0]).join('\n')
+    const output = mockStdoutWrite.mock.calls.map((call) => call[0] as string).join('')
     const parsed = JSON.parse(output)
     expect(parsed.changes[0].labels).toBeUndefined()
   })

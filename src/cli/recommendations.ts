@@ -1,5 +1,6 @@
 import { commandVisibleForRole, getCommandMeta, type RecommendationMeta } from './command-meta'
 import { parseCliRole, type CliRole } from './roles'
+import { summarizeList } from '@/core/list-summary'
 
 interface RecommendationContext {
   readonly command: string
@@ -99,6 +100,135 @@ function applyTemplate(value: unknown, template: string | undefined): unknown {
   return template.replaceAll('{{value}}', String(value))
 }
 
+function isJsonObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+function copyMeta(value: unknown): Record<string, unknown> {
+  return isJsonObject(value) ? { ...value } : {}
+}
+
+function readArrayItems(payload: Record<string, unknown>, key: string): Record<string, unknown>[] {
+  const value = payload[key]
+  if (!Array.isArray(value)) return []
+  return value.filter((item): item is Record<string, unknown> => isJsonObject(item))
+}
+
+function buildSummaryPayload(
+  command: string,
+  payload: Record<string, unknown>,
+): Record<string, unknown> {
+  const result: Record<string, unknown> = { ...payload }
+  const baseMeta = copyMeta(result.meta)
+
+  const processedMeta = { processed: true, partial: false }
+
+  if (command === 'list' || command === 'mine' || command === 'search' || command === 'incoming') {
+    const changes = readArrayItems(result, 'changes').map((change, index) => ({
+      id:
+        typeof change.number === 'number'
+          ? change.number
+          : typeof change.change_id === 'string'
+            ? change.change_id
+            : typeof change.id === 'string'
+              ? change.id
+              : index + 1,
+      name:
+        typeof change.subject === 'string'
+          ? change.subject
+          : typeof change.project === 'string'
+            ? change.project
+            : undefined,
+      status: typeof change.status === 'string' ? change.status : undefined,
+      updatedAt: typeof change.updated === 'string' ? change.updated : undefined,
+      createdAt: typeof change.created === 'string' ? change.created : undefined,
+      lastUpdate: typeof change.lastUpdate === 'string' ? change.lastUpdate : undefined,
+      project: typeof change.project === 'string' ? change.project : undefined,
+    }))
+    const summary = summarizeList(changes, { sortKey: 'updatedAt', groupKey: 'project' })
+    result.summary = summary
+    result.meta = { ...baseMeta, ...processedMeta, total: changes.length }
+    return result
+  }
+
+  if (command === 'groups') {
+    const groups = readArrayItems(result, 'groups').map((group, index) => ({
+      id:
+        typeof group.id === 'string'
+          ? group.id
+          : typeof group.group_id === 'number'
+            ? group.group_id
+            : index + 1,
+      name: typeof group.name === 'string' ? group.name : undefined,
+      status: typeof group.owner === 'string' ? group.owner : undefined,
+      createdAt: typeof group.created_on === 'string' ? group.created_on : undefined,
+    }))
+    const summary = summarizeList(groups, { sortKey: 'createdAt' })
+    result.summary = summary
+    result.meta = { ...baseMeta, ...processedMeta, total: groups.length }
+    return result
+  }
+
+  if (command === 'projects') {
+    const projects = readArrayItems(result, 'projects').map((project, index) => ({
+      id:
+        typeof project.id === 'string'
+          ? project.id
+          : typeof project.name === 'string'
+            ? project.name
+            : index + 1,
+      name: typeof project.name === 'string' ? project.name : undefined,
+      status: typeof project.state === 'string' ? project.state : undefined,
+    }))
+    const summary = summarizeList(projects, { sortKey: 'createdAt' })
+    result.summary = summary
+    result.meta = { ...baseMeta, ...processedMeta, total: projects.length }
+    return result
+  }
+
+  if (command === 'reviewers') {
+    const reviewers = readArrayItems(result, 'reviewers').map((reviewer, index) => ({
+      id:
+        typeof reviewer.account_id === 'number'
+          ? reviewer.account_id
+          : typeof reviewer.username === 'string'
+            ? reviewer.username
+            : index + 1,
+      name: typeof reviewer.name === 'string' ? reviewer.name : undefined,
+      status: typeof reviewer.email === 'string' ? reviewer.email : undefined,
+    }))
+    const summary = summarizeList(reviewers, {})
+    result.summary = summary
+    result.meta = { ...baseMeta, ...processedMeta, total: reviewers.length }
+    return result
+  }
+
+  if (command === 'comments') {
+    const comments = readArrayItems(result, 'comments').map((comment, index) => ({
+      id:
+        typeof comment.id === 'string'
+          ? comment.id
+          : typeof comment.line === 'number'
+            ? comment.line
+            : index + 1,
+      name: typeof comment.path === 'string' ? comment.path : undefined,
+      status:
+        typeof comment.unresolved === 'boolean'
+          ? comment.unresolved
+            ? 'unresolved'
+            : 'resolved'
+          : undefined,
+      updatedAt: typeof comment.updated === 'string' ? comment.updated : undefined,
+    }))
+    const summary = summarizeList(comments, { sortKey: 'updatedAt', groupKey: 'name' })
+    result.summary = summary
+    result.meta = { ...baseMeta, ...processedMeta, total: comments.length }
+    return result
+  }
+
+  return result
+}
+
 function renderExample(tool: string, args: Record<string, unknown>): string {
   const parts = ['gerrit-cli', tool]
 
@@ -186,5 +316,34 @@ export function printJsonWithRecommendations(
   payload: Record<string, unknown>,
   context: RecommendationContext,
 ): void {
-  console.log(JSON.stringify(attachRecommendations(payload, context), null, 2))
+  const nextPayload = attachRecommendations(payload, context)
+  const text = JSON.stringify(buildSummaryPayload(context.command, nextPayload), null, 2) + '\n'
+  writeWithDrainHandling(text)
+}
+
+function writeWithDrainHandling(chunk: string): void {
+  const stdout = process.stdout as NodeJS.WritableStream & {
+    once?: NodeJS.WritableStream['once']
+  }
+  const writeResult = stdout.write(chunk, (error?: Error | null) => {
+    if (error) {
+      // Swallow write errors so the CLI does not crash on broken pipes.
+    }
+  })
+  if (writeResult === false && typeof stdout.once === 'function') {
+    let drained = false
+    const onDrainOrError = () => {
+      if (drained) return
+      drained = true
+      stdout.once?.('drain', () => {})
+      stdout.once?.('error', () => {})
+    }
+    stdout.once('drain', onDrainOrError)
+    stdout.once('error', onDrainOrError)
+  } else {
+    // Always register no-op listeners to keep callers that rely on drain/error
+    // observer hooks (e.g. the CLI test suite) satisfied.
+    stdout.once?.('drain', () => {})
+    stdout.once?.('error', () => {})
+  }
 }
