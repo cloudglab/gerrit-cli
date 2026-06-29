@@ -36,6 +36,7 @@
 | `comments` | 全部评论 | 否 |
 | `comment` | 发评论 | 是 |
 | `vote` | 投票 | 是 |
+| `review` | 一键 review（通过 / reject 双路径） | 是 |
 | `reviewers` | 审查人 / CC 列表 | 否 |
 | `add-reviewer` | 加审查人 / CC / 组 | 是 |
 | `remove-reviewer` | 移除审查人 | 是 |

@@ -19,6 +19,8 @@
   - 从 stdin 读 message / JSON 数组。
   - `--batch` 时 stdin 必须是 JSON 数组。
 - `vote <id> [--code-review -2..2] [--verified -1..1] [--label <k> <v>] [-m "..."] --confirm` — 投票
+- `review <id> [-m "..."] [--no-submit] [--no-verified] --confirm` — 一键走“无问题”路径：投票 + 评论 + 可选 submit
+- `review <id> --reject --file <path> --line <n> -m "..." --confirm` — 一键走“严重问题”路径：仅留行级 reject 评论，不投票不 submit
 - `add-reviewer <email...> -c <id> [--cc] [--group] [--notify none|owner|owner_reviewers|all] --confirm` — 加审查人 / CC / 组
 - `remove-reviewer <email...> -c <id> [--notify none|owner|owner_reviewers|all] --confirm` — 移除
 

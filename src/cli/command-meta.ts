@@ -152,6 +152,26 @@ export const COMMAND_META: readonly CommandMeta[] = [
   { name: 'comment', group: 'review', isWrite: true, roles: ['full', 'reviewer', 'lead'] },
   { name: 'vote', group: 'review', isWrite: true, roles: ['full', 'reviewer', 'lead'] },
   {
+    name: 'review',
+    group: 'review',
+    isWrite: true,
+    roles: ['full', 'reviewer', 'lead'],
+    recommendations: [
+      {
+        tool: 'show',
+        reason: '执行 review 前后查看该变更的完整状态',
+        priority: 1,
+        args: { changeId: { source: 'input', path: 'changeId' } },
+      },
+      {
+        tool: 'comments',
+        reason: '继续查看或复核该变更的评论线程',
+        priority: 0,
+        args: { changeId: { source: 'input', path: 'changeId' } },
+      },
+    ],
+  },
+  {
     name: 'reviewers',
     group: 'review',
     isWrite: false,

@@ -7,7 +7,7 @@
 | 文档 | 场景 | 关键命令 |
 | --- | --- | --- |
 | [daily.md](./daily.md) | 日常开发 | `mine` `list` `show` `search` `projects` `files` `open` `setup` `whoami` `doctor` `status` |
-| [review.md](./review.md) | 审查 | `show` `diff` `comments` `reviewers` `comment` `vote` `incoming` `team` `add-reviewer` `remove-reviewer` |
+| [review.md](./review.md) | 审查 | `show` `diff` `comments` `reviewers` `comment` `vote` `review` `incoming` `team` `add-reviewer` `remove-reviewer` |
 | [ci.md](./ci.md) | CI 构建 | `build-status` `failures` `extract-url` `retrigger` `install-hook` `analyze` |
 | [workspace.md](./workspace.md) | 工作区 / worktree | `push` `checkout` `cherry` `rebase` `topic` `set-ready` `set-wip` `tree` `trees` `clean` |
 | [scenarios.md](./scenarios.md) | 典型组合 | 多命令串联场景 |
