@@ -1,6 +1,7 @@
 import { commandVisibleForRole, getCommandMeta, type RecommendationMeta } from './command-meta'
 import { parseCliRole, type CliRole } from './roles'
 import { summarizeList } from '@/core/list-summary'
+import { addMarkdownForAi } from '@/utils/html-markdown'
 
 interface RecommendationContext {
   readonly command: string
@@ -303,13 +304,13 @@ export function attachRecommendations(
 
   const currentMeta = isRecord(payload.meta) ? payload.meta : {}
 
-  return {
+  return addMarkdownForAi({
     ...payload,
     meta: {
       ...currentMeta,
       next,
     },
-  }
+  }) as Record<string, unknown>
 }
 
 export function printJsonWithRecommendations(
